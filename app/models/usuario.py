@@ -9,9 +9,11 @@ class Usuario(UserMixin,BaseModel):
     username = db.Column(db.String(45), unique=True, nullable=False)
     password = db.Column(db.String(255), nullable=False)
     email = db.Column(db.String(100), unique=True, nullable=False)
+    role = db.Column(db.String(20), nullable=False, default="vendedor")
     nombre = db.Column(db.String(100), nullable=False)
     ap_paterno = db.Column(db.String(45), nullable=False)
     ap_materno = db.Column(db.String(45), nullable=True)
+    deleted_at = db.Column(db.DateTime, nullable=True)
 
     def set_password(self, raw_password):
         self.password = bcrypt.generate_password_hash(
