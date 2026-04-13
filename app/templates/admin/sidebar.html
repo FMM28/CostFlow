@@ -1,0 +1,64 @@
+<aside class="w-64 bg-gray-900 text-gray-100 flex flex-col border-r border-gray-800/60 shadow-xl">
+
+    <!-- Usuario -->
+    <div class="px-5 py-4 border-b border-gray-800/60">
+        <div class="flex items-center space-x-3">
+            <!-- Avatar con indicador de estado -->
+            <div class="relative">
+                <div class="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center ring-2 ring-gray-700/50 shadow-md">
+                    <img src="{{ url_for('static', filename='icons/usuario.svg') }}" 
+                         alt="avatar" 
+                         class="w-5 h-5 opacity-80">
+                </div>
+                <!-- Indicador online -->
+                <span class="absolute bottom-0 right-0 block h-2.5 w-2.5 rounded-full ring-2 ring-gray-900 bg-green-400"></span>
+            </div>
+
+            <div class="flex flex-col min-w-0">
+                <span class="text-sm font-semibold text-white truncate">
+                    {{ current_user.nombre }} {{ current_user.ap_paterno }}
+                </span>
+                <span class="text-xs text-gray-400 font-medium">Administrador</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Menú de navegación -->
+    <nav class="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+        
+        <!-- Item: Dashboard -->
+        <a href="{{ url_for('admin.dashboard') }}" 
+           class="group flex items-center px-3 py-2.5 rounded-lg text-gray-300 hover:bg-gray-800 hover:text-white transition-all duration-200">
+            <div class="p-1.5 rounded-md group-hover:bg-gray-700/50 transition-colors">
+                <img src="{{ url_for('static', filename='icons/home.svg') }}" 
+                     class="w-5 h-5 opacity-70 group-hover:opacity-100">
+            </div>
+            <span class="ml-3 text-sm font-medium">Dashboard</span>
+        </a>
+
+        <!-- Item: Usuarios -->
+        <a href="#" 
+           class="group flex items-center px-3 py-2.5 rounded-lg text-gray-300 hover:bg-gray-800 hover:text-white transition-all duration-200">
+            <div class="p-1.5 rounded-md group-hover:bg-gray-700/50 transition-colors">
+                <img src="{{ url_for('static', filename='icons/usuario.svg') }}" 
+                     class="w-5 h-5 opacity-70 group-hover:opacity-100">
+            </div>
+            <span class="ml-3 text-sm font-medium">Usuarios</span>
+        </a>
+
+
+    </nav>
+
+    <!-- Cerrar sesión -->
+    <div class="px-3 py-4 border-t border-gray-800/60">
+        <a href="{{ url_for('auth.logout') }}" 
+           class="group flex items-center px-3 py-2.5 rounded-lg text-gray-400 hover:bg-red-500/10 hover:text-red-400 transition-all duration-200">
+            <div class="p-1.5 rounded-md group-hover:bg-red-500/20 transition-colors">
+                <img src="{{ url_for('static', filename='icons/logout.svg') }}" 
+                     class="w-5 h-5 opacity-70 group-hover:opacity-100">
+            </div>
+            <span class="ml-3 text-sm font-medium">Cerrar sesión</span>
+        </a>
+    </div>
+
+</aside>
