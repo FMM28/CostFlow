@@ -16,5 +16,10 @@ class Config:
 
     SECRET_KEY = os.environ.get("SECRET_KEY")
 
+    LOG_LEVEL = "INFO"
+    LOG_FILE = "app.log"
+    LOG_MAX_BYTES = 10 * 1024 * 1024  # 10 MB
+    LOG_BACKUP_COUNT = 5
+
     CVA_URL = os.getenv("CVA_URL")
     CVA_CLIENTE = os.getenv("CVA_CLIENTE")
