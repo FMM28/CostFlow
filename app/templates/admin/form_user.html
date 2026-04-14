@@ -1,0 +1,91 @@
+{% extends "admin/base_form.html" %}
+
+{% block form_title %}
+    {{ "Editar usuario" if usuario else "Crear usuario" }}
+{% endblock %}
+
+{% block form_header %}
+    {{ "Editar usuario" if usuario else "Nuevo usuario" }}
+{% endblock %}
+
+{% block form_subtitle %}
+    Completa la información del usuario
+{% endblock %}
+
+
+{% block form_fields %}
+
+<div class="grid grid-cols-2 gap-4">
+
+    <!-- Username -->
+    <div class="space-y-1 col-span-2">
+        <label class="text-sm text-gray-600">Usuario</label>
+        <input type="text" name="username"
+               value="{{ usuario.username if usuario else '' }}"
+               class="w-full h-10 px-3 rounded-md border border-gray-300
+                      focus:outline-none focus:border-gray-500">
+    </div>
+
+    <!-- Nombre -->
+    <div class="space-y-1">
+        <label class="text-sm text-gray-600">Nombre</label>
+        <input type="text" name="nombre"
+               value="{{ usuario.nombre if usuario else '' }}"
+               class="w-full h-10 px-3 rounded-md border border-gray-300">
+    </div>
+
+    <!-- Apellido paterno -->
+    <div class="space-y-1">
+        <label class="text-sm text-gray-600">Apellido paterno</label>
+        <input type="text" name="ap_paterno"
+               value="{{ usuario.ap_paterno if usuario else '' }}"
+               class="w-full h-10 px-3 rounded-md border border-gray-300">
+    </div>
+
+    <!-- Apellido materno -->
+    <div class="space-y-1 col-span-2">
+        <label class="text-sm text-gray-600">Apellido materno</label>
+        <input type="text" name="ap_materno"
+               value="{{ usuario.ap_materno if usuario else '' }}"
+               class="w-full h-10 px-3 rounded-md border border-gray-300">
+    </div>
+
+    <!-- Email -->
+    <div class="space-y-1 col-span-2">
+        <label class="text-sm text-gray-600">Email</label>
+        <input type="email" name="email"
+               value="{{ usuario.email if usuario else '' }}"
+               class="w-full h-10 px-3 rounded-md border border-gray-300">
+    </div>
+
+    <!-- Rol -->
+    <div class="space-y-1">
+        <label class="text-sm text-gray-600">Rol</label>
+        <select name="role"
+                class="w-full h-10 px-3 rounded-md border border-gray-300">
+
+            <option value="admin"
+                {% if usuario and usuario.role == 'admin' %}selected{% endif %}>
+                Admin
+            </option>
+
+            <option value="vendedor"
+                {% if usuario and usuario.role == 'vendedor' %}selected{% endif %}>
+                Vendedor
+            </option>
+
+        </select>
+    </div>
+
+    <!-- Password -->
+    <div class="space-y-1">
+        <label class="text-sm text-gray-600">
+            Contraseña {% if usuario %}(opcional){% endif %}
+        </label>
+        <input type="password" name="password"
+               class="w-full h-10 px-3 rounded-md border border-gray-300">
+    </div>
+
+</div>
+
+{% endblock %}

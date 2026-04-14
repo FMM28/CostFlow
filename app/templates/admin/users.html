@@ -1,0 +1,99 @@
+{% extends "admin/base_table.html" %}
+
+{% block table_title %}Usuarios{% endblock %}
+
+{% block table_header %}Usuarios{% endblock %}
+{% block table_subtitle %}Gestión de usuarios del sistema{% endblock %}
+
+{% block table_actions %}
+<a href="{{ url_for('admin.create_user') }}"
+   class="inline-flex items-center justify-center
+          w-40 h-10
+          border border-green-600 text-green-700
+          rounded-md text-sm
+          hover:bg-green-600 hover:text-white transition">
+    + Nuevo usuario
+</a>
+{% endblock %}
+
+
+{% block table_columns %}
+<th class="px-4 py-3">ID</th>
+<th class="px-4 py-3">Usuario</th>
+<th class="px-4 py-3">Nombre</th>
+<th class="px-4 py-3">Email</th>
+<th class="px-4 py-3">Rol</th>
+<th class="px-4 py-3 text-right">Acciones</th>
+{% endblock %}
+
+
+{% block table_rows %}
+{% for u in usuarios %}
+<tr class="hover:bg-gray-100 transition">
+
+    <td class="px-4 py-3 text-gray-500">{{ u.id_usuario }}</td>
+
+    <td class="px-4 py-3 font-medium text-gray-800">
+        {{ u.username }}
+    </td>
+
+    <td class="px-4 py-3 text-gray-600">
+        {{ u.nombre }} {{ u.ap_paterno }} {{ u.ap_materno or '' }}
+    </td>
+
+    <td class="px-4 py-3 text-gray-500">
+        {{ u.email }}
+    </td>
+
+    <!-- Rol con tamaño fijo -->
+    <td class="px-4 py-3">
+        <span class="
+            inline-flex items-center justify-center
+            w-24 h-7
+            text-xs font-medium rounded
+            {% if u.role == 'admin' %}
+                border border-gray-500 text-gray-700
+            {% else %}
+                border border-green-600 text-green-700
+            {% endif %}
+        ">
+            {{ u.role|upper }}
+        </span>
+    </td>
+
+    <!-- Acciones -->
+    <td class="px-4 py-3 text-right">
+        <div class="inline-flex gap-2">
+
+            <!-- Editar -->
+            <a href="{{ url_for('admin.edit_user', user_id=u.id_usuario) }}"
+               class="inline-flex items-center justify-center
+                      w-20 h-8
+                      text-xs rounded-md
+                      border border-amber-600 text-amber-700
+                      hover:bg-amber-600 hover:text-white transition">
+                Editar
+            </a>
+
+            <!-- Eliminar -->
+            <form action="{{ url_for('admin.delete_user', user_id=u.id_usuario) }}"
+                  method="POST"
+                  onsubmit="return confirm('¿Eliminar usuario?')">
+
+                <button
+                    class="inline-flex items-center justify-center
+                           w-20 h-8
+                           text-xs rounded-md
+                           border border-red-600 text-red-700
+                           hover:bg-red-600 hover:text-white transition">
+                    Eliminar
+                </button>
+
+            </form>
+
+        </div>
+    </td>
+
+</tr>
+{% endfor %}
+{% endblock %}

@@ -1,0 +1,76 @@
+{% extends "admin/base.html" %}
+
+{% block title %}
+    {% block table_title %}Listado{% endblock %}
+{% endblock %}
+
+{% block content %}
+
+<div class="space-y-6">
+
+    <!-- Header -->
+    <div class="flex items-center justify-between">
+        <div>
+            <h1 class="text-2xl font-semibold text-gray-800">
+                {% block table_header %}Listado{% endblock %}
+            </h1>
+            <p class="text-sm text-gray-500">
+                {% block table_subtitle %}{% endblock %}
+            </p>
+        </div>
+
+        <div>
+            {% block table_actions %}{% endblock %}
+        </div>
+    </div>
+
+    <!-- Flash -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="space-y-2">
+                {% for category, message in messages %}
+                    <div class="
+                        px-4 py-2 rounded-md text-sm border
+                        {% if category == 'success' %}
+                            border-green-600 text-green-700 bg-white
+                        {% elif category == 'danger' %}
+                            border-red-600 text-red-700 bg-white
+                        {% elif category == 'warning' %}
+                            border-amber-600 text-amber-700 bg-white
+                        {% else %}
+                            border-gray-300 text-gray-700 bg-white
+                        {% endif %}
+                    ">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <!-- Tabla -->
+    <div class="bg-white rounded-xl border border-gray-300">
+
+        <div class="overflow-x-auto">
+            <table class="min-w-full text-sm text-left">
+
+                <!-- Head -->
+                <thead class="bg-gray-200 text-gray-600 uppercase text-xs">
+                    <tr>
+                        {% block table_columns %}{% endblock %}
+                    </tr>
+                </thead>
+
+                <!-- Body -->
+                <tbody class="divide-y divide-gray-200">
+                    {% block table_rows %}{% endblock %}
+                </tbody>
+
+            </table>
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

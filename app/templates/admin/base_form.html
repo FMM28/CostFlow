@@ -1,0 +1,86 @@
+{% extends "admin/base.html" %}
+
+{% block title %}
+    {% block form_title %}Formulario{% endblock %}
+{% endblock %}
+
+{% block content %}
+
+<div class="max-w-3xl mx-auto space-y-6">
+
+    <!-- Header -->
+    <div>
+        <h1 class="text-2xl font-semibold text-gray-800">
+            {% block form_header %}Formulario{% endblock %}
+        </h1>
+        <p class="text-sm text-gray-500">
+            {% block form_subtitle %}{% endblock %}
+        </p>
+    </div>
+
+    <!-- Flash messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="space-y-2">
+                {% for category, message in messages %}
+                    <div class="
+                        px-4 py-2 rounded-md text-sm border
+                        {% if category == 'success' %}
+                            border-green-600 text-green-700
+                        {% elif category == 'danger' %}
+                            border-red-600 text-red-700
+                        {% elif category == 'warning' %}
+                            border-amber-600 text-amber-700
+                        {% else %}
+                            border-gray-300 text-gray-700
+                        {% endif %}
+                    ">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <!-- Card -->
+    <div class="bg-white border border-gray-300 rounded-xl p-6">
+
+        <form method="POST" class="space-y-6">
+            
+            {% block form_fields %}
+            {% endblock %}
+
+            <!-- Actions -->
+            <div class="flex justify-end gap-3 pt-4 border-t">
+
+                {% block form_actions %}
+
+                <a href="{{ url_for('admin.users') }}"
+                   class="inline-flex items-center justify-center
+                          w-32 h-10
+                          border border-gray-400 text-gray-700
+                          rounded-md text-sm
+                          hover:bg-gray-200 transition">
+                    Cancelar
+                </a>
+
+                <button type="submit"
+                        class="inline-flex items-center justify-center
+                               w-40 h-10
+                               border border-green-600 text-green-700
+                               rounded-md text-sm
+                               hover:bg-green-600 hover:text-white transition">
+                    Guardar
+                </button>
+
+                {% endblock %}
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+{% endblock %}
