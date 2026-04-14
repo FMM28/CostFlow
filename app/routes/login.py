@@ -10,7 +10,7 @@ def login():
         username = request.form.get("username")
         password = request.form.get("password")
 
-        user = UserService.get_user_by_username(username)
+        user = UserService.get_by_username(username)
 
         if user and user.check_password(password):
             login_user(user)

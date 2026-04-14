@@ -18,7 +18,7 @@ def dashboard():
 @login_required
 @role_required("admin")
 def users():
-    usuarios = UserService.get_all_users()
+    usuarios = UserService.get_all()
     return render_template("admin/users.html", usuarios=usuarios)
 
 
@@ -33,7 +33,7 @@ def create_user():
 @login_required
 @role_required("admin")
 def create_user_post():
-    user, error = UserService.create_user(
+    user, error = UserService.create(
         username=request.form.get("username"),
         email=request.form.get("email"),
         role=request.form.get("role"),
@@ -55,7 +55,7 @@ def create_user_post():
 @login_required
 @role_required("admin")
 def edit_user(user_id):
-    usuario = UserService.get_user_by_id(user_id)
+    usuario = UserService.get_by_id(user_id)
 
     if not usuario:
         flash("Usuario no encontrado", "danger")
@@ -68,7 +68,7 @@ def edit_user(user_id):
 @login_required
 @role_required("admin")
 def edit_user_post(user_id):
-    user, error = UserService.update_user(
+    user, error = UserService.update(
         user_id=user_id,
         username=request.form.get("username"),
         email=request.form.get("email"),
@@ -81,7 +81,7 @@ def edit_user_post(user_id):
 
     if error:
         flash(error, "danger")
-        usuario = UserService.get_user_by_id(user_id)
+        usuario = UserService.get_by_id(user_id)
         return render_template("admin/form_user.html", usuario=usuario)
 
     flash("Usuario actualizado correctamente", "success")
@@ -92,7 +92,7 @@ def edit_user_post(user_id):
 @login_required
 @role_required("admin")
 def delete_user(user_id):
-    success, error = UserService.delete_user(user_id)
+    success, error = UserService.soft_delete(user_id)
 
     if error:
         flash(error, "danger")

@@ -15,6 +15,8 @@ class Usuario(UserMixin,BaseModel):
     ap_materno = db.Column(db.String(45), nullable=True)
     deleted_at = db.Column(db.DateTime, nullable=True)
 
+    ordenes = db.relationship("Orden", back_populates="usuario", lazy=True)
+
     def set_password(self, raw_password):
         self.password = bcrypt.generate_password_hash(
             raw_password
