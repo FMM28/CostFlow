@@ -1,6 +1,6 @@
 from flask import Flask
 from .config import Config
-from .extensions import db, migrate, bcrypt, login_manager
+from .extensions import db, migrate, bcrypt, login_manager,csrf
 from app import models
 from app.auth.login_manager import load_user
 from app.logging_config import setup_logging
@@ -9,6 +9,8 @@ from .routes import register_blueprints
 def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
+
+    csrf.init_app(app)
 
     db.init_app(app)
     migrate.init_app(app, db)

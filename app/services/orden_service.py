@@ -361,3 +361,71 @@ class OrdenService:
         except SQLAlchemyError as exc:
             logger.error("Error al obtener estadísticas de órdenes: %s", exc)
             return {}
+        
+    @staticmethod
+    def search_orders(
+        search: Optional[str] = None,
+        estado: Optional[str] = None,
+        fecha_inicio: Optional[str] = None,
+        fecha_fin: Optional[str] = None,
+        page: int = 1,
+        per_page: int = 12
+    ) -> Tuple[List[Orden], int, Optional[str]]:
+        """
+        Busca órdenes con filtros y paginación.
+        
+        Args:
+            search: Texto para buscar en clave_orden o comprador.
+            estado: Filtrar por estado (pendiente, aprobada, completada, cancelada).
+            fecha_inicio: Fecha inicial en formato YYYY-MM-DD.
+            fecha_fin: Fecha final en formato YYYY-MM-DD.
+            page: Número de página (1-indexado).
+            per_page: Cantidad de resultados por página.
+            
+        Returns:
+            Tuple[List[Orden], int, Optional[str]]: (lista de órdenes, total de páginas, mensaje_error)
+        """
+        try:
+            query = Orden.query
+            
+            # Filtro por estado
+            if estado:
+                if estado not in ESTADOS_VALIDOS:
+                    return [], 0, f"Estado '{estado}' no válido"
+                query = query.filter_by(estado=estado)
+            
+            # Filtro por rango de fechas
+            if fecha_inicio or fecha_fin:
+                from datetime import datetime
+                try:
+                    if fecha_inicio:
+                        inicio_dt = datetime.strptime(fecha_inicio, '%Y-%m-%d')
+                        query = query.filter(Orden.fecha_creacion >= inicio_dt)
+                    if fecha_fin:
+                        fin_dt = datetime.strptime(fecha_fin, '%Y-%m-%d')
+                        # Incluir todo el día final
+                        fin_dt = fin_dt.replace(hour=23, minute=59, second=59)
+                        query = query.filter(Orden.fecha_creacion <= fin_dt)
+                except ValueError:
+                    return [], 0, "Formato de fecha inválido (use YYYY-MM-DD)"
+            
+            # Búsqueda por texto
+            if search:
+                search_term = f"%{search.strip()}%"
+                query = query.filter(
+                    db.or_(
+                        Orden.clave_orden.ilike(search_term),
+                        Orden.comprador.ilike(search_term)
+                    )
+                )
+            
+            # Ordenar y paginar
+            paginated = query.order_by(Orden.fecha_creacion.desc()).paginate(
+                page=page, per_page=per_page, error_out=False
+            )
+            
+            return paginated.items, paginated.pages, None
+            
+        except SQLAlchemyError as exc:
+            logger.error("Error en búsqueda de órdenes: %s", exc)
+            return [], 0, "Error de base de datos al buscar órdenes"

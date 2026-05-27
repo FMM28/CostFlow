@@ -1,0 +1,218 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}Órdenes{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+            <h1 class="text-3xl font-bold tracking-tight text-gray-900">Órdenes</h1>
+            <p class="text-gray-500 mt-1">Gestiona y da seguimiento a las órdenes de compra</p>
+        </div>
+        <a href="{{ url_for('admin.nueva_orden') }}"
+           class="inline-flex items-center justify-center px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium rounded-xl transition-colors shadow-sm">
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+            </svg>
+            Nueva cotización
+        </a>
+    </div>
+
+
+    <div class="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
+        <form method="get" class="space-y-4">
+            <div class="flex flex-col lg:flex-row gap-4">
+                <div class="flex-1 relative">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <svg class="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                        </svg>
+                    </div>
+                    <input type="text" name="search" placeholder="Buscar por clave o comprador..."
+                           value="{{ search or '' }}"
+                           class="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-300 rounded-xl text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-shadow">
+                </div>
+
+                <div class="flex flex-col sm:flex-row gap-2">
+                    <div class="relative">
+                        <input type="date" name="fecha_inicio" placeholder="Desde"
+                               value="{{ fecha_inicio or '' }}"
+                               class="w-full sm:w-36 px-4 py-2.5 bg-white border border-gray-300 rounded-xl text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500">
+                    </div>
+                    <span class="hidden sm:flex items-center text-gray-400">—</span>
+                    <div class="relative">
+                        <input type="date" name="fecha_fin" placeholder="Hasta"
+                               value="{{ fecha_fin or '' }}"
+                               class="w-full sm:w-36 px-4 py-2.5 bg-white border border-gray-300 rounded-xl text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500">
+                    </div>
+                </div>
+
+                <button type="submit"
+                        class="px-6 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium rounded-xl border border-gray-300 transition-colors">
+                    Aplicar filtros
+                </button>
+            </div>
+
+            <div class="flex flex-wrap gap-2 pt-1">
+                {% set current_estado = estado_actual or 'pendiente' %}
+                {% for estado in ['pendiente', 'aprobada', 'completada', 'cancelada'] %}
+                    {% set base_url = '?' %}
+                    {% set params = [] %}
+                    {% if search %}
+                        {% set _ = params.append('search=' + search) %}
+                    {% endif %}
+                    {% if fecha_inicio %}
+                        {% set _ = params.append('fecha_inicio=' + fecha_inicio) %}
+                    {% endif %}
+                    {% if fecha_fin %}
+                        {% set _ = params.append('fecha_fin=' + fecha_fin) %}
+                    {% endif %}
+                    {% set _ = params.append('estado=' + estado) %}
+                    <a href="{{ base_url + params|join('&') }}"
+                       class="px-4 py-1.5 rounded-full text-xs font-medium border transition-all
+                       {% if current_estado == estado %}
+                            bg-emerald-100 border-emerald-300 text-emerald-800 shadow-sm
+                       {% else %}
+                            border-gray-300 text-gray-600 hover:bg-gray-50 hover:border-gray-400
+                       {% endif %}">
+                        {{ estado | capitalize }}
+                    </a>
+                {% endfor %}
+
+                <a href="{{ url_for('admin.ordenes') }}"
+                   class="px-4 py-1.5 rounded-full text-xs font-medium border border-gray-300 text-gray-600 hover:bg-gray-50 hover:border-gray-400 transition-all">
+                    Limpiar filtros
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <div class="grid md:grid-cols-2 xl:grid-cols-3 gap-5">
+        {% for orden in ordenes %}
+        <div class="group bg-white border border-gray-200 rounded-2xl p-5 shadow-sm hover:shadow-md hover:border-emerald-300 transition-all duration-200">
+            <div class="flex items-start justify-between mb-4">
+                <div class="space-y-1">
+                    <p class="text-xs text-gray-500">ID: {{ orden.id_orden }}</p>
+                    <p class="font-mono text-sm font-medium text-gray-900">{{ orden.clave_orden }}</p>
+                </div>
+                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border
+                    {% if orden.estado == 'pendiente' %} bg-yellow-50 text-yellow-700 border-yellow-200
+                    {% elif orden.estado == 'aprobada' %} bg-blue-50 text-blue-700 border-blue-200
+                    {% elif orden.estado == 'completada' %} bg-emerald-50 text-emerald-700 border-emerald-200
+                    {% elif orden.estado == 'cancelada' %} bg-red-50 text-red-700 border-red-200
+                    {% endif %}">
+                    {{ orden.estado }}
+                </span>
+            </div>
+
+            <div class="space-y-2 text-sm">
+                <div class="flex items-center text-gray-700">
+                    <svg class="w-4 h-4 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                    </svg>
+                    <span>{{ orden.comprador }}</span>
+                </div>
+                <div class="flex items-center text-gray-700">
+                    <svg class="w-4 h-4 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                    </svg>
+                    <span>{{ orden.fecha_creacion.strftime('%d/%m/%Y') }}</span>
+                </div>
+                <div class="flex items-center text-gray-700">
+                    <svg class="w-4 h-4 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    <span class="font-semibold text-gray-900">${{ "{:,.2f}".format(orden.total) }}</span>
+                </div>
+                <div class="flex items-center text-gray-700">
+                    <svg class="w-4 h-4 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14"/>
+                    </svg>
+                    <span>{{ orden.detalles|length }} artículo{{ 's' if orden.detalles|length != 1 else '' }}</span>
+                </div>
+            </div>
+
+            <div class="mt-5 pt-3 border-t border-gray-100">
+                <a href="{{ url_for('admin.orden_detalle', id_orden=orden.id_orden) }}"
+                   class="inline-flex items-center text-sm font-medium text-emerald-600 hover:text-emerald-800 transition-colors">
+                    Ver detalles
+                    <svg class="w-4 h-4 ml-1 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                    </svg>
+                </a>
+            </div>
+        </div>
+        {% else %}
+        <div class="col-span-full flex flex-col items-center justify-center py-16 text-gray-400">
+            <svg class="w-16 h-16 mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+            </svg>
+            <p class="text-lg font-medium text-gray-600">No se encontraron órdenes</p>
+            <p class="text-sm mt-1 text-gray-500">Intenta ajustar los filtros o crea una nueva cotización</p>
+        </div>
+        {% endfor %}
+    </div>
+
+    {% if total_pages > 1 %}
+    <div class="flex justify-center items-center space-x-2 pt-4">
+        {% set base_url = '?' %}
+        {% set params = [] %}
+        {% if search %}
+            {% set _ = params.append('search=' + search) %}
+        {% endif %}
+        {% if fecha_inicio %}
+            {% set _ = params.append('fecha_inicio=' + fecha_inicio) %}
+        {% endif %}
+        {% if fecha_fin %}
+            {% set _ = params.append('fecha_fin=' + fecha_fin) %}
+        {% endif %}
+        {% if estado_actual %}
+            {% set _ = params.append('estado=' + estado_actual) %}
+        {% endif %}
+        
+        {% if page > 1 %}
+            {% set prev_params = params + ['page=' + (page-1)|string] %}
+            <a href="{{ base_url + prev_params|join('&') }}"
+               class="px-4 py-2 text-sm border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
+                Anterior
+            </a>
+        {% else %}
+            <span class="px-4 py-2 text-sm border border-gray-200 rounded-lg text-gray-400 bg-gray-50 cursor-not-allowed">
+                Anterior
+            </span>
+        {% endif %}
+
+        {# Números de página #}
+        <div class="flex space-x-1">
+            {% for p in range(1, total_pages + 1) %}
+                {% if p == page %}
+                    <span class="px-4 py-2 text-sm bg-emerald-600 text-white rounded-lg">{{ p }}</span>
+                {% elif p <= 3 or p > total_pages - 3 or (p >= page - 2 and p <= page + 2) %}
+                    {% set page_params = params + ['page=' + p|string] %}
+                    <a href="{{ base_url + page_params|join('&') }}"
+                       class="px-4 py-2 text-sm border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
+                        {{ p }}
+                    </a>
+                {% elif p == 4 or p == total_pages - 3 %}
+                    <span class="px-2 py-2 text-gray-500">...</span>
+                {% endif %}
+            {% endfor %}
+        </div>
+
+        {% if page < total_pages %}
+            {% set next_params = params + ['page=' + (page+1)|string] %}
+            <a href="{{ base_url + next_params|join('&') }}"
+               class="px-4 py-2 text-sm border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
+                Siguiente
+            </a>
+        {% else %}
+            <span class="px-4 py-2 text-sm border border-gray-200 rounded-lg text-gray-400 bg-gray-50 cursor-not-allowed">
+                Siguiente
+            </span>
+        {% endif %}
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}

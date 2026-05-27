@@ -1,7 +1,13 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash
-from flask_login import login_required
+from flask import Blueprint, jsonify, render_template, request, redirect, url_for, flash
+from flask_login import login_required, current_user
+from app.services.proveedor_service import ProveedorService
 from app.services.user_service import UserService
+from app.services.orden_service import OrdenService
+from app.services.orden_detalle_service import OrdenDetalleService
 from app.auth.decorators import role_required
+from datetime import datetime
+import re
+
 
 
 admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
@@ -100,3 +106,314 @@ def delete_user(user_id):
         flash("Usuario eliminado correctamente", "success")
 
     return redirect(url_for("admin.users"))
+
+@admin_bp.route("/ordenes")
+@login_required
+@role_required("admin")
+def ordenes():
+    search = request.args.get('search', '').strip() or None
+    estado = request.args.get('estado', 'pendiente')
+    fecha_inicio = request.args.get('fecha_inicio', '').strip() or None
+    fecha_fin = request.args.get('fecha_fin', '').strip() or None
+    page = request.args.get('page', 1, type=int)
+    
+    ordenes, total_pages, error = OrdenService.search_orders(
+        search=search,
+        estado=estado,
+        fecha_inicio=fecha_inicio,
+        fecha_fin=fecha_fin,
+        page=page,
+        per_page=12
+    )
+    
+    if error:
+        flash(error, 'error')
+        ordenes, total_pages = [], 0
+    
+    return render_template(
+        'admin/ordenes.html',
+        ordenes=ordenes,
+        page=page,
+        total_pages=total_pages,
+        search=search,
+        estado_actual=estado,
+        fecha_inicio=fecha_inicio,
+        fecha_fin=fecha_fin
+    )
+
+
+@admin_bp.get('/ordenes/create')
+@login_required
+@role_required("admin")
+def nueva_orden():
+    """
+    Muestra el formulario para crear una nueva orden.
+    """
+    # Pasar la fecha actual formateada para el campo de fecha
+    today = datetime.now().strftime('%Y-%m-%d')
+    return render_template('admin/nueva_orden.html', today=today)
+
+
+@admin_bp.post('/ordenes/create')
+@login_required
+@role_required("admin")
+def nueva_orden_post():
+    """
+    Procesa la creación de una orden con sus detalles.
+    """
+    try:
+        clave_orden = request.form.get('clave_orden', '').strip()
+        comprador = request.form.get('comprador', '').strip()
+        fecha_creacion_str = request.form.get('fecha_creacion', '').strip()
+        estado = 'pendiente'  # Fijo
+
+        if not clave_orden:
+            flash("La clave de la orden es obligatoria.", "error")
+            return redirect(url_for('admin.nueva_orden'))
+        if not comprador:
+            flash("El comprador es obligatorio.", "error")
+            return redirect(url_for('admin.nueva_orden'))
+
+        fecha_creacion = None
+        if fecha_creacion_str:
+            try:
+                fecha_creacion = datetime.strptime(fecha_creacion_str, '%Y-%m-%d')
+            except ValueError:
+                flash("Formato de fecha inválido.", "error")
+                return redirect(url_for('admin.nueva_orden'))
+
+        # Extraer detalles simplificados
+        detalles_raw = {}
+        for key in request.form:
+            match = re.match(r'detalles\[(\d+)\]\[(\w+)\]', key)
+            if match:
+                idx = int(match.group(1))
+                campo = match.group(2)
+                if idx not in detalles_raw:
+                    detalles_raw[idx] = {}
+                detalles_raw[idx][campo] = request.form.get(key)
+
+        if not detalles_raw:
+            flash("Debe agregar al menos un producto a la orden.", "error")
+            return redirect(url_for('admin.nueva_orden'))
+
+        detalles_list = [detalles_raw[i] for i in sorted(detalles_raw.keys())]
+
+        # Validar campos requeridos de cada detalle
+        for i, det in enumerate(detalles_list):
+            if not det.get('producto'):
+                flash(f"El producto #{i+1} no tiene nombre.", "error")
+                return redirect(url_for('admin.nueva_orden'))
+            try:
+                cantidad = int(det.get('cantidad', 0))
+                if cantidad <= 0:
+                    raise ValueError
+            except ValueError:
+                flash(f"El producto #{i+1} debe tener una cantidad válida > 0.", "error")
+                return redirect(url_for('admin.nueva_orden'))
+
+        # Preparar detalles con valores por defecto para campos no incluidos
+        for det in detalles_list:
+            det.setdefault('precio_unitario', '0.00')
+            det.setdefault('ganancia_unitaria', '0.00')
+            det.setdefault('costo_envio', '0.00')
+            # id_proveedor se deja nulo
+            if 'id_proveedor' not in det:
+                det['id_proveedor'] = None
+
+        id_usuario = current_user.id
+
+        data_orden = {
+            "clave_orden": clave_orden,
+            "id_usuario": id_usuario,
+            "comprador": comprador,
+            "estado": estado,
+            "total": "0.00",
+        }
+        if fecha_creacion:
+            data_orden["fecha_creacion"] = fecha_creacion
+
+        orden, error = OrdenService.create(data_orden)
+        if error:
+            flash(f"Error al crear la orden: {error}", "error")
+            return redirect(url_for('admin.nueva_orden'))
+
+        detalles_creados, error_detalles = OrdenDetalleService.add_bulk(orden.id_orden, detalles_list)
+        if error_detalles:
+            OrdenService.delete(orden.id_orden)
+            flash(f"Error al agregar productos: {error_detalles}", "error")
+            return redirect(url_for('admin.nueva_orden'))
+
+        flash(f"Orden '{orden.clave_orden}' creada exitosamente con {len(detalles_creados)} producto(s).", "success")
+        return redirect(url_for('admin.ordenes'))
+
+    except Exception as e:
+        flash(f"Error inesperado: {str(e)}", "error")
+        return redirect(url_for('admin.nueva_orden'))
+
+
+@admin_bp.get('/ordenes/<int:id_orden>')
+@login_required
+@role_required("admin")
+def orden_detalle(id_orden):
+    """
+    Muestra la página de detalle de una orden con todos sus productos.
+    """
+    orden, detalles, error = OrdenService.get_with_details(id_orden)
+    if error or not orden:
+        flash(error or "Orden no encontrada", "error")
+        return redirect(url_for('admin.ordenes'))
+    
+    proveedores = ProveedorService.get_all()
+
+    return render_template(
+        'admin/detalle_orden.html',
+        orden=orden,
+        proveedores=proveedores
+    )
+
+
+@admin_bp.post('/ordenes/<int:id_orden>/update')
+@login_required
+@role_required("admin")
+def orden_update(id_orden):
+
+    data = {
+        "clave_orden": request.form.get("clave_orden", "").strip(),
+        "comprador": request.form.get("comprador", "").strip(),
+        "estado": request.form.get("estado", "").strip(),
+    }
+
+    orden, error = OrdenService.update(id_orden, data)
+
+    if error:
+        flash(error, "error")
+    else:
+        flash("Orden actualizada correctamente", "success")
+
+    return redirect(url_for('admin.orden_detalle', id_orden=id_orden))
+
+
+@admin_bp.post('/ordenes/<int:id_orden>/detalles')
+@login_required
+@role_required("admin")
+def orden_agregar_detalle(id_orden):
+
+    data = {
+        "producto": request.form.get("producto", "").strip(),
+        "clave_producto": request.form.get("clave_producto") or None,
+        "id_proveedor": request.form.get("id_proveedor") or None,
+        "cantidad": request.form.get("cantidad", type=int),
+        "precio_unitario": request.form.get("precio_unitario", type=float),
+        "ganancia_unitaria": request.form.get("ganancia_unitaria", type=float),
+        "costo_envio": request.form.get("costo_envio", type=float),
+    }
+
+    detalle, error = OrdenDetalleService.add_detalle(id_orden, data)
+
+    if error:
+        flash(error, "error")
+    else:
+        flash("Producto agregado correctamente", "success")
+
+    return redirect(url_for('admin.orden_detalle', id_orden=id_orden))
+
+
+@admin_bp.get('/ordenes/detalles/<int:id_detalle>/edit')
+@login_required
+@role_required("admin")
+def orden_edit_detalle(id_detalle):
+
+    detalle, error = OrdenDetalleService.get_by_id(id_detalle)
+
+    if error or not detalle:
+        flash(error or "Producto no encontrado", "error")
+        return redirect(url_for('admin.ordenes'))
+
+    proveedores = ProveedorService.get_all()
+
+    return render_template(
+        'admin/editar_detalle_orden.html',
+        detalle=detalle,
+        proveedores=proveedores
+    )
+
+
+@admin_bp.post('/ordenes/detalles/<int:id_detalle>/update')
+@login_required
+@role_required("admin")
+def orden_update_detalle(id_detalle):
+
+    detalle_actual, error = OrdenDetalleService.get_by_id(id_detalle)
+
+    if error or not detalle_actual:
+        flash(error or "Producto no encontrado", "error")
+        return redirect(url_for('admin.ordenes'))
+
+    data = {
+        "producto": request.form.get("producto", "").strip(),
+        "clave_producto": request.form.get("clave_producto") or None,
+        "id_proveedor": request.form.get("id_proveedor") or None,
+        "cantidad": request.form.get("cantidad", type=int),
+        "precio_unitario": request.form.get("precio_unitario", type=float),
+        "ganancia_unitaria": request.form.get("ganancia_unitaria", type=float),
+        "costo_envio": request.form.get("costo_envio", type=float),
+    }
+
+    detalle, error = OrdenDetalleService.update_detalle(id_detalle, data)
+
+    if error:
+        flash(error, "error")
+    else:
+        flash("Producto actualizado", "success")
+
+    return redirect(
+        url_for(
+            'admin.orden_detalle',
+            id_orden=detalle.id_orden
+        )
+    )
+
+
+@admin_bp.post('/ordenes/detalles/<int:id_detalle>/delete')
+@login_required
+@role_required("admin")
+def orden_delete_detalle(id_detalle):
+
+    detalle, error = OrdenDetalleService.get_by_id(id_detalle)
+
+    if error or not detalle:
+        flash(error or "Producto no encontrado", "error")
+        return redirect(url_for('admin.ordenes'))
+
+    id_orden = detalle.id_orden
+
+    success, error = OrdenDetalleService.delete_detalle(id_detalle)
+
+    if not success:
+        flash(error, "error")
+    else:
+        flash("Producto eliminado", "success")
+
+    return redirect(url_for('admin.orden_detalle', id_orden=id_orden))
+
+
+@admin_bp.post('/ordenes/<int:id_orden>/delete')
+@login_required
+@role_required("admin")
+def orden_delete(id_orden):
+
+    orden, detalles, error = OrdenService.get_with_details(id_orden)
+
+    if error or not orden:
+        flash(error or "Orden no encontrada", "error")
+        return redirect(url_for('admin.ordenes'))
+
+    success, error = OrdenService.delete(id_orden)
+
+    if not success:
+        flash(error or "No se pudo eliminar la orden", "error")
+    else:
+        flash("Orden eliminada correctamente", "success")
+
+    return redirect(url_for('admin.ordenes'))

@@ -79,7 +79,7 @@
             <form action="{{ url_for('admin.delete_user', user_id=u.id_usuario) }}"
                   method="POST"
                   onsubmit="return confirm('¿Eliminar usuario?')">
-
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <button
                     class="inline-flex items-center justify-center
                            w-20 h-8

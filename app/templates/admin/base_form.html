@@ -46,6 +46,7 @@
     <div class="bg-white border border-gray-300 rounded-xl p-6">
 
         <form method="POST" class="space-y-6">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             
             {% block form_fields %}
             {% endblock %}
