@@ -303,37 +303,66 @@ def orden_agregar_detalle(id_orden):
         "producto": request.form.get("producto", "").strip(),
         "clave_producto": request.form.get("clave_producto") or None,
         "id_proveedor": request.form.get("id_proveedor") or None,
-        "cantidad": request.form.get("cantidad", type=int),
-        "precio_unitario": request.form.get("precio_unitario", type=float),
-        "ganancia_unitaria": request.form.get("ganancia_unitaria", type=float),
-        "costo_envio": request.form.get("costo_envio", type=float),
+        "cantidad": request.form.get("cantidad", type=int) or 1,
+
+        # Valores por defecto
+        "precio_unitario": request.form.get(
+            "precio_unitario",
+            type=float
+        ) or 0,
+
+        "ganancia_unitaria": request.form.get(
+            "ganancia_unitaria",
+            type=float
+        ) or 0,
+
+        "costo_envio": request.form.get(
+            "costo_envio",
+            type=float
+        ) or 0,
     }
 
-    detalle, error = OrdenDetalleService.add_detalle(id_orden, data)
+    # Validaciones mínimas
+    if not data["producto"]:
+        flash("El producto es obligatorio", "error")
+        return redirect(
+            url_for(
+                'admin.orden_detalle',
+                id_orden=id_orden
+            )
+        )
+
+    detalle, error = OrdenDetalleService.add_detalle(
+        id_orden,
+        data
+    )
 
     if error:
         flash(error, "error")
     else:
-        flash("Producto agregado correctamente", "success")
+        flash(
+            "Producto agregado correctamente",
+            "success"
+        )
 
-    return redirect(url_for('admin.orden_detalle', id_orden=id_orden))
+    return redirect(
+        url_for(
+            'admin.orden_detalle',
+            id_orden=id_orden
+        )
+    )
 
 
-@admin_bp.get('/ordenes/detalles/<int:id_detalle>/edit')
+@admin_bp.get('/ordenes/detalles/<int:id_detalle>')
 @login_required
-@role_required("admin")
-def orden_edit_detalle(id_detalle):
+def orden_detalle_show(id_detalle):
 
-    detalle, error = OrdenDetalleService.get_by_id(id_detalle)
-
-    if error or not detalle:
-        flash(error or "Producto no encontrado", "error")
-        return redirect(url_for('admin.ordenes'))
+    detalle = OrdenDetalleService.get_by_id(id_detalle)
 
     proveedores = ProveedorService.get_all()
 
     return render_template(
-        'admin/editar_detalle_orden.html',
+        'admin/detalle_show.html',
         detalle=detalle,
         proveedores=proveedores
     )
@@ -342,7 +371,7 @@ def orden_edit_detalle(id_detalle):
 @admin_bp.post('/ordenes/detalles/<int:id_detalle>/update')
 @login_required
 @role_required("admin")
-def orden_update_detalle(id_detalle):
+def orden_detalle_update(id_detalle):
 
     detalle_actual, error = OrdenDetalleService.get_by_id(id_detalle)
 
@@ -380,10 +409,10 @@ def orden_update_detalle(id_detalle):
 @role_required("admin")
 def orden_delete_detalle(id_detalle):
 
-    detalle, error = OrdenDetalleService.get_by_id(id_detalle)
+    detalle = OrdenDetalleService.get_by_id(id_detalle)
 
-    if error or not detalle:
-        flash(error or "Producto no encontrado", "error")
+    if not detalle:
+        flash("Producto no encontrado", "error")
         return redirect(url_for('admin.ordenes'))
 
     id_orden = detalle.id_orden
@@ -395,7 +424,8 @@ def orden_delete_detalle(id_detalle):
     else:
         flash("Producto eliminado", "success")
 
-    return redirect(url_for('admin.orden_detalle', id_orden=id_orden))
+    return redirect(
+        url_for('admin.orden_detalle',id_orden=id_orden))
 
 
 @admin_bp.post('/ordenes/<int:id_orden>/delete')
@@ -417,3 +447,16 @@ def orden_delete(id_orden):
         flash("Orden eliminada correctamente", "success")
 
     return redirect(url_for('admin.ordenes'))
+
+
+@admin_bp.get('/ordenes/<int:id_detalle>/proveedores')
+@login_required
+def orden_detalle_proveedores(id_detalle):
+    
+    proveedores = ProveedorService.get_all()
+
+    return render_template(
+        'admin/proveedores.html',
+        proveedores=proveedores,
+        id_detalle=id_detalle
+    )

@@ -3,12 +3,13 @@
 {% block title %}Orden {{ orden.clave_orden }}{% endblock %}
 
 {% block content %}
-<div class="max-w-7xl mx-auto px-4 py-8 space-y-6">
+<div class="max-w-[1700px] mx-auto px-4 lg:px-6 py-8 space-y-6">
 
     <!-- Header -->
     <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
 
         <div>
+
             <h1 class="text-3xl font-bold text-gray-900">
                 Orden {{ orden.clave_orden }}
             </h1>
@@ -16,22 +17,40 @@
             <p class="mt-1 text-sm text-gray-500">
                 Creada el {{ orden.fecha_creacion.strftime('%d/%m/%Y') }}
             </p>
+
         </div>
 
-        <div class="flex gap-3">
+        <div class="flex flex-wrap items-center gap-3">
 
+            <!-- Volver -->
             <a href="{{ url_for('admin.ordenes') }}"
-                class="px-4 py-2 bg-white border border-gray-300 rounded-xl text-sm hover:bg-gray-50">
+                class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-xl hover:bg-gray-100 transition">
+
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+
+                </svg>
+
                 Volver
+
             </a>
 
-            <form method="POST" action="{{ url_for('admin.orden_delete',
-                                      id_orden=orden.id_orden) }}" onsubmit="return confirm('¿Eliminar esta orden?')">
+            <!-- Eliminar -->
+            <form method="POST" action="{{ url_for('admin.orden_delete', id_orden=orden.id_orden) }}"
+                onsubmit="return confirm('¿Eliminar esta orden?')">
 
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
-                <button type="submit" class="px-4 py-2 bg-red-600 text-white rounded-xl text-sm hover:bg-red-700">
+                <button type="submit"
+                    class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-xl hover:bg-red-700 transition group">
+
+                    <img src="/static/icons/trash.svg" class="w-4 h-4 group-hover:hidden">
+
+                    <img src="/static/icons/trash_open.svg" class="w-4 h-4 hidden group-hover:block">
+
                     Eliminar orden
+
                 </button>
 
             </form>
@@ -41,10 +60,10 @@
     </div>
 
     <!-- Layout principal -->
-    <div class="grid grid-cols-1 xl:grid-cols-4 gap-6">
+    <div class="grid grid-cols-1 xl:grid-cols-12 gap-6">
 
         <!-- Sidebar -->
-        <div class="xl:col-span-1 space-y-6">
+        <div class="xl:col-span-3 space-y-6">
 
             <!-- Información -->
             <div class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
@@ -54,29 +73,34 @@
                 </h2>
 
                 <form method="POST" action="{{ url_for('admin.orden_update',
-                                          id_orden=orden.id_orden) }}" class="space-y-5">
+                                         id_orden=orden.id_orden) }}" class="space-y-5">
 
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
                     <div>
+
                         <label class="block text-sm font-medium text-gray-700 mb-1">
                             Clave
                         </label>
 
                         <input type="text" name="clave_orden" value="{{ orden.clave_orden }}"
                             class="w-full px-4 py-2 border border-gray-300 rounded-xl">
+
                     </div>
 
                     <div>
+
                         <label class="block text-sm font-medium text-gray-700 mb-1">
                             Comprador
                         </label>
 
                         <input type="text" name="comprador" value="{{ orden.comprador }}"
                             class="w-full px-4 py-2 border border-gray-300 rounded-xl">
+
                     </div>
 
                     <div>
+
                         <label class="block text-sm font-medium text-gray-700 mb-1">
                             Estado
                         </label>
@@ -100,10 +124,12 @@
                             </option>
 
                         </select>
+
                     </div>
 
                     <button type="submit"
-                        class="w-full px-4 py-2 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700">
+                        class="w-full px-4 py-2 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition">
+
                         Guardar cambios
                     </button>
 
@@ -121,6 +147,7 @@
                 <div class="space-y-4">
 
                     <div class="flex items-center justify-between">
+
                         <span class="text-sm text-gray-500">
                             Productos
                         </span>
@@ -128,9 +155,11 @@
                         <span class="font-semibold text-gray-900">
                             {{ orden.detalles|length }}
                         </span>
+
                     </div>
 
                     <div class="flex items-center justify-between">
+
                         <span class="text-sm text-gray-500">
                             Total
                         </span>
@@ -138,6 +167,7 @@
                         <span class="text-2xl font-bold text-gray-900">
                             ${{ "%.2f"|format(orden.total) }}
                         </span>
+
                     </div>
 
                 </div>
@@ -147,7 +177,7 @@
         </div>
 
         <!-- Contenido principal -->
-        <div class="xl:col-span-3 space-y-6">
+        <div class="xl:col-span-9 space-y-6">
 
             <!-- Agregar producto -->
             <div class="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
@@ -201,7 +231,7 @@
                         <div id="panel-manual">
 
                             <form method="POST" action="{{ url_for('admin.orden_agregar_detalle',
-                                          id_orden=orden.id_orden) }}"
+                                                     id_orden=orden.id_orden) }}"
                                 class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
 
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -242,7 +272,7 @@
                                     </div>
 
                                     <button type="submit"
-                                        class="px-4 py-2 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 whitespace-nowrap">
+                                        class="px-4 py-2 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 whitespace-nowrap transition">
 
                                         + Agregar
                                     </button>
@@ -278,14 +308,6 @@
                             <div
                                 class="text-center py-8 text-gray-500 text-sm border border-dashed border-gray-300 rounded-xl bg-white">
 
-                                <svg class="w-8 h-8 mx-auto mb-2 text-gray-400" fill="none" stroke="currentColor"
-                                    viewBox="0 0 24 24">
-
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-
-                                </svg>
-
                                 Funcionalidad de búsqueda próximamente
 
                             </div>
@@ -301,41 +323,52 @@
             <!-- Tabla -->
             <div class="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
 
-                <div class="px-6 py-4 border-b border-gray-200 bg-gray-50 flex items-center justify-between">
+                <div class="px-6 py-5 border-b border-gray-200 bg-gray-50 flex items-center justify-between">
 
                     <div>
-                        <h2 class="text-lg font-semibold text-gray-900">
+
+                        <h2 class="text-xl font-semibold text-gray-900">
                             Productos
                         </h2>
 
-                        <p class="text-sm text-gray-500">
+                        <p class="text-sm text-gray-500 mt-1">
                             {{ orden.detalles|length }} productos registrados
                         </p>
+
                     </div>
 
                 </div>
 
-                <div class="overflow-x-auto">
+                <div class="overflow-hidden">
 
-                    <table class="min-w-full divide-y divide-gray-200">
+                    <table class="w-full table-fixed divide-y divide-gray-200">
 
                         <thead class="bg-gray-50">
 
                             <tr>
 
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                                <th
+                                    class="px-4 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-[42%]">
                                     Producto
                                 </th>
 
-                                <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">
+                                <th
+                                    class="px-4 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-[18%]">
+                                    Proveedor
+                                </th>
+
+                                <th
+                                    class="px-4 py-4 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider w-[10%]">
                                     Cantidad
                                 </th>
 
-                                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">
+                                <th
+                                    class="px-4 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider w-[12%]">
                                     Subtotal
                                 </th>
 
-                                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">
+                                <th
+                                    class="px-4 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider w-[18%]">
                                     Acciones
                                 </th>
 
@@ -343,49 +376,137 @@
 
                         </thead>
 
-                        <tbody class="divide-y divide-gray-200 bg-white">
+                        <tbody class="divide-y divide-gray-100 bg-white">
 
                             {% for detalle in orden.detalles %}
 
-                            <tr class="hover:bg-gray-50">
+                            <tr class="hover:bg-gray-50/80 transition">
 
-                                <td class="px-6 py-4">
+                                <!-- PRODUCTO -->
+                                <td class="px-6 py-5">
 
-                                    <div class="font-medium text-gray-900">
-                                        {{ detalle.producto }}
+                                    <div class="flex items-center gap-4">
+
+                                        <!-- Imagen -->
+                                        <div class="flex-shrink-0">
+
+                                            {% if detalle.url_imagen %}
+
+                                            <img src="{{ detalle.url_imagen }}" alt="{{ detalle.producto }}"
+                                                class="w-16 h-16 rounded-xl object-cover border border-gray-200 bg-white">
+
+                                            {% else %}
+
+                                            <div
+                                                class="w-16 h-16 rounded-xl border border-gray-200 bg-gray-100 flex items-center justify-center">
+
+                                                <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor"
+                                                    viewBox="0 0 24 24">
+
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        stroke-width="2"
+                                                        d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14" />
+
+                                                </svg>
+
+                                            </div>
+
+                                            {% endif %}
+
+                                        </div>
+
+                                        <!-- Información -->
+                                        <div class="min-w-0">
+
+                                            <div
+                                                class="font-semibold text-gray-900 text-sm leading-5 break-words whitespace-normal">
+                                                {{ detalle.producto }}
+                                            </div>
+
+                                            {% if detalle.clave_producto %}
+
+                                            <div class="mt-1 flex items-center gap-2">
+
+                                                <span
+                                                    class="text-xs font-medium px-2 py-1 bg-gray-100 text-gray-600 rounded-lg">
+                                                    SKU
+                                                </span>
+
+                                                <span class="text-sm text-gray-500">
+                                                    {{ detalle.clave_producto }}
+                                                </span>
+
+                                            </div>
+
+                                            {% endif %}
+
+                                        </div>
+
                                     </div>
 
-                                    {% if detalle.clave_producto %}
-                                    <div class="text-sm text-gray-500 mt-1">
-                                        SKU: {{ detalle.clave_producto }}
-                                    </div>
-                                    {% endif %}
+                                </td>
+
+                                <!-- PROVEEDOR -->
+                                <td class="px-6 py-5">
 
                                     {% if detalle.proveedor %}
-                                    <div class="text-sm text-emerald-700 mt-1">
+
+                                    <div
+                                        class="inline-flex items-center px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-700 text-sm font-medium border border-emerald-100">
+
                                         {{ detalle.proveedor.nombre }}
+
                                     </div>
+
+                                    {% else %}
+
+                                    <span class="text-sm text-gray-400">
+                                        Sin proveedor
+                                    </span>
+
                                     {% endif %}
 
                                 </td>
 
-                                <td class="px-6 py-4 text-center text-sm text-gray-700">
-                                    {{ detalle.cantidad }}
+                                <!-- CANTIDAD -->
+                                <td class="px-6 py-5 text-center">
+
+                                    <span
+                                        class="inline-flex items-center justify-center min-w-[42px] h-10 px-3 rounded-xl bg-gray-100 text-gray-800 text-sm font-semibold">
+
+                                        {{ detalle.cantidad }}
+
+                                    </span>
+
                                 </td>
 
-                                <td class="px-6 py-4 text-right font-semibold text-gray-900">
-                                    ${{ "%.2f"|format(detalle.subtotal) }}
+                                <!-- SUBTOTAL -->
+                                <td class="px-6 py-5 text-right">
+
+                                    <div class="text-base font-bold text-gray-900">
+                                        ${{ "%.2f"|format(detalle.subtotal) }}
+                                    </div>
+
                                 </td>
 
-                                <td class="px-6 py-4">
+                                <!-- ACCIONES -->
+                                <td class="px-6 py-5">
 
-                                    <div class="flex justify-end gap-2">
+                                    <div class="flex flex-wrap items-center justify-end gap-2">
 
-                                        <a href="{{ url_for('admin.orden_edit_detalle',
+                                        <a href="{{ url_for('admin.orden_detalle_show',
                                                             id_detalle=detalle.id_detalle) }}"
-                                            class="px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-gray-50">
+                                            class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-xl hover:bg-gray-100 transition">
 
-                                            Editar
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M15 12H9m12 0A9 9 0 113 12a9 9 0 0118 0z" />
+
+                                            </svg>
+
+                                            Detalles
+
                                         </a>
 
                                         <form method="POST" action="{{ url_for('admin.orden_delete_detalle',
@@ -395,7 +516,14 @@
                                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
                                             <button type="submit"
-                                                class="px-3 py-1.5 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700">
+                                                class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-xl hover:bg-red-700 transition group">
+
+                                                <img src="/static/icons/trash.svg" class="w-4 h-4 group-hover:hidden"
+                                                    fill="none" stroke="currentColor" viewBox="0 0 24 24">
+
+                                                <img src="/static/icons/trash_open.svg"
+                                                    class="w-4 h-4 hidden group-hover:block" fill="none"
+                                                    stroke="currentColor" viewBox="0 0 24 24">
 
                                                 Eliminar
                                             </button>
@@ -416,13 +544,18 @@
 
                             <tr>
 
-                                <td colspan="2" class="px-6 py-4 text-right font-medium text-gray-700">
+                                <td colspan="3" class="px-6 py-5 text-right text-sm font-medium text-gray-600">
 
                                     Total
+
                                 </td>
 
-                                <td class="px-6 py-4 text-right text-xl font-bold text-gray-900">
-                                    ${{ "%.2f"|format(orden.total) }}
+                                <td class="px-6 py-5 text-right">
+
+                                    <div class="text-2xl font-bold text-gray-900">
+                                        ${{ "%.2f"|format(orden.total) }}
+                                    </div>
+
                                 </td>
 
                                 <td></td>
