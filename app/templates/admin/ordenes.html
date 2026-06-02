@@ -134,9 +134,9 @@
 
             <div class="space-y-2 text-sm">
                 <div class="flex items-center text-gray-700">
-                    <svg class="w-4 h-4 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    <svg class="w-4 h-4 mr-2 text-gray-400" viewBox="0 0 13.229166 13.229167" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M 6.6145832 8.0832274 A 5.7296662 4.958981 0 0 0 3.7496419 8.7477863 A 5.7296662 4.958981 0 0 0 0.88470051 13.042615 L 6.6145832 13.042615 L 12.344466 13.042615 A 5.7296662 4.958981 0 0 0 9.4795246 8.7477863 A 5.7296662 4.958981 0 0 0 6.6145832 8.0832274 z M 6.6140665 9.31416 C 7.4300185 9.31416 8.2461007 9.4865941 8.9374389 9.8319579 C 9.8585966 10.292167 10.402672 11.034764 10.746114 11.831836 L 6.6151 11.831836 L 2.4825358 11.831836 C 2.8259774 11.034764 3.3700531 10.292167 4.2912109 9.8319579 C 4.9825491 9.4865941 5.7981145 9.31416 6.6140665 9.31416 z" />
+                        <path d="M 6.6145832 0.26665039 A 3.96875 3.96875 0 0 0 2.6458333 4.2354003 A 3.96875 3.96875 0 0 0 6.6145832 8.2041503 A 3.96875 3.96875 0 0 0 10.583333 4.2354003 A 3.96875 3.96875 0 0 0 6.6145832 0.26665039 z M 6.6151 1.5451253 C 8.0236677 1.5451254 9.3048583 2.8257991 9.3048583 4.2343668 C 9.3048583 5.6429345 8.0236677 6.9236082 6.6151 6.9236083 C 5.2065322 6.9236083 3.9258585 5.6429346 3.9258585 4.2343668 C 3.9258585 2.825799 5.2065322 1.5451253 6.6151 1.5451253 z" />
                     </svg>
                     <span>{{ orden.comprador }}</span>
                 </div>
@@ -222,7 +222,7 @@
             <span class="px-4 py-2 text-sm bg-emerald-600 text-white rounded-lg">{{ p }}</span>
             {% elif p <= 3 or p> total_pages - 3 or (p >= page - 2 and p <= page + 2) %} {% set page_params=params +
                     ['page=' + p|string] %}
-                    <a href="{{ base_url + page_params|join(' &') }}"
+                    <a href="{{ base_url + page_params|join('&') }}"
                     class="px-4 py-2 text-sm border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
                     {{ p }}
                     </a>
@@ -233,7 +233,7 @@
         </div>
 
         {% if page < total_pages %} {% set next_params=params + ['page=' + (page+1)|string] %}
-            <a href="{{ base_url + next_params|join(' &') }}"
+            <a href="{{ base_url + next_params|join('&') }}"
             class="px-4 py-2 text-sm border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
             Siguiente
             </a>
