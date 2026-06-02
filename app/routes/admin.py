@@ -217,6 +217,7 @@ def nueva_orden_post():
             det.setdefault('precio_unitario', '0.00')
             det.setdefault('ganancia_unitaria', '0.00')
             det.setdefault('costo_envio', '0.00')
+            det.setdefault('margen_ganancia', '0.00')
             # id_proveedor se deja nulo
             if 'id_proveedor' not in det:
                 det['id_proveedor'] = None
@@ -242,6 +243,12 @@ def nueva_orden_post():
         if error_detalles:
             OrdenService.delete(orden.id_orden)
             flash(f"Error al agregar productos: {error_detalles}", "error")
+            return redirect(url_for('admin.nueva_orden'))
+        
+        nuevo_total, error_total = OrdenService.recalculate_total(orden.id_orden)
+        if error_total:
+            OrdenService.delete(orden.id_orden)
+            flash(error_total, "error")
             return redirect(url_for('admin.nueva_orden'))
 
         flash(f"Orden '{orden.clave_orden}' creada exitosamente con {len(detalles_creados)} producto(s).", "success")
@@ -339,17 +346,15 @@ def orden_agregar_detalle(id_orden):
 
     if error:
         flash(error, "error")
-    else:
-        flash(
-            "Producto agregado correctamente",
-            "success"
-        )
-
-    return redirect(
-        url_for(
-            'admin.orden_detalle',
-            id_orden=id_orden
-        )
+    
+    nuevo_total, error_total = OrdenService.recalculate_total(id_orden)
+    if error_total:
+        flash(error_total, "error")
+        return redirect(url_for('admin.orden_detalle', id_orden=id_orden))
+    
+    flash(
+        "Producto agregado correctamente",
+        "success"
     )
 
 
@@ -373,10 +378,10 @@ def orden_detalle_show(id_detalle):
 @role_required("admin")
 def orden_detalle_update(id_detalle):
 
-    detalle_actual, error = OrdenDetalleService.get_by_id(id_detalle)
+    detalle_actual = OrdenDetalleService.get_by_id(id_detalle)
 
-    if error or not detalle_actual:
-        flash(error or "Producto no encontrado", "error")
+    if not detalle_actual:
+        flash("Producto no encontrado", "error")
         return redirect(url_for('admin.ordenes'))
 
     data = {
@@ -385,21 +390,42 @@ def orden_detalle_update(id_detalle):
         "id_proveedor": request.form.get("id_proveedor") or None,
         "cantidad": request.form.get("cantidad", type=int),
         "precio_unitario": request.form.get("precio_unitario", type=float),
-        "ganancia_unitaria": request.form.get("ganancia_unitaria", type=float),
         "costo_envio": request.form.get("costo_envio", type=float),
+        "margen_ganancia": request.form.get("margen_ganancia", type=float),
+        "url_producto": request.form.get("url_producto") or None,
+        "url_imagen": request.form.get("url_imagen") or None,
     }
 
-    detalle, error = OrdenDetalleService.update_detalle(id_detalle, data)
+    detalle, error = OrdenDetalleService.update_detalle(
+        id_detalle=id_detalle,
+        data=data,
+    )
 
     if error:
         flash(error, "error")
-    else:
-        flash("Producto actualizado", "success")
+        return redirect(
+            url_for(
+                "admin.orden_detalle",
+                id_orden=detalle_actual.id_orden,
+            )
+        )
+        
+    nuevo_total, error_total = OrdenService.recalculate_total(detalle.id_orden)
+    if error_total:
+        flash(error_total, "error")
+        return redirect(
+            url_for(
+                "admin.orden_detalle",
+                id_orden=detalle.id_orden,
+            )
+        )
+
+    flash("Producto actualizado", "success")
 
     return redirect(
         url_for(
-            'admin.orden_detalle',
-            id_orden=detalle.id_orden
+            "admin.orden_detalle",
+            id_orden=detalle.id_orden,
         )
     )
 
@@ -421,8 +447,13 @@ def orden_delete_detalle(id_detalle):
 
     if not success:
         flash(error, "error")
-    else:
-        flash("Producto eliminado", "success")
+        
+    nuevo_total, error_total = OrdenService.recalculate_total(id_orden)
+    if error_total:
+        flash(error_total, "error")
+        return redirect(url_for('admin.orden_detalle', id_orden=id_orden))
+    
+    flash("Producto eliminado", "success")
 
     return redirect(
         url_for('admin.orden_detalle',id_orden=id_orden))

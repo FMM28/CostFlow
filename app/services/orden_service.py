@@ -263,30 +263,41 @@ class OrdenService:
 
     @staticmethod
     def recalculate_total(id_orden: int) -> Tuple[Optional[Decimal], Optional[str]]:
-        """
-        Recalcula el total de la orden sumando los subtotales de sus detalles.
-        
-        Returns:
-            Tuple[Optional[Decimal], Optional[str]]: (nuevo_total, mensaje_error)
-        """
         orden = OrdenService.get_by_id(id_orden)
+
         if orden is None:
             return None, f"Orden con id {id_orden} no encontrada"
 
         try:
-            suma = db.session.query(db.func.sum(OrdenDetalle.subtotal)).filter_by(
+            subtotal = db.session.query(
+                db.func.sum(OrdenDetalle.subtotal)
+            ).filter_by(
                 id_orden=id_orden
             ).scalar()
-            
-            nuevo_total = suma if suma is not None else Decimal("0.00")
-            orden.total = nuevo_total
+
+            subtotal = Decimal(str(subtotal or 0))
+
+            iva = (subtotal * Decimal("0.16")).quantize(
+                Decimal("0.01")
+            )
+
+            total = subtotal + iva
+
+            orden.subtotal = subtotal
+            orden.iva = iva
+            orden.total = total
+
             db.session.commit()
-            
-            logger.info("Total recalculado para orden id=%s: %s", id_orden, nuevo_total)
-            return nuevo_total, None
+
+            return total, None
+
         except SQLAlchemyError as exc:
             db.session.rollback()
-            logger.error("Error al recalcular total de orden id=%s: %s", id_orden, exc)
+            logger.error(
+                "Error al recalcular total de orden id=%s: %s",
+                id_orden,
+                exc
+            )
             return None, "Error de base de datos al recalcular el total"
 
     @staticmethod

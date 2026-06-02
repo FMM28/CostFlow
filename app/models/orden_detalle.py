@@ -15,6 +15,7 @@ class OrdenDetalle(BaseModel):
     precio_unitario = db.Column(db.Numeric(10, 2), nullable=False)  # Costo de compra
     costo_envio = db.Column(db.Numeric(10, 2), nullable=False, default=0) # Costo de envío por pieza
     ganancia_unitaria = db.Column(db.Numeric(10, 2), nullable=False, default=0)  # Margen por pieza
+    margen_ganancia = db.Column(db.Numeric(5, 2),nullable=False, default=0)  # Porcentaje de ganancia
     precio_venta = db.Column(db.Numeric(10, 2), nullable=False)  # precio_unitario + ganancia
     subtotal = db.Column(db.Numeric(10, 2), nullable=False)  # precio_venta * cantidad
 

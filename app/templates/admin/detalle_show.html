@@ -23,10 +23,10 @@
 
         <!-- SIDEBAR CONTAINER (mantiene el espacio en el grid) -->
         <div class="2xl:col-span-1 relative" id="sidebar-grid-cell">
-            
+
             <!-- SIDEBAR FIJO -->
             <div class="2xl:fixed 2xl:top-8 2xl:bottom-8 2xl:overflow-y-auto space-y-6" id="sidebar-fixed">
-                
+
                 <!-- TÍTULO STICKY (dinámico) -->
                 <div id="sticky-title-container" class="opacity-0 transition-opacity duration-300">
                     <h2 class="text-xl font-bold text-gray-900 leading-tight break-words"></h2>
@@ -327,12 +327,14 @@
                                         <label class="block text-sm font-medium text-gray-700 mb-1">
                                             Margen de ganancia
                                         </label>
-                                        <p class="text-xs text-gray-400 mb-3">Porcentaje sobre el costo total</p>
+                                        <p class="text-xs text-gray-400 mb-3">Porcentaje sobre el precio de venta</p>
                                         <div class="flex items-center gap-3 mb-3">
-                                            <input type="range" min="0" max="100" step="1" id="ganancia_slider"
+                                            <input type="range" min="0" max="99" step="1" id="ganancia_slider"
                                                 class="flex-1 accent-gray-600">
                                             <div class="flex items-center gap-1">
-                                                <input type="number" step="0.1" min="0" id="ganancia_porcentaje"
+                                                <input type="number" step="0.1" min="0" max="99"
+                                                    id="ganancia_porcentaje" name="margen_ganancia"
+                                                    value="{{ detalle.margen_ganancia }}"
                                                     class="w-20 px-2 py-1.5 border border-gray-300 rounded-lg text-right text-sm bg-white">
                                                 <span class="text-sm text-gray-500 font-medium">%</span>
                                             </div>
@@ -343,14 +345,11 @@
                                         <label class="block text-sm font-medium text-gray-700 mb-1">
                                             Ganancia en pesos por pieza
                                         </label>
-                                        <p class="text-xs text-gray-400 mb-2">Puedes escribir directamente el monto que
-                                            deseas ganar</p>
-                                        <div class="relative">
-                                            <span
-                                                class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-medium">$</span>
-                                            <input type="number" step="0.01" id="ganancia_unitaria"
-                                                name="ganancia_unitaria" value="{{ detalle.ganancia_unitaria }}"
-                                                class="w-full pl-7 pr-4 py-2 border border-gray-300 rounded-xl bg-white">
+                                        <p class="text-xs text-gray-400 mb-2">Calculado automáticamente desde el margen
+                                        </p>
+                                        <div id="ganancia-unitaria-visual"
+                                            class="w-full px-4 py-2.5 rounded-xl bg-gray-50 border border-gray-200 text-emerald-800 font-bold text-lg">
+                                            $0.00
                                         </div>
                                     </div>
 
@@ -358,14 +357,12 @@
                                         <label class="block text-sm font-medium text-gray-700 mb-1">
                                             Precio de venta al cliente
                                         </label>
-                                        <p class="text-xs text-gray-400 mb-2">Calculado automáticamente: costo +
-                                            ganancia</p>
+                                        <p class="text-xs text-gray-400 mb-2">Calculado automáticamente: costo / (1 −
+                                            margen)</p>
                                         <div id="precio-venta-visual"
                                             class="w-full px-4 py-2.5 rounded-xl bg-gray-50 border border-gray-200 text-gray-900 font-bold text-lg">
                                             $0.00
                                         </div>
-                                        <input type="hidden" id="precio_venta" name="precio_venta"
-                                            value="{{ detalle.precio_venta }}">
                                     </div>
 
                                 </div>
@@ -410,42 +407,22 @@
         const cantidad = document.getElementById('cantidad');
         const precioUnitario = document.getElementById('precio_unitario');
         const costoEnvio = document.getElementById('costo_envio');
-        const gananciaInput = document.getElementById('ganancia_unitaria');
-        const gananciaPct = document.getElementById('ganancia_porcentaje');
+        const gananciaPct = document.getElementById('ganancia_porcentaje'); // también es name="margen_ganancia"
         const slider = document.getElementById('ganancia_slider');
-        const precioVenta = document.getElementById('precio_venta');
         const precioVentaVis = document.getElementById('precio-venta-visual');
+        const gananciaVis = document.getElementById('ganancia-unitaria-visual');
         const costoTotalUI = document.getElementById('costo-total');
         const gananciaUI = document.getElementById('ganancia-total');
         const precioFinalUI = document.getElementById('precio-final');
         const subtotalUI = document.getElementById('subtotal-final');
+
         const tituloWrapper = document.getElementById('titulo-principal-wrapper');
         const stickyTitleContainer = document.getElementById('sticky-title-container');
         const stickyTitleH2 = stickyTitleContainer.querySelector('h2');
         const sidebarFixed = document.getElementById('sidebar-fixed');
         const sidebarGridCell = document.getElementById('sidebar-grid-cell');
-        
-        // Guardar el título original
+
         stickyTitleH2.textContent = tituloWrapper.querySelector('h1').textContent;
-
-        // Función para ajustar el ancho del sidebar fijo al ancho de su celda
-        function adjustSidebarWidth() {
-            if (window.innerWidth >= 1536) { // 1536px es el breakpoint 2xl
-                const cellWidth = sidebarGridCell.offsetWidth;
-                sidebarFixed.style.width = `${cellWidth}px`;
-            } else {
-                sidebarFixed.style.width = '';
-            }
-        }
-
-        // Función para ajustar la altura del sidebar fijo
-        function adjustSidebarHeight() {
-            if (window.innerWidth >= 1536) {
-                sidebarFixed.style.maxHeight = `${window.innerHeight - 64}px`; // 64px = 32px top + 32px bottom
-            } else {
-                sidebarFixed.style.maxHeight = '';
-            }
-        }
 
         const currency = v => `$${Number(v).toFixed(2)}`;
 
@@ -453,89 +430,72 @@
             return Number(precioUnitario.value || 0) + Number(costoEnvio.value || 0);
         }
 
-        function calcularDesdeGanancia() {
-            const costo = getCosto();
-            const ganancia = Number(gananciaInput.value || 0);
-            const pct = costo > 0 ? (ganancia / costo) * 100 : 0;
-            gananciaPct.value = pct.toFixed(1);
-            slider.value = pct;
-            actualizarResumen();
-        }
-
-        function calcularDesdePorcentaje() {
-            const costo = getCosto();
-            const pct = Number(gananciaPct.value || 0);
-            const ganancia = costo * (pct / 100);
-            gananciaInput.value = ganancia.toFixed(2);
-            slider.value = pct;
-            actualizarResumen();
-        }
-
         function actualizarResumen() {
             const qty = Number(cantidad.value || 0);
             const costo = getCosto();
-            const ganancia = Number(gananciaInput.value || 0);
-            const venta = costo + ganancia;
+            const margen = Math.min(Math.max(Number(gananciaPct.value || 0), 0), 99);
+            const divisor = 1 - (margen / 100);
+
+            // Misma fórmula que el servicio: precio_venta = costo / (1 - margen/100)
+            const venta = divisor > 0 ? costo / divisor : 0;
+            const ganancia = venta - costo;
             const subtotal = venta * qty;
 
-            precioVenta.value = venta.toFixed(2);
             precioVentaVis.textContent = currency(venta);
+            gananciaVis.textContent = currency(ganancia);
             costoTotalUI.textContent = currency(costo);
             gananciaUI.textContent = currency(ganancia);
             precioFinalUI.textContent = currency(venta);
             subtotalUI.textContent = currency(subtotal);
         }
 
-        function showStickyTitle() {
-            stickyTitleContainer.classList.add('opacity-100');
+        // Sidebar width/height
+        function adjustSidebarWidth() {
+            if (window.innerWidth >= 1536) {
+                sidebarFixed.style.width = `${sidebarGridCell.offsetWidth}px`;
+            } else {
+                sidebarFixed.style.width = '';
+            }
+        }
+        function adjustSidebarHeight() {
+            if (window.innerWidth >= 1536) {
+                sidebarFixed.style.maxHeight = `${window.innerHeight - 64}px`;
+            } else {
+                sidebarFixed.style.maxHeight = '';
+            }
         }
 
-        function hideStickyTitle() {
-            stickyTitleContainer.classList.remove('opacity-100');
-        }
-
+        // Sticky title observer
         const observer = new IntersectionObserver(
             ([entry]) => {
-                if (!entry.isIntersecting) {
-                    showStickyTitle();
-                } else {
-                    hideStickyTitle();
-                }
+                stickyTitleContainer.classList.toggle('opacity-100', !entry.isIntersecting);
             },
-            {
-                root: null,
-                threshold: 0,
-                rootMargin: '0px'
-            }
+            { root: null, threshold: 0, rootMargin: '0px' }
         );
-
         observer.observe(tituloWrapper);
-        
-        // Ajustar dimensiones al cargar y al redimensionar
-        window.addEventListener('load', () => {
-            adjustSidebarWidth();
-            adjustSidebarHeight();
-        });
-        window.addEventListener('resize', () => {
-            adjustSidebarWidth();
-            adjustSidebarHeight();
-        });
-        
-        // Inicializar
+
+        window.addEventListener('load', () => { adjustSidebarWidth(); adjustSidebarHeight(); });
+        window.addEventListener('resize', () => { adjustSidebarWidth(); adjustSidebarHeight(); });
         adjustSidebarWidth();
         adjustSidebarHeight();
 
+        // Sincronizar slider ↔ input de porcentaje
         slider.addEventListener('input', () => {
             gananciaPct.value = slider.value;
-            calcularDesdePorcentaje();
+            actualizarResumen();
         });
-        gananciaPct.addEventListener('input', calcularDesdePorcentaje);
-        gananciaInput.addEventListener('input', calcularDesdeGanancia);
-        [cantidad, precioUnitario, costoEnvio].forEach(el => {
-            el.addEventListener('input', calcularDesdeGanancia);
+        gananciaPct.addEventListener('input', () => {
+            slider.value = gananciaPct.value;
+            actualizarResumen();
         });
 
-        calcularDesdeGanancia();
+        [cantidad, precioUnitario, costoEnvio].forEach(el =>
+            el.addEventListener('input', actualizarResumen)
+        );
+
+        // Inicializar slider con el valor cargado del servidor
+        slider.value = gananciaPct.value;
+        actualizarResumen();
     })();
 </script>
 {% endblock %}

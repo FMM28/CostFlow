@@ -59,6 +59,33 @@
 
     </div>
 
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <div class="space-y-3">
+
+        {% for category, message in messages %}
+
+        <div class="
+        px-4 py-3 rounded-xl border text-sm font-medium
+        {% if category == 'success' %}
+            bg-emerald-50 border-emerald-200 text-emerald-800
+        {% elif category == 'error' %}
+            bg-red-50 border-red-200 text-red-800
+        {% elif category == 'warning' %}
+            bg-amber-50 border-amber-200 text-amber-800
+        {% else %}
+            bg-blue-50 border-blue-200 text-blue-800
+        {% endif %}
+    ">
+            {{ message }}
+        </div>
+
+        {% endfor %}
+
+    </div>
+    {% endif %}
+    {% endwith %}
+
     <!-- Layout principal -->
     <div class="grid grid-cols-1 xl:grid-cols-12 gap-6">
 
@@ -161,12 +188,40 @@
                     <div class="flex items-center justify-between">
 
                         <span class="text-sm text-gray-500">
-                            Total
+                            Subtotal
                         </span>
 
-                        <span class="text-2xl font-bold text-gray-900">
-                            ${{ "%.2f"|format(orden.total) }}
+                        <span class="font-semibold text-gray-900">
+                            ${{ "%.2f"|format(orden.subtotal) }}
                         </span>
+
+                    </div>
+
+                    <div class="flex items-center justify-between">
+
+                        <span class="text-sm text-gray-500">
+                            IVA (16%)
+                        </span>
+
+                        <span class="font-semibold text-gray-900">
+                            ${{ "%.2f"|format(orden.iva) }}
+                        </span>
+
+                    </div>
+
+                    <div class="border-t border-gray-200 pt-4">
+
+                        <div class="flex items-center justify-between">
+
+                            <span class="text-sm font-medium text-gray-700">
+                                Total
+                            </span>
+
+                            <span class="text-2xl font-bold text-gray-900">
+                                ${{ "%.2f"|format(orden.total) }}
+                            </span>
+
+                        </div>
 
                     </div>
 
@@ -544,10 +599,36 @@
 
                             <tr>
 
-                                <td colspan="3" class="px-6 py-5 text-right text-sm font-medium text-gray-600">
+                                <td colspan="3" class="px-6 py-3 text-right text-sm font-medium text-gray-600">
+                                    Subtotal
+                                </td>
 
+                                <td class="px-6 py-3 text-right font-semibold text-gray-900">
+                                    ${{ "%.2f"|format(orden.subtotal) }}
+                                </td>
+
+                                <td></td>
+
+                            </tr>
+
+                            <tr>
+
+                                <td colspan="3" class="px-6 py-3 text-right text-sm font-medium text-gray-600">
+                                    IVA (16%)
+                                </td>
+
+                                <td class="px-6 py-3 text-right font-semibold text-gray-900">
+                                    ${{ "%.2f"|format(orden.iva) }}
+                                </td>
+
+                                <td></td>
+
+                            </tr>
+
+                            <tr class="border-t border-gray-300">
+
+                                <td colspan="3" class="px-6 py-5 text-right text-base font-semibold text-gray-900">
                                     Total
-
                                 </td>
 
                                 <td class="px-6 py-5 text-right">
