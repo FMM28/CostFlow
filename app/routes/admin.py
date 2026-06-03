@@ -4,6 +4,8 @@ from app.services.proveedor_service import ProveedorService
 from app.services.user_service import UserService
 from app.services.orden_service import OrdenService
 from app.services.orden_detalle_service import OrdenDetalleService
+from app.services.proveedores.buscador_producto import BuscadorProducto
+from app.services.CurrencyService import CurrencyService
 from app.auth.decorators import role_required
 from datetime import datetime
 import re
@@ -364,12 +366,9 @@ def orden_detalle_show(id_detalle):
 
     detalle = OrdenDetalleService.get_by_id(id_detalle)
 
-    proveedores = ProveedorService.get_all()
-
     return render_template(
         'admin/detalle_show.html',
-        detalle=detalle,
-        proveedores=proveedores
+        detalle=detalle
     )
 
 
@@ -387,7 +386,6 @@ def orden_detalle_update(id_detalle):
     data = {
         "producto": request.form.get("producto", "").strip(),
         "clave_producto": request.form.get("clave_producto") or None,
-        "id_proveedor": request.form.get("id_proveedor") or None,
         "cantidad": request.form.get("cantidad", type=int),
         "precio_unitario": request.form.get("precio_unitario", type=float),
         "costo_envio": request.form.get("costo_envio", type=float),
@@ -484,10 +482,179 @@ def orden_delete(id_orden):
 @login_required
 def orden_detalle_proveedores(id_detalle):
     
-    proveedores = ProveedorService.get_all()
+    detalle = OrdenDetalleService.get_by_id(id_detalle)
+    if not detalle:
+        flash("Producto no encontrado", "error")
+        return redirect(url_for('admin.ordenes'))
+    
+    if not detalle.clave_producto:
+        flash("El producto no tiene clave SKU para buscar proveedores", "error")
+        return redirect(
+            url_for(
+                "admin.orden_detalle_show",
+                id_detalle=id_detalle,
+            )
+        )
+        
+    productos = BuscadorProducto.buscar(texto=detalle.clave_producto)
 
     return render_template(
         'admin/proveedores.html',
-        proveedores=proveedores,
+        productos=productos,
         id_detalle=id_detalle
+    )
+    
+    
+@admin_bp.post('/ordenes/<int:id_detalle>/proveedores')
+@login_required
+def orden_detalle_seleccionar_proveedor(id_detalle):
+
+    detalle = OrdenDetalleService.get_by_id(id_detalle)
+
+    if not detalle:
+        flash("Producto no encontrado", "error")
+        return redirect(url_for('admin.ordenes'))
+
+    existencia = request.form.get("existencia", type=int)
+
+    if existencia is not None:
+
+        if existencia <= 0:
+            flash(
+                "El proveedor seleccionado no tiene existencia disponible",
+                "error"
+            )
+
+            return redirect(
+                url_for(
+                    "admin.orden_detalle_show",
+                    id_detalle=id_detalle,
+                )
+            )
+
+        if existencia < detalle.cantidad:
+            flash(
+                (
+                    "El proveedor seleccionado tiene existencia "
+                    f"insuficiente ({existencia} disponibles) "
+                    f"para la cantidad requerida ({detalle.cantidad})."
+                ),
+                "error"
+            )
+
+            return redirect(
+                url_for(
+                    "admin.orden_detalle_show",
+                    id_detalle=id_detalle,
+                )
+            )
+
+    proveedor_nombre = request.form.get("proveedor")
+
+    if not proveedor_nombre:
+        flash("Proveedor no seleccionado", "error")
+
+        return redirect(
+            url_for(
+                "admin.orden_detalle_show",
+                id_detalle=id_detalle,
+            )
+        )
+
+    proveedor = ProveedorService.search_by_nombre(
+        proveedor_nombre
+    )
+
+    if not proveedor:
+        flash("Proveedor no encontrado", "error")
+
+        return redirect(
+            url_for(
+                "admin.orden_detalle_show",
+                id_detalle=id_detalle,
+            )
+        )
+
+    data = {
+        "id_proveedor": proveedor.id_proveedor
+    }
+
+    imagen = request.form.get("url_imagen")
+
+    if not detalle.url_imagen and imagen:
+        data["url_imagen"] = imagen
+
+    moneda = request.form.get("moneda")
+    precio = request.form.get(
+        "precio",
+        type=float
+    )
+
+    if moneda and precio is not None:
+
+        moneda = moneda.strip().upper()
+
+        try:
+
+            if moneda in {"USD", "DOLARES"}:
+
+                conversion = CurrencyService.convertir(
+                    "usd",
+                    "mxn"
+                )
+
+                precio = precio * conversion
+
+            elif moneda in {"EUR", "EUROS"}:
+
+                conversion = CurrencyService.convertir(
+                    "eur",
+                    "mxn"
+                )
+
+                precio = precio * conversion
+
+            elif moneda != "MXN":
+
+                flash(
+                    (
+                        f"Moneda '{moneda}' no soportada "
+                        "para conversión. "
+                        "Se guardará el precio sin convertir."
+                    ),
+                    "warning"
+                )
+
+        except Exception:
+            flash(
+                "No se pudo convertir la moneda del proveedor",
+                "warning"
+            )
+
+        data["precio_unitario"] = precio
+
+    success, error = OrdenDetalleService.update_detalle(
+        id_detalle=id_detalle,
+        data=data
+    )
+
+    if not success:
+
+        flash(
+            error or "No se pudo asignar el proveedor",
+            "error"
+        )
+
+    else:
+
+        flash(
+            "Proveedor asignado correctamente",
+            "success"
+        )
+
+    return redirect(
+        url_for(
+            "admin.orden_detalle_show",
+            id_detalle=id_detalle,
+        )
     )

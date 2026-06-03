@@ -25,12 +25,12 @@
         <div class="2xl:col-span-1 relative" id="sidebar-grid-cell">
 
             <!-- SIDEBAR FIJO -->
-            <div class="2xl:fixed 2xl:top-8 2xl:bottom-8 2xl:overflow-y-auto space-y-6" id="sidebar-fixed">
+            <div class="2xl:fixed 2xl:top-8 2xl:bottom-8 2xl:overflow-y-hidden space-y-6" id="sidebar-fixed">
 
                 <!-- TÍTULO STICKY (dinámico) -->
                 <div id="sticky-title-container" class="opacity-0 transition-opacity duration-300">
-                    <h2 class="text-xl font-bold text-gray-900 leading-tight break-words"></h2>
-                    <div class="h-10"></div>
+                    <h2 class="text-xl font-bold text-gray-900 leading-tight line-clamp-5"></h2>
+                    <div class="h-4"></div>
                 </div>
 
                 <!-- IMAGEN -->
@@ -102,6 +102,32 @@
 
         <!-- CONTENIDO -->
         <div class="2xl:col-span-4">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            <div class="space-y-3">
+
+                {% for category, message in messages %}
+
+                <div class="
+        px-4 py-3 rounded-xl border text-sm font-medium
+        {% if category == 'success' %}
+            bg-emerald-50 border-emerald-200 text-emerald-800
+        {% elif category == 'error' %}
+            bg-red-50 border-red-200 text-red-800
+        {% elif category == 'warning' %}
+            bg-amber-50 border-amber-200 text-amber-800
+        {% else %}
+            bg-blue-50 border-blue-200 text-blue-800
+        {% endif %}
+    ">
+                    {{ message }}
+                </div>
+
+                {% endfor %}
+
+            </div>
+            {% endif %}
+            {% endwith %}
 
             <form id="form-detalle" method="POST"
                 action="{{ url_for('admin.orden_detalle_update', id_detalle=detalle.id_detalle) }}" class="space-y-6">

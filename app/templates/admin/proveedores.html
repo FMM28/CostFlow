@@ -1,0 +1,142 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Seleccionar proveedor{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto px-4 lg:px-6 py-8 space-y-6">
+
+    <!-- Encabezado -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+
+        <div>
+            <h1 class="text-3xl font-semibold text-gray-900">
+                Comparar proveedores
+            </h1>
+            <p class="mt-1 text-sm text-gray-500">
+                Revisa las opciones disponibles y selecciona el proveedor que deseas utilizar.
+            </p>
+        </div>
+
+        <a href="{{ request.referrer or url_for('productos.index') }}"
+            class="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg border border-gray-300 bg-white text-sm font-medium text-gray-700 transition-all duration-200 hover:bg-gray-50 hover:border-gray-400 hover:shadow-sm">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24"
+                stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+            </svg>
+
+            Regresar
+        </a>
+
+    </div>
+
+    <!-- Listado -->
+    <div class="space-y-4">
+
+        {% for producto in productos %}
+
+        <div
+            class="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden transition-all duration-200 hover:shadow-md hover:border-gray-300">
+
+            <div class="flex flex-col lg:flex-row lg:items-center gap-5 p-5">
+
+                <!-- Imagen -->
+                <div class="flex-shrink-0">
+
+                    {% if producto.url_imagen %}
+                    <img src="{{ producto.url_imagen }}" alt="{{ producto.nombre }}"
+                        class="w-28 h-28 object-contain border border-gray-200 rounded-lg bg-white">
+                    {% else %}
+                    <div
+                        class="w-28 h-28 border border-gray-200 rounded-lg bg-gray-100 flex items-center justify-center text-xs text-gray-400">
+                        Sin imagen
+                    </div>
+                    {% endif %}
+
+                </div>
+
+                <!-- Información -->
+                <div class="flex-1 min-w-0">
+
+                    <h2 class="text-lg font-semibold text-gray-900">
+                        {{ producto.nombre }}
+                    </h2>
+
+                    <div class="mt-3 flex flex-wrap gap-x-8 gap-y-2 text-sm">
+
+                        <div>
+                            <span class="text-gray-500">Proveedor:</span>
+                            <span class="font-medium text-gray-900">
+                                {{ producto.proveedor }}
+                            </span>
+                        </div>
+
+                        <div>
+                            <span class="text-gray-500">Precio:</span>
+                            <span class="font-semibold text-green-700">
+                                {{ producto.moneda }}
+                                {{ "{:,.2f}".format(producto.precio) }}
+                            </span>
+                        </div>
+
+                        <div>
+                            <span class="text-gray-500">Existencia:</span>
+
+                            {% if producto.existencia is not none %}
+                            <span class="font-medium text-gray-900">
+                                {{ producto.existencia }}
+                            </span>
+                            {% else %}
+                            <span class="font-medium text-gray-400">
+                                N/D
+                            </span>
+                            {% endif %}
+                        </div>
+
+                        {% if producto.url %}
+                        <div>
+                            <a href="{{ producto.url }}" target="_blank"
+                                class="text-gray-700 hover:text-black font-medium">
+                                Ver producto
+                            </a>
+                        </div>
+                        {% endif %}
+
+                    </div>
+
+                </div>
+
+                <!-- Acción -->
+                <div class="flex-shrink-0">
+
+                    <form method="post"
+                        action="{{ url_for('admin.orden_detalle_seleccionar_proveedor', id_detalle=id_detalle) }}"
+                        class="w-full">
+
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                        <input type="hidden" name="proveedor" value="{{ producto.proveedor }}">
+                        <input type="hidden" name="precio" value="{{ producto.precio }}">
+                        <input type="hidden" name="moneda" value="{{ producto.moneda }}">
+                        <input type="hidden" name="existencia" value="{{ producto.existencia }}">
+                        <input type="hidden" name="url" value="{{ producto.url }}">
+                        <input type="hidden" name="url_imagen" value="{{ producto.url_imagen }}">
+
+                        <button type="submit"
+                            class="w-full lg:w-auto px-5 py-2.5 rounded-lg bg-gray-900 text-white text-sm font-medium transition-all duration-200 hover:bg-black hover:shadow-md hover:-translate-y-0.5 active:translate-y-0">
+                            Seleccionar proveedor
+                        </button>
+
+                    </form>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        {% endfor %}
+
+    </div>
+
+</div>
+{% endblock %}

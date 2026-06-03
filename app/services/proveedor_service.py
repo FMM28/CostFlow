@@ -59,7 +59,7 @@ class ProveedorService:
         return proveedor
 
     @staticmethod
-    def search_by_nombre(nombre: str, include_deleted: bool = False) -> List[Proveedor]:
+    def search_by_nombre(nombre: str, include_deleted: bool = False) -> Proveedor:
         """
         Busca proveedores cuyo nombre contenga la cadena indicada (case-insensitive).
         
@@ -76,7 +76,7 @@ class ProveedorService:
             )
             if not include_deleted:
                 query = query.filter(Proveedor.deleted_at.is_(None))
-            return query.order_by(Proveedor.nombre).all()
+            return query.order_by(Proveedor.nombre).first()
         except SQLAlchemyError as exc:
             logger.error("Error al buscar proveedores por nombre='%s': %s", nombre, exc)
             return []
