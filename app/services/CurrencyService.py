@@ -1,5 +1,6 @@
 import requests
 from datetime import datetime
+from flask import current_app
 
 
 class CurrencyService:
@@ -8,6 +9,10 @@ class CurrencyService:
     @staticmethod
     def _get_latest_date():
         return "latest"
+
+    @staticmethod
+    def _get_conversion_margin():
+        return current_app.config.get("MARGEN_CONVERSION", 0)
 
     @staticmethod
     def convertir(from_currency: str, to_currency: str):
@@ -23,18 +28,16 @@ class CurrencyService:
 
             rate = data[from_currency.lower()][to_currency.lower()]
 
-            print(f"{from_currency.upper()} → {to_currency.upper()} = {rate}")
+            margen = CurrencyService._get_conversion_margin()
+            rate += margen
+
+            print(
+                f"{from_currency.upper()} → {to_currency.upper()} = {rate} "
+                f"(incluye margen: {margen})"
+            )
+
             return rate
 
         except Exception as e:
             print(f"Error obteniendo conversión: {e}")
             return None
-
-
-# =========================
-# PRUEBA
-# =========================
-if __name__ == "__main__":
-    CurrencyService.convertir("usd", "mxn")
-    CurrencyService.convertir("eur", "mxn")
-    CurrencyService.convertir("mxn", "usd")

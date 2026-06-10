@@ -1,46 +1,125 @@
 import logging
-from app.services.proveedores.CVAService import CVAService
+from concurrent.futures import ThreadPoolExecutor, as_completed
+
+from flask import current_app
+
 from app.models.producto_proveedor import ProductoProveedor
+from app.services.proveedores.CVAService import CVAService
+from app.services.proveedores.IngramService import IngramService
 
 logger = logging.getLogger(__name__)
 
 
 class BuscadorProducto:
+
     PROVEEDORES = [
         CVAService,
+        # IngramService,
     ]
 
+    MAX_WORKERS = 4
+
     @classmethod
-    def buscar(cls, texto: str) -> list[ProductoProveedor]:
-        """Busca un producto en todos los proveedores registrados."""
+    def _buscar_en_proveedor(
+        cls,
+        app,
+        proveedor,
+        texto: str,
+    ) -> ProductoProveedor | None:
+
+        with app.app_context():
+
+            nombre = proveedor.__name__
+
+            try:
+                logger.debug(
+                    "Buscando '%s' en %s...",
+                    texto,
+                    nombre,
+                )
+
+                resultado = proveedor.buscar_producto(texto)
+
+                if resultado:
+                    logger.debug(
+                        "Resultado encontrado en %s.",
+                        nombre,
+                    )
+                    return resultado
+
+                logger.debug(
+                    "Sin resultados en %s.",
+                    nombre,
+                )
+
+            except Exception:
+                logger.exception(
+                    "Error al consultar %s.",
+                    nombre,
+                )
+
+            return None
+
+    @classmethod
+    def buscar(
+        cls,
+        texto: str,
+    ) -> list[ProductoProveedor]:
+
         if not texto or not texto.strip():
-            logger.warning("Se llamó a buscar() con un texto vacío o nulo.")
+            logger.warning(
+                "Se llamó a buscar() con un texto vacío o nulo."
+            )
             return []
 
         logger.info(
-            "Iniciando búsqueda para: '%s' en %d proveedor(es).",
+            "Iniciando búsqueda para '%s' en %d proveedor(es).",
             texto,
             len(cls.PROVEEDORES),
         )
+
         resultados: list[ProductoProveedor] = []
 
-        for servicio in cls.PROVEEDORES:
-            nombre = servicio.__name__
-            try:
-                logger.debug("Buscando en %s...", nombre)
-                resultado = servicio.buscar_producto(texto)
+        app = current_app._get_current_object()
 
-                if resultado:
-                    resultados.append(resultado)
-                    logger.debug("Resultado encontrado en %s.", nombre)
-                else:
-                    logger.debug("Sin resultados en %s.", nombre)
+        max_workers = min(
+            cls.MAX_WORKERS,
+            len(cls.PROVEEDORES),
+        )
 
-            except Exception:
-                logger.exception("Error inesperado al buscar en %s.", nombre)
+        with ThreadPoolExecutor(
+            max_workers=max_workers,
+            thread_name_prefix="proveedor",
+        ) as executor:
+
+            futures = {
+                executor.submit(
+                    cls._buscar_en_proveedor,
+                    app,
+                    proveedor,
+                    texto,
+                ): proveedor.__name__
+                for proveedor in cls.PROVEEDORES
+            }
+
+            for future in as_completed(futures):
+
+                try:
+                    resultado = future.result()
+
+                    if resultado:
+                        resultados.append(resultado)
+
+                except Exception:
+                    logger.exception(
+                        "Error recuperando resultado de búsqueda."
+                    )
 
         resultados.sort(
-            key=lambda p: (p.precio, -(p.existencia or 0))
+            key=lambda producto: (
+                producto.precio,
+                -(producto.existencia or 0),
+            )
         )
 
         logger.info(
@@ -48,4 +127,5 @@ class BuscadorProducto:
             len(resultados),
             len(cls.PROVEEDORES),
         )
+
         return resultados

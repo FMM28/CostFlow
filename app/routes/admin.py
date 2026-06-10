@@ -614,7 +614,7 @@ def orden_detalle_seleccionar_proveedor(id_detalle):
 
                 precio = precio * conversion
 
-            elif moneda != "MXN":
+            elif moneda not in {"MXN", "PESOS"}:
 
                 flash(
                     (

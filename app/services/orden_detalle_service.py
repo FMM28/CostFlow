@@ -161,8 +161,6 @@ class OrdenDetalleService:
             )
             return None
 
-        costo_total = precio_unitario + costo_envio
-
         divisor = Decimal("1") - (
             margen_ganancia / _DECIMAL_100
         )
@@ -174,12 +172,16 @@ class OrdenDetalleService:
             )
             return None
 
+        precio_producto_con_margen = (
+            precio_unitario / divisor
+        )
+
         precio_venta = OrdenDetalleService._round(
-            costo_total / divisor
+            precio_producto_con_margen + costo_envio
         )
 
         ganancia_unitaria = OrdenDetalleService._round(
-            precio_venta - costo_total
+            precio_producto_con_margen - precio_unitario
         )
 
         subtotal = OrdenDetalleService._round(

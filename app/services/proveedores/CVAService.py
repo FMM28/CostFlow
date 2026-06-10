@@ -6,7 +6,7 @@ from urllib.parse import urlencode
 from flask import current_app
 
 from app.services.proveedores.proveedor_productos import ProveedorProductos
-from app.models.producto_proveedor import ProductoProveedor
+from app.models.producto_proveedor import ProductoProveedor, ExistenciaSucursal
 
 
 class CVAService(ProveedorProductos):
@@ -38,12 +38,60 @@ class CVAService(ProveedorProductos):
 
             for item in root.findall("item"):
 
+                existencias_sucursal = []
+
+                # CVA no envía VENTAS_CDMX explícitamente.
+                existencia_cdmx = int(item.findtext("disponible") or 0)
+
+                existencias_sucursal.append(
+                    ExistenciaSucursal(
+                        sucursal="VENTAS_CDMX",
+                        existencia=existencia_cdmx
+                    )
+                )
+
+                existencia_total = existencia_cdmx
+
+                for campo in item:
+
+                    nombre_campo = campo.tag
+
+                    if nombre_campo in {
+                        "CENTRO_DE_DISTRIBUCION_MEXICO",
+                        "CENTRO_DE_DISTRIBUCION_MONTERREY",
+                        "RETAIL_CDMX",
+                        "RETAIL_MTY",
+                    } or nombre_campo.startswith("VENTAS_"):
+
+                        try:
+                            existencia = int(campo.text or 0)
+                        except (TypeError, ValueError):
+                            existencia = 0
+
+                        if existencia > 0:
+                            existencias_sucursal.append(
+                                ExistenciaSucursal(
+                                    sucursal=nombre_campo,
+                                    existencia=existencia
+                                )
+                            )
+
+                            existencia_total += existencia
+
+                descuento = item.findtext("PrecioDescuento")
+
                 producto = ProductoProveedor(
                     proveedor="CVA",
                     nombre=item.findtext("descripcion") or "",
                     precio=Decimal(item.findtext("precio") or "0"),
                     moneda=item.findtext("moneda") or "MXN",
-                    existencia=int(item.findtext("disponible") or 0),
+                    existencia=existencia_total,
+                    descuento=(
+                        Decimal(descuento)
+                        if descuento and descuento.strip()
+                        else None
+                    ),
+                    existencias_sucursal=existencias_sucursal,
                     url=None,
                     url_imagen=item.findtext("imagen")
                 )
@@ -59,10 +107,9 @@ class CVAService(ProveedorProductos):
     def _buscar_por_codigo(codigo: str):
         params = {
             "cliente": current_app.config["CVA_CLIENTE"],
-            "marca": "%",
-            "grupo": "%",
-            "clave": "%",
             "codigo": codigo,
+            "promos": "1",
+            "sucursales": "1"
         }
 
         return CVAService._make_request(params)
@@ -72,8 +119,6 @@ class CVAService(ProveedorProductos):
         resultados = CVAService._buscar_por_codigo(texto)
 
         if not resultados:
-            raise ValueError(
-                f"No se encontró el producto '{texto}' en CVA"
-            )
+            return None
 
         return resultados[0]

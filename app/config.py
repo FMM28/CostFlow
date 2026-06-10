@@ -21,6 +21,14 @@ class Config:
     LOG_FILE = "app.log"
     LOG_MAX_BYTES = 10 * 1024 * 1024  # 10 MB
     LOG_BACKUP_COUNT = 5
+    
+    MARGEN_CONVERSION = float(os.getenv("MARGEN_CONVERSION", 0))
 
     CVA_URL = os.getenv("CVA_URL")
     CVA_CLIENTE = os.getenv("CVA_CLIENTE")
+    
+    INGRAM_CLIENT_ID=os.getenv("INGRAM_CLIENT_ID")
+    INGRAM_CLIENT_SECRET=os.getenv("INGRAM_CLIENT_SECRET")
+    INGRAM_CUSTOMER_NUMBER=os.getenv("INGRAM_CUSTOMER_NUMBER")
+    INGRAM_COUNTRY_CODE=os.getenv("INGRAM_COUNTRY_CODE")
+    INGRAM_URL=os.getenv("INGRAM_URL")
