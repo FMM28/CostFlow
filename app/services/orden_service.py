@@ -10,6 +10,8 @@ from app.extensions import db
 from app.models.orden import Orden
 from app.models.orden_detalle import OrdenDetalle
 
+from datetime import datetime
+
 logger = logging.getLogger(__name__)
 
 ESTADOS_VALIDOS = frozenset({"pendiente", "aprobada", "completada", "cancelada"})
@@ -219,6 +221,15 @@ class OrdenService:
             total = OrdenService._to_decimal(data["total"])
             if total is not None:
                 orden.total = total
+                
+        # Actualizar fecha_creacion
+        if "fecha_creacion" in data:
+            try:
+                fecha_str = str(data["fecha_creacion"]).strip()
+                if fecha_str:
+                    orden.fecha_creacion = datetime.strptime(fecha_str, '%Y-%m-%d').date()
+            except ValueError:
+                return None, "Formato de 'fecha_creacion' inválido (use 'YYYY-MM-DD')"
 
         try:
             db.session.commit()

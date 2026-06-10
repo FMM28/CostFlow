@@ -8,7 +8,7 @@ class Orden(BaseModel):
     clave_orden = db.Column(db.String(45), unique=True, nullable=False)
     id_usuario = db.Column(db.Integer, db.ForeignKey("usuario.id_usuario"), nullable=False)
     comprador = db.Column(db.String(150), nullable=False)
-    fecha_creacion = db.Column(db.DateTime, default=db.func.now())
+    fecha_creacion = db.Column(db.Date, default=db.func.now())
     estado = db.Column(db.String(20), default="pendiente")
     subtotal = db.Column(db.Numeric(10, 2), default=0)
     iva = db.Column(db.Numeric(10, 2), default=0)

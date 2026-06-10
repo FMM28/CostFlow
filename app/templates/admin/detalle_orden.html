@@ -11,9 +11,6 @@
             <h1 class="text-3xl font-bold text-gray-900">
                 Orden {{ orden.clave_orden }}
             </h1>
-            <p class="mt-1 text-sm text-gray-500">
-                Creada el {{ orden.fecha_creacion.strftime('%d/%m/%Y') }}
-            </p>
         </div>
 
         <div class="flex flex-wrap items-center gap-3">
@@ -72,47 +69,79 @@
                     Información
                 </h2>
 
-                <form method="POST" action="{{ url_for('admin.orden_update', id_orden=orden.id_orden) }}" class="space-y-5">
+                <form method="POST" action="{{ url_for('admin.orden_update', id_orden=orden.id_orden) }}"
+                    class="space-y-5">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                    <div class="space-y-1.5">
+                        <label class="block text-sm font-medium text-gray-700">
                             Clave
                         </label>
-                        <input type="text" name="clave_orden" value="{{ orden.clave_orden }}"
-                            class="w-full px-4 py-2 border border-gray-300 rounded-xl">
+                        <input type="text" name="clave_orden" value="{{ orden.clave_orden }}" class="w-full h-11 px-4 rounded-xl border border-gray-200 bg-white text-gray-700
+                       focus:outline-none focus:ring-2 focus:ring-emerald-500/50
+                       focus:border-emerald-500 transition">
                     </div>
 
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                    <div class="space-y-1.5">
+                        <label class="block text-sm font-medium text-gray-700">
                             Comprador
                         </label>
-                        <input type="text" name="comprador" value="{{ orden.comprador }}"
-                            class="w-full px-4 py-2 border border-gray-300 rounded-xl">
+                        <input type="text" name="comprador" value="{{ orden.comprador }}" class="w-full h-11 px-4 rounded-xl border border-gray-200 bg-white text-gray-700
+                       focus:outline-none focus:ring-2 focus:ring-emerald-500/50
+                       focus:border-emerald-500 transition">
                     </div>
 
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                    <div class="space-y-1.5">
+                        <label class="block text-sm font-medium text-gray-700">
+                            Fecha de creación
+                        </label>
+                        <input type="date" name="fecha_creacion"
+                            value="{{ orden.fecha_creacion.strftime('%Y-%m-%d') if orden.fecha_creacion else '' }}"
+                            class="w-full h-11 px-4 rounded-xl border border-gray-200 bg-white text-gray-700
+                       focus:outline-none focus:ring-2 focus:ring-emerald-500/50
+                       focus:border-emerald-500 transition">
+                    </div>
+
+                    <div class="space-y-1.5">
+                        <label class="block text-sm font-medium text-gray-700">
                             Estado
                         </label>
-                        <select name="estado" class="w-full px-4 py-2 border border-gray-300 rounded-xl">
-                            <option value="pendiente" {% if orden.estado=='pendiente' %}selected{% endif %}>
-                                Pendiente
-                            </option>
-                            <option value="aprobada" {% if orden.estado=='aprobada' %}selected{% endif %}>
-                                Aprobada
-                            </option>
-                            <option value="completada" {% if orden.estado=='completada' %}selected{% endif %}>
-                                Completada
-                            </option>
-                            <option value="cancelada" {% if orden.estado=='cancelada' %}selected{% endif %}>
-                                Cancelada
-                            </option>
-                        </select>
+
+                        <div class="relative">
+                            <select name="estado" class="w-full h-11 px-4 pr-10 rounded-xl border border-gray-200 bg-white
+                           text-gray-700 appearance-none cursor-pointer
+                           focus:outline-none focus:ring-2 focus:ring-emerald-500/50
+                           focus:border-emerald-500 transition">
+
+                                <option value="pendiente" {% if orden.estado=='pendiente' %}selected{% endif %}>
+                                    Pendiente
+                                </option>
+
+                                <option value="aprobada" {% if orden.estado=='aprobada' %}selected{% endif %}>
+                                    Aprobada
+                                </option>
+
+                                <option value="completada" {% if orden.estado=='completada' %}selected{% endif %}>
+                                    Completada
+                                </option>
+
+                                <option value="cancelada" {% if orden.estado=='cancelada' %}selected{% endif %}>
+                                    Cancelada
+                                </option>
+                            </select>
+
+                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
+                                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M19 9l-7 7-7-7" />
+                                </svg>
+                            </div>
+                        </div>
                     </div>
 
-                    <button type="submit"
-                        class="w-full px-4 py-2 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition">
+                    <button type="submit" class="w-full px-4 py-2.5 bg-emerald-600 text-white rounded-xl
+                   hover:bg-emerald-700 transition font-medium">
                         Guardar cambios
                     </button>
                 </form>
@@ -181,15 +210,16 @@
                         </p>
                     </div>
                     <!-- Flecha que rotará -->
-                    <svg class="w-5 h-5 text-gray-500 transition-transform duration-300 transform group-hover:scale-110" 
-                         fill="none" stroke="currentColor" viewBox="0 0 24 24" id="toggle-icon">
+                    <svg class="w-5 h-5 text-gray-500 transition-transform duration-300 transform group-hover:scale-110"
+                        fill="none" stroke="currentColor" viewBox="0 0 24 24" id="toggle-icon">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                     </svg>
                 </button>
 
                 <div id="panel-agregar-producto" class="hidden border-t border-gray-200 bg-gray-50/50">
                     <div class="p-5">
-                        <form method="POST" action="{{ url_for('admin.orden_agregar_detalle', id_orden=orden.id_orden) }}"
+                        <form method="POST"
+                            action="{{ url_for('admin.orden_agregar_detalle', id_orden=orden.id_orden) }}"
                             class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
@@ -244,19 +274,24 @@
                     <table class="w-full min-w-[800px] divide-y divide-gray-200">
                         <thead class="bg-gray-50">
                             <tr>
-                                <th class="px-4 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                <th
+                                    class="px-4 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
                                     Producto
                                 </th>
-                                <th class="px-4 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                <th
+                                    class="px-4 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
                                     SKU
                                 </th>
-                                <th class="px-4 py-4 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                <th
+                                    class="px-4 py-4 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">
                                     Cantidad
                                 </th>
-                                <th class="px-4 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                <th
+                                    class="px-4 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">
                                     Subtotal
                                 </th>
-                                <th class="px-4 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                <th
+                                    class="px-4 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">
                                     Acciones
                                 </th>
                             </tr>
@@ -274,9 +309,12 @@
                                             <img src="{{ detalle.url_imagen }}" alt="{{ detalle.producto }}"
                                                 class="w-12 h-12 rounded-lg object-cover border border-gray-200 bg-white">
                                             {% else %}
-                                            <div class="w-12 h-12 rounded-lg border border-gray-200 bg-gray-100 flex items-center justify-center">
-                                                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            <div
+                                                class="w-12 h-12 rounded-lg border border-gray-200 bg-gray-100 flex items-center justify-center">
+                                                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor"
+                                                    viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        stroke-width="2"
                                                         d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14" />
                                                 </svg>
                                             </div>
@@ -290,7 +328,8 @@
                                             </div>
                                             {% if detalle.proveedor %}
                                             <div class="mt-1">
-                                                <span class="text-xs px-2 py-0.5 bg-emerald-50 text-emerald-700 rounded-full">
+                                                <span
+                                                    class="text-xs px-2 py-0.5 bg-emerald-50 text-emerald-700 rounded-full">
                                                     {{ detalle.proveedor.nombre }}
                                                 </span>
                                             </div>
@@ -308,7 +347,8 @@
 
                                 <!-- CANTIDAD -->
                                 <td class="px-4 py-4 text-center">
-                                    <span class="inline-flex items-center justify-center min-w-[40px] h-8 px-2 rounded-lg bg-gray-100 text-gray-800 text-sm font-semibold">
+                                    <span
+                                        class="inline-flex items-center justify-center min-w-[40px] h-8 px-2 rounded-lg bg-gray-100 text-gray-800 text-sm font-semibold">
                                         {{ detalle.cantidad }}
                                     </span>
                                 </td>
@@ -325,20 +365,25 @@
                                     <div class="flex items-center justify-end gap-2">
                                         <a href="{{ url_for('admin.orden_detalle_show', id_detalle=detalle.id_detalle) }}"
                                             class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 transition">
-                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor"
+                                                viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                     d="M15 12H9m12 0A9 9 0 113 12a9 9 0 0118 0z" />
                                             </svg>
                                             Detalles
                                         </a>
 
-                                        <form method="POST" action="{{ url_for('admin.orden_delete_detalle', id_detalle=detalle.id_detalle) }}"
+                                        <form method="POST"
+                                            action="{{ url_for('admin.orden_delete_detalle', id_detalle=detalle.id_detalle) }}"
                                             onsubmit="return confirm('¿Eliminar este producto?')">
                                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                             <button type="submit"
                                                 class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition">
-                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor"
+                                                    viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        stroke-width="2"
+                                                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                                                 </svg>
                                                 Eliminar
                                             </button>
@@ -394,23 +439,21 @@
 </div>
 
 <script>
-    (function() {
+    (function () {
         const toggleButton = document.getElementById('toggle-panel-btn');
         const panel = document.getElementById('panel-agregar-producto');
         const icon = document.getElementById('toggle-icon');
-        
+
         if (toggleButton && panel && icon) {
-            toggleButton.addEventListener('click', function(e) {
+            toggleButton.addEventListener('click', function (e) {
                 e.preventDefault();
-                
+
                 // Toggle del panel
                 if (panel.classList.contains('hidden')) {
                     panel.classList.remove('hidden');
-                    // Rotar flecha hacia abajo (180 grados)
-                    icon.style.transform = 'rotate(90deg)';
+                    icon.style.transform = 'rotate(180deg)';
                 } else {
                     panel.classList.add('hidden');
-                    // Rotar flecha hacia la derecha (0 grados)
                     icon.style.transform = 'rotate(0deg)';
                 }
             });

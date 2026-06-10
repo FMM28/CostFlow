@@ -291,6 +291,7 @@ def orden_update(id_orden):
         "clave_orden": request.form.get("clave_orden", "").strip(),
         "comprador": request.form.get("comprador", "").strip(),
         "estado": request.form.get("estado", "").strip(),
+        "fecha_creacion": request.form.get("fecha_creacion", "").strip(),
     }
 
     orden, error = OrdenService.update(id_orden, data)
