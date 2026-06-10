@@ -45,7 +45,7 @@ class CVAService(ProveedorProductos):
 
                 existencias_sucursal.append(
                     ExistenciaSucursal(
-                        sucursal="VENTAS_CDMX",
+                        sucursal="VENTAS CDMX",
                         existencia=existencia_cdmx
                     )
                 )
@@ -71,7 +71,7 @@ class CVAService(ProveedorProductos):
                         if existencia > 0:
                             existencias_sucursal.append(
                                 ExistenciaSucursal(
-                                    sucursal=nombre_campo,
+                                    sucursal=nombre_campo.replace("_", " "),
                                     existencia=existencia
                                 )
                             )
@@ -79,12 +79,21 @@ class CVAService(ProveedorProductos):
                             existencia_total += existencia
 
                 descuento = item.findtext("PrecioDescuento")
+                
+                moneda = (item.findtext("moneda") or "").strip().lower()
+
+                if moneda in {"pesos", "mxn"}:
+                    moneda = "MXN"
+                elif moneda in {"dolares", "usd"}:
+                    moneda = "USD"
+                else:
+                    moneda = moneda.upper() if moneda else "DESCONOCIDA"
 
                 producto = ProductoProveedor(
                     proveedor="CVA",
                     nombre=item.findtext("descripcion") or "",
                     precio=Decimal(item.findtext("precio") or "0"),
-                    moneda=item.findtext("moneda") or "MXN",
+                    moneda=moneda,
                     existencia=existencia_total,
                     descuento=(
                         Decimal(descuento)

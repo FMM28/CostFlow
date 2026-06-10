@@ -591,47 +591,18 @@ def orden_detalle_seleccionar_proveedor(id_detalle):
     )
 
     if moneda and precio is not None:
-
-        moneda = moneda.strip().upper()
-
-        try:
-
-            if moneda in {"USD", "DOLARES"}:
-
-                conversion = CurrencyService.convertir(
-                    "usd",
-                    "mxn"
-                )
-
-                precio = precio * conversion
-
-            elif moneda in {"EUR", "EUROS"}:
-
-                conversion = CurrencyService.convertir(
-                    "eur",
-                    "mxn"
-                )
-
-                precio = precio * conversion
-
-            elif moneda not in {"MXN", "PESOS"}:
-
-                flash(
-                    (
-                        f"Moneda '{moneda}' no soportada "
-                        "para conversión. "
-                        "Se guardará el precio sin convertir."
-                    ),
-                    "warning"
-                )
-
-        except Exception:
-            flash(
-                "No se pudo convertir la moneda del proveedor",
-                "warning"
+        precio_mxn, error = CurrencyService.calcular_conversion_MXN(
+            precio=precio,
+            from_currency=moneda
+        )
+        
+        if error:
+            flash(error, "error")
+            return redirect(
+                url_for("admin.orden_detalle_show",id_detalle=id_detalle)
             )
 
-        data["precio_unitario"] = precio
+        data["precio_unitario"] = precio_mxn
 
     success, error = OrdenDetalleService.update_detalle(
         id_detalle=id_detalle,
