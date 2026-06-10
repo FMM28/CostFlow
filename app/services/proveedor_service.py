@@ -95,7 +95,7 @@ class ProveedorService:
         if not nombre:
             return None, "El campo 'nombre' es obligatorio"
         
-        if len(nombre) > 100:  # Asumiendo límite en el modelo
+        if len(nombre) > 100:
             return None, "El nombre no puede exceder 100 caracteres"
 
         proveedor = Proveedor(nombre=nombre)

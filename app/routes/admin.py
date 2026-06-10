@@ -633,3 +633,65 @@ def orden_detalle_seleccionar_proveedor(id_detalle):
             id_detalle=id_detalle,
         )
     )
+    
+
+@admin_bp.post('/ordenes/<int:id_detalle>/proveedores/manual')
+@login_required
+def orden_detalle_asignar_proveedor_manual(id_detalle):
+
+    detalle = OrdenDetalleService.get_by_id(id_detalle)
+
+    if not detalle:
+        flash("Producto no encontrado", "error")
+        return redirect(url_for('admin.ordenes'))
+
+    proveedor_nombre = request.form.get("proveedor").strip()
+
+    if not proveedor_nombre:
+        flash("El nombre del proveedor es obligatorio", "error")
+        return redirect(
+            url_for(
+                "admin.orden_detalle_show",
+                id_detalle=id_detalle,
+            )
+        )
+
+    proveedor = ProveedorService.search_by_nombre(proveedor_nombre)
+
+    if not proveedor:
+        proveedor, error = ProveedorService.create({"nombre": proveedor_nombre})
+        if error:
+            flash(f"Error al crear el proveedor: {error}", "error")
+            return redirect(
+                url_for(
+                    "admin.orden_detalle_show",
+                    id_detalle=id_detalle,
+                )
+            )
+
+    data = {
+        "id_proveedor": proveedor.id_proveedor
+    }
+
+    success, error = OrdenDetalleService.update_detalle(
+        id_detalle=id_detalle,
+        data=data
+    )
+
+    if not success:
+        flash(
+            error or "No se pudo asignar el proveedor",
+            "error"
+        )
+    else:
+        flash(
+            "Proveedor asignado correctamente",
+            "success"
+        )
+
+    return redirect(
+        url_for(
+            "admin.orden_detalle_show",
+            id_detalle=id_detalle,
+        )
+    )

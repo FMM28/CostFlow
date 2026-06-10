@@ -165,18 +165,41 @@
                 <div class="bg-white border border-gray-200 rounded-2xl shadow-sm">
                     <div class="px-6 py-5 border-b border-gray-200">
                         <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+
                             <div>
                                 <h2 class="text-lg font-semibold text-gray-900">Proveedor</h2>
-                                <p class="text-sm text-gray-500 mt-1">Disponibilidad y costos de compra</p>
+                                <p class="text-sm text-gray-500 mt-1">
+                                    Disponibilidad y costos de compra
+                                </p>
                             </div>
-                            <a href="{{ url_for('admin.orden_detalle_proveedores', id_detalle=detalle.id_detalle) }}"
-                                class="inline-flex items-center gap-2 text-sm font-medium text-emerald-700 hover:text-emerald-800 transition">
-                                Ver comparación
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M9 5l7 7-7 7" />
-                                </svg>
-                            </a>
+
+                            <div class="flex flex-wrap items-center gap-3">
+
+                                <button type="button" id="btn-open-manual-provider"
+                                    class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-700 transition">
+
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M12 4v16m8-8H4" />
+                                    </svg>
+
+                                    Agregar proveedor
+                                </button>
+
+                                <a href="{{ url_for('admin.orden_detalle_proveedores', id_detalle=detalle.id_detalle) }}"
+                                    class="inline-flex items-center gap-2 text-sm font-medium text-emerald-700 hover:text-emerald-800 transition">
+
+                                    Ver comparación
+
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M9 5l7 7-7 7" />
+                                    </svg>
+
+                                </a>
+
+                            </div>
+
                         </div>
                     </div>
                     <div class="p-6">
@@ -424,6 +447,59 @@
 
 </div>
 
+<div id="manual-provider-modal" class="fixed inset-0 z-50 hidden">
+
+    <div class="absolute inset-0 bg-black/50"></div>
+
+    <div class="relative h-full flex items-center justify-center p-4">
+
+        <div class="w-full max-w-2xl bg-white rounded-2xl shadow-2xl">
+
+            <div class="flex items-center justify-between p-6 border-b border-gray-200">
+                <h2 class="text-xl font-semibold text-gray-900">
+                    Agregar proveedor manualmente
+                </h2>
+
+                <button type="button" id="btn-close-manual-provider" class="text-gray-400 hover:text-gray-600">
+                    ✕
+                </button>
+            </div>
+
+            <form method="POST"
+                action="{{ url_for('admin.orden_detalle_asignar_proveedor_manual', id_detalle=detalle.id_detalle) }}"
+                class="p-6 space-y-5">
+
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">
+                        Proveedor
+                    </label>
+                    <input type="text" name="proveedor" required
+                        class="w-full h-11 px-4 rounded-xl border border-gray-200">
+                </div>
+
+                <div class="flex justify-end gap-3 pt-2">
+
+                    <button type="button" id="btn-cancel-manual-provider"
+                        class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
+                        Cancelar
+                    </button>
+
+                    <button type="submit" class="px-5 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700">
+                        Guardar proveedor
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</div>
+
 <script>
     (() => {
         const cantidad = document.getElementById('cantidad');
@@ -544,5 +620,35 @@
         slider.value = gananciaPct.value;
         actualizarResumen();
     })();
+</script>
+<script>
+    const modal = document.getElementById('manual-provider-modal');
+
+    const openBtn = document.getElementById('btn-open-manual-provider');
+    const closeBtn = document.getElementById('btn-close-manual-provider');
+    const cancelBtn = document.getElementById('btn-cancel-manual-provider');
+
+    if (openBtn) {
+        openBtn.addEventListener('click', () => {
+            modal.classList.remove('hidden');
+            document.body.classList.add('overflow-hidden');
+        });
+    }
+
+    [closeBtn, cancelBtn].forEach(btn => {
+        if (btn) {
+            btn.addEventListener('click', () => {
+                modal.classList.add('hidden');
+                document.body.classList.remove('overflow-hidden');
+            });
+        }
+    });
+
+    modal?.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            modal.classList.add('hidden');
+            document.body.classList.remove('overflow-hidden');
+        }
+    });
 </script>
 {% endblock %}
