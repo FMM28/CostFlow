@@ -308,56 +308,59 @@ def orden_update(id_orden):
 @role_required("admin")
 def orden_agregar_detalle(id_orden):
 
-    data = {
-        "producto": request.form.get("producto", "").strip(),
-        "clave_producto": request.form.get("clave_producto") or None,
-        "id_proveedor": request.form.get("id_proveedor") or None,
-        "cantidad": request.form.get("cantidad", type=int) or 1,
+    try:
+        orden = OrdenService.get_by_id(id_orden)
+        if not orden:
+            flash("La orden no existe.", "error")
+            return redirect(url_for('admin.ordenes'))
 
-        # Valores por defecto
-        "precio_unitario": request.form.get(
-            "precio_unitario",
-            type=float
-        ) or 0,
+        producto = request.form.get('producto', '').strip()
+        clave_producto = request.form.get('clave_producto', '').strip() or None
+        
+        try:
+            cantidad = int(request.form.get('cantidad', 0))
+            if cantidad <= 0:
+                raise ValueError
+        except (ValueError, TypeError):
+            flash("La cantidad debe ser un número válido mayor a 0.", "error")
+            return redirect(url_for('admin.orden_detalle', id_orden=id_orden))
 
-        "ganancia_unitaria": request.form.get(
-            "ganancia_unitaria",
-            type=float
-        ) or 0,
+        if not producto:
+            flash("El nombre del producto es obligatorio.", "error")
+            return redirect(url_for('admin.orden_detalle', id_orden=id_orden))
 
-        "costo_envio": request.form.get(
-            "costo_envio",
-            type=float
-        ) or 0,
-    }
+        data = {
+            "producto": producto,
+            "clave_producto": clave_producto,
+            "cantidad": cantidad,
+            "precio_unitario": 0.00,  # Valor por defecto
+            "ganancia_unitaria": 0.00,  # Valor por defecto
+            "costo_envio": 0.00,  # Valor por defecto
+            "margen_ganancia": 0.00,  # Valor por defecto
+            "id_proveedor": None  # Se deja nulo por defecto
+        }
 
-    # Validaciones mínimas
-    if not data["producto"]:
-        flash("El producto es obligatorio", "error")
-        return redirect(
-            url_for(
-                'admin.orden_detalle',
-                id_orden=id_orden
-            )
-        )
+        detalle, error = OrdenDetalleService.add_detalle(id_orden, data)
+        
+        if error:
+            flash(f"Error al agregar el producto: {error}", "error")
+            return redirect(url_for('admin.orden_detalle', id_orden=id_orden))
 
-    detalle, error = OrdenDetalleService.add_detalle(
-        id_orden,
-        data
-    )
+        # Recalcular totales de la orden
+        nuevo_total, error_total = OrdenService.recalculate_total(id_orden)
+        
+        if error_total:
+            if detalle and detalle.get('id_detalle'):
+                OrdenDetalleService.delete(detalle['id_detalle'])
+            flash(f"Error al actualizar los totales: {error_total}", "error")
+            return redirect(url_for('admin.orden_detalle', id_orden=id_orden))
 
-    if error:
-        flash(error, "error")
-    
-    nuevo_total, error_total = OrdenService.recalculate_total(id_orden)
-    if error_total:
-        flash(error_total, "error")
+        flash(f"Producto '{producto}' agregado exitosamente a la orden.", "success")
         return redirect(url_for('admin.orden_detalle', id_orden=id_orden))
-    
-    flash(
-        "Producto agregado correctamente",
-        "success"
-    )
+
+    except Exception as e:
+        flash(f"Error inesperado al agregar producto: {str(e)}", "error")
+        return redirect(url_for('admin.orden_detalle', id_orden=id_orden))
 
 
 @admin_bp.get('/ordenes/detalles/<int:id_detalle>')

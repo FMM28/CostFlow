@@ -7,81 +7,56 @@
 
     <!-- Header -->
     <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
-
         <div>
-
             <h1 class="text-3xl font-bold text-gray-900">
                 Orden {{ orden.clave_orden }}
             </h1>
-
             <p class="mt-1 text-sm text-gray-500">
                 Creada el {{ orden.fecha_creacion.strftime('%d/%m/%Y') }}
             </p>
-
         </div>
 
         <div class="flex flex-wrap items-center gap-3">
-
             <!-- Volver -->
             <a href="{{ url_for('admin.ordenes') }}"
                 class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-xl hover:bg-gray-100 transition">
-
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-
                 </svg>
-
                 Volver
-
             </a>
 
             <!-- Eliminar -->
             <form method="POST" action="{{ url_for('admin.orden_delete', id_orden=orden.id_orden) }}"
                 onsubmit="return confirm('¿Eliminar esta orden?')">
-
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-
                 <button type="submit"
                     class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-xl hover:bg-red-700 transition group">
-
                     <img src="/static/icons/trash.svg" class="w-4 h-4 group-hover:hidden">
-
                     <img src="/static/icons/trash_open.svg" class="w-4 h-4 hidden group-hover:block">
-
                     Eliminar orden
-
                 </button>
-
             </form>
-
         </div>
-
     </div>
 
     {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}
     <div class="space-y-3">
-
         {% for category, message in messages %}
-
-        <div class="
-        px-4 py-3 rounded-xl border text-sm font-medium
-        {% if category == 'success' %}
-            bg-emerald-50 border-emerald-200 text-emerald-800
-        {% elif category == 'error' %}
-            bg-red-50 border-red-200 text-red-800
-        {% elif category == 'warning' %}
-            bg-amber-50 border-amber-200 text-amber-800
-        {% else %}
-            bg-blue-50 border-blue-200 text-blue-800
-        {% endif %}
-    ">
+        <div class="px-4 py-3 rounded-xl border text-sm font-medium
+            {% if category == 'success' %}
+                bg-emerald-50 border-emerald-200 text-emerald-800
+            {% elif category == 'error' %}
+                bg-red-50 border-red-200 text-red-800
+            {% elif category == 'warning' %}
+                bg-amber-50 border-amber-200 text-amber-800
+            {% else %}
+                bg-blue-50 border-blue-200 text-blue-800
+            {% endif %}">
             {{ message }}
         </div>
-
         {% endfor %}
-
     </div>
     {% endif %}
     {% endwith %}
@@ -91,631 +66,355 @@
 
         <!-- Sidebar -->
         <div class="xl:col-span-3 space-y-6">
-
             <!-- Información -->
             <div class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
-
                 <h2 class="text-lg font-semibold text-gray-900 mb-5">
                     Información
                 </h2>
 
-                <form method="POST" action="{{ url_for('admin.orden_update',
-                                         id_orden=orden.id_orden) }}" class="space-y-5">
-
+                <form method="POST" action="{{ url_for('admin.orden_update', id_orden=orden.id_orden) }}" class="space-y-5">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
                     <div>
-
                         <label class="block text-sm font-medium text-gray-700 mb-1">
                             Clave
                         </label>
-
                         <input type="text" name="clave_orden" value="{{ orden.clave_orden }}"
                             class="w-full px-4 py-2 border border-gray-300 rounded-xl">
-
                     </div>
 
                     <div>
-
                         <label class="block text-sm font-medium text-gray-700 mb-1">
                             Comprador
                         </label>
-
                         <input type="text" name="comprador" value="{{ orden.comprador }}"
                             class="w-full px-4 py-2 border border-gray-300 rounded-xl">
-
                     </div>
 
                     <div>
-
                         <label class="block text-sm font-medium text-gray-700 mb-1">
                             Estado
                         </label>
-
                         <select name="estado" class="w-full px-4 py-2 border border-gray-300 rounded-xl">
-
                             <option value="pendiente" {% if orden.estado=='pendiente' %}selected{% endif %}>
                                 Pendiente
                             </option>
-
                             <option value="aprobada" {% if orden.estado=='aprobada' %}selected{% endif %}>
                                 Aprobada
                             </option>
-
                             <option value="completada" {% if orden.estado=='completada' %}selected{% endif %}>
                                 Completada
                             </option>
-
                             <option value="cancelada" {% if orden.estado=='cancelada' %}selected{% endif %}>
                                 Cancelada
                             </option>
-
                         </select>
-
                     </div>
 
                     <button type="submit"
                         class="w-full px-4 py-2 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition">
-
                         Guardar cambios
                     </button>
-
                 </form>
-
             </div>
 
             <!-- Resumen -->
             <div class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
-
                 <h2 class="text-lg font-semibold text-gray-900 mb-5">
                     Resumen
                 </h2>
 
                 <div class="space-y-4">
-
                     <div class="flex items-center justify-between">
-
                         <span class="text-sm text-gray-500">
                             Productos
                         </span>
-
                         <span class="font-semibold text-gray-900">
                             {{ orden.detalles|length }}
                         </span>
-
                     </div>
 
                     <div class="flex items-center justify-between">
-
                         <span class="text-sm text-gray-500">
                             Subtotal
                         </span>
-
                         <span class="font-semibold text-gray-900">
                             ${{ "%.2f"|format(orden.subtotal) }}
                         </span>
-
                     </div>
 
                     <div class="flex items-center justify-between">
-
                         <span class="text-sm text-gray-500">
                             IVA (16%)
                         </span>
-
                         <span class="font-semibold text-gray-900">
                             ${{ "%.2f"|format(orden.iva) }}
                         </span>
-
                     </div>
 
                     <div class="border-t border-gray-200 pt-4">
-
                         <div class="flex items-center justify-between">
-
                             <span class="text-sm font-medium text-gray-700">
                                 Total
                             </span>
-
                             <span class="text-2xl font-bold text-gray-900">
                                 ${{ "%.2f"|format(orden.total) }}
                             </span>
-
                         </div>
-
                     </div>
-
                 </div>
-
             </div>
-
         </div>
 
         <!-- Contenido principal -->
         <div class="xl:col-span-9 space-y-6">
-
-            <!-- Agregar producto -->
+            <!-- Agregar producto - Solo manual -->
             <div class="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
-
-                <button type="button"
-                    onclick="document.getElementById('panel-agregar-producto').classList.toggle('hidden')"
-                    class="w-full px-6 py-4 flex items-center justify-between bg-gray-50 hover:bg-gray-100 transition">
-
+                <button type="button" id="toggle-panel-btn"
+                    class="w-full px-6 py-4 flex items-center justify-between bg-gray-50 hover:bg-gray-100 transition group">
                     <div class="text-left">
-
                         <h2 class="text-lg font-semibold text-gray-900">
                             Agregar producto
                         </h2>
-
                         <p class="text-sm text-gray-500">
-                            Añadir productos a la orden
+                            Añadir productos a la orden manualmente
                         </p>
-
                     </div>
-
-                    <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-
+                    <!-- Flecha que rotará -->
+                    <svg class="w-5 h-5 text-gray-500 transition-transform duration-300 transform group-hover:scale-110" 
+                         fill="none" stroke="currentColor" viewBox="0 0 24 24" id="toggle-icon">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                     </svg>
-
                 </button>
 
                 <div id="panel-agregar-producto" class="hidden border-t border-gray-200 bg-gray-50/50">
+                    <div class="p-5">
+                        <form method="POST" action="{{ url_for('admin.orden_agregar_detalle', id_orden=orden.id_orden) }}"
+                            class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
-                    <div class="p-5 space-y-4">
-
-                        <!-- Tabs -->
-                        <div class="flex border-b border-gray-200">
-
-                            <button type="button" id="tab-manual"
-                                class="px-4 py-2 text-sm font-medium text-emerald-600 border-b-2 border-emerald-500 -mb-px">
-
-                                Agregar manualmente
-                            </button>
-
-                            <button type="button" id="tab-busqueda"
-                                class="px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-700">
-
-                                Buscar producto
-                            </button>
-
-                        </div>
-
-                        <!-- Panel manual -->
-                        <div id="panel-manual">
-
-                            <form method="POST" action="{{ url_for('admin.orden_agregar_detalle',
-                                                     id_orden=orden.id_orden) }}"
-                                class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
-
-                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-
-                                <div class="md:col-span-2">
-
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">
-                                        Producto
-                                    </label>
-
-                                    <input type="text" name="producto" required placeholder="Nombre del producto"
-                                        class="w-full px-4 py-2 border border-gray-300 rounded-xl">
-
-                                </div>
-
-                                <div>
-
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">
-                                        SKU
-                                    </label>
-
-                                    <input type="text" name="clave_producto" placeholder="Opcional"
-                                        class="w-full px-4 py-2 border border-gray-300 rounded-xl">
-
-                                </div>
-
-                                <div class="flex gap-2">
-
-                                    <div class="flex-1">
-
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">
-                                            Cantidad
-                                        </label>
-
-                                        <input type="number" name="cantidad" min="1" value="1" required
-                                            class="w-full px-4 py-2 border border-gray-300 rounded-xl">
-
-                                    </div>
-
-                                    <button type="submit"
-                                        class="px-4 py-2 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 whitespace-nowrap transition">
-
-                                        + Agregar
-                                    </button>
-
-                                </div>
-
-                            </form>
-
-                        </div>
-
-                        <!-- Panel búsqueda -->
-                        <div id="panel-busqueda" class="hidden space-y-4">
-
-                            <div class="relative">
-
-                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-
-                                    <svg class="h-4 w-4 text-gray-400" fill="none" stroke="currentColor"
-                                        viewBox="0 0 24 24">
-
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-
-                                    </svg>
-
-                                </div>
-
-                                <input type="text" placeholder="Buscar por nombre o SKU..."
-                                    class="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-300 rounded-xl text-sm">
-
+                            <div class="md:col-span-2">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">
+                                    Nombre del producto <span class="text-red-500">*</span>
+                                </label>
+                                <input type="text" name="producto" required placeholder="Ej. Cable USB-C 1m"
+                                    class="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500">
                             </div>
 
-                            <div
-                                class="text-center py-8 text-gray-500 text-sm border border-dashed border-gray-300 rounded-xl bg-white">
-
-                                Funcionalidad de búsqueda próximamente
-
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">
+                                    SKU / Clave
+                                </label>
+                                <input type="text" name="clave_producto" placeholder="Opcional"
+                                    class="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500">
                             </div>
 
-                        </div>
-
+                            <div class="flex gap-2">
+                                <div class="flex-1">
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">
+                                        Cantidad <span class="text-red-500">*</span>
+                                    </label>
+                                    <input type="number" name="cantidad" min="1" value="1" required
+                                        class="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500">
+                                </div>
+                                <button type="submit"
+                                    class="px-4 py-2.5 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 whitespace-nowrap transition shadow-sm">
+                                    + Agregar
+                                </button>
+                            </div>
+                        </form>
                     </div>
-
                 </div>
-
             </div>
 
-            <!-- Tabla -->
+            <!-- Tabla de productos -->
             <div class="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
-
                 <div class="px-6 py-5 border-b border-gray-200 bg-gray-50 flex items-center justify-between">
-
                     <div>
-
                         <h2 class="text-xl font-semibold text-gray-900">
                             Productos
                         </h2>
-
                         <p class="text-sm text-gray-500 mt-1">
                             {{ orden.detalles|length }} productos registrados
                         </p>
-
                     </div>
-
                 </div>
 
-                <div class="overflow-hidden">
-
-                    <table class="w-full table-fixed divide-y divide-gray-200">
-
+                <div class="overflow-hidden overflow-x-auto">
+                    <table class="w-full min-w-[800px] divide-y divide-gray-200">
                         <thead class="bg-gray-50">
-
                             <tr>
-
-                                <th
-                                    class="px-4 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-[42%]">
+                                <th class="px-4 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
                                     Producto
                                 </th>
-
-                                <th
-                                    class="px-4 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-[18%]">
-                                    Proveedor
+                                <th class="px-4 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                    SKU
                                 </th>
-
-                                <th
-                                    class="px-4 py-4 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider w-[10%]">
+                                <th class="px-4 py-4 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">
                                     Cantidad
                                 </th>
-
-                                <th
-                                    class="px-4 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider w-[12%]">
+                                <th class="px-4 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">
                                     Subtotal
                                 </th>
-
-                                <th
-                                    class="px-4 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider w-[18%]">
+                                <th class="px-4 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">
                                     Acciones
                                 </th>
-
                             </tr>
-
                         </thead>
 
                         <tbody class="divide-y divide-gray-100 bg-white">
-
                             {% for detalle in orden.detalles %}
-
                             <tr class="hover:bg-gray-50/80 transition">
-
                                 <!-- PRODUCTO -->
-                                <td class="px-6 py-5">
-
-                                    <div class="flex items-center gap-4">
-
+                                <td class="px-4 py-4">
+                                    <div class="flex items-center gap-3">
                                         <!-- Imagen -->
                                         <div class="flex-shrink-0">
-
                                             {% if detalle.url_imagen %}
-
                                             <img src="{{ detalle.url_imagen }}" alt="{{ detalle.producto }}"
-                                                class="w-16 h-16 rounded-xl object-cover border border-gray-200 bg-white">
-
+                                                class="w-12 h-12 rounded-lg object-cover border border-gray-200 bg-white">
                                             {% else %}
-
-                                            <div
-                                                class="w-16 h-16 rounded-xl border border-gray-200 bg-gray-100 flex items-center justify-center">
-
-                                                <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor"
-                                                    viewBox="0 0 24 24">
-
-                                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                                        stroke-width="2"
+                                            <div class="w-12 h-12 rounded-lg border border-gray-200 bg-gray-100 flex items-center justify-center">
+                                                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                         d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14" />
-
                                                 </svg>
-
                                             </div>
-
                                             {% endif %}
-
                                         </div>
 
                                         <!-- Información -->
-                                        <div class="min-w-0">
-
-                                            <div
-                                                class="font-semibold text-gray-900 text-sm leading-5 break-words whitespace-normal">
+                                        <div>
+                                            <div class="font-semibold text-gray-900 text-sm">
                                                 {{ detalle.producto }}
                                             </div>
-
-                                            {% if detalle.clave_producto %}
-
-                                            <div class="mt-1 flex items-center gap-2">
-
-                                                <span
-                                                    class="text-xs font-medium px-2 py-1 bg-gray-100 text-gray-600 rounded-lg">
-                                                    SKU
+                                            {% if detalle.proveedor %}
+                                            <div class="mt-1">
+                                                <span class="text-xs px-2 py-0.5 bg-emerald-50 text-emerald-700 rounded-full">
+                                                    {{ detalle.proveedor.nombre }}
                                                 </span>
-
-                                                <span class="text-sm text-gray-500">
-                                                    {{ detalle.clave_producto }}
-                                                </span>
-
                                             </div>
-
                                             {% endif %}
-
                                         </div>
-
                                     </div>
-
                                 </td>
 
-                                <!-- PROVEEDOR -->
-                                <td class="px-6 py-5">
-
-                                    {% if detalle.proveedor %}
-
-                                    <div
-                                        class="inline-flex items-center px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-700 text-sm font-medium border border-emerald-100">
-
-                                        {{ detalle.proveedor.nombre }}
-
-                                    </div>
-
-                                    {% else %}
-
-                                    <span class="text-sm text-gray-400">
-                                        Sin proveedor
+                                <!-- SKU -->
+                                <td class="px-4 py-4">
+                                    <span class="text-sm text-gray-500">
+                                        {{ detalle.clave_producto or '—' }}
                                     </span>
-
-                                    {% endif %}
-
                                 </td>
 
                                 <!-- CANTIDAD -->
-                                <td class="px-6 py-5 text-center">
-
-                                    <span
-                                        class="inline-flex items-center justify-center min-w-[42px] h-10 px-3 rounded-xl bg-gray-100 text-gray-800 text-sm font-semibold">
-
+                                <td class="px-4 py-4 text-center">
+                                    <span class="inline-flex items-center justify-center min-w-[40px] h-8 px-2 rounded-lg bg-gray-100 text-gray-800 text-sm font-semibold">
                                         {{ detalle.cantidad }}
-
                                     </span>
-
                                 </td>
 
                                 <!-- SUBTOTAL -->
-                                <td class="px-6 py-5 text-right">
-
-                                    <div class="text-base font-bold text-gray-900">
+                                <td class="px-4 py-4 text-right">
+                                    <div class="text-sm font-bold text-gray-900">
                                         ${{ "%.2f"|format(detalle.subtotal) }}
                                     </div>
-
                                 </td>
 
                                 <!-- ACCIONES -->
-                                <td class="px-6 py-5">
-
-                                    <div class="flex flex-wrap items-center justify-end gap-2">
-
-                                        <a href="{{ url_for('admin.orden_detalle_show',
-                                                            id_detalle=detalle.id_detalle) }}"
-                                            class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-xl hover:bg-gray-100 transition">
-
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-
+                                <td class="px-4 py-4">
+                                    <div class="flex items-center justify-end gap-2">
+                                        <a href="{{ url_for('admin.orden_detalle_show', id_detalle=detalle.id_detalle) }}"
+                                            class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 transition">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                     d="M15 12H9m12 0A9 9 0 113 12a9 9 0 0118 0z" />
-
                                             </svg>
-
                                             Detalles
-
                                         </a>
 
-                                        <form method="POST" action="{{ url_for('admin.orden_delete_detalle',
-                                                                  id_detalle=detalle.id_detalle) }}"
-                                            onsubmit="return confirm('¿Eliminar producto?')">
-
+                                        <form method="POST" action="{{ url_for('admin.orden_delete_detalle', id_detalle=detalle.id_detalle) }}"
+                                            onsubmit="return confirm('¿Eliminar este producto?')">
                                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-
                                             <button type="submit"
-                                                class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-xl hover:bg-red-700 transition group">
-
-                                                <img src="/static/icons/trash.svg" class="w-4 h-4 group-hover:hidden"
-                                                    fill="none" stroke="currentColor" viewBox="0 0 24 24">
-
-                                                <img src="/static/icons/trash_open.svg"
-                                                    class="w-4 h-4 hidden group-hover:block" fill="none"
-                                                    stroke="currentColor" viewBox="0 0 24 24">
-
+                                                class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition">
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                </svg>
                                                 Eliminar
                                             </button>
-
                                         </form>
-
                                     </div>
-
                                 </td>
-
                             </tr>
-
+                            {% else %}
+                            <tr>
+                                <td colspan="5" class="px-4 py-12 text-center text-gray-500">
+                                    No hay productos registrados en esta orden
+                                </td>
+                            </tr>
                             {% endfor %}
-
                         </tbody>
 
                         <tfoot class="bg-gray-50 border-t border-gray-200">
-
                             <tr>
-
-                                <td colspan="3" class="px-6 py-3 text-right text-sm font-medium text-gray-600">
+                                <td colspan="3" class="px-4 py-3 text-right text-sm font-medium text-gray-600">
                                     Subtotal
                                 </td>
-
-                                <td class="px-6 py-3 text-right font-semibold text-gray-900">
+                                <td class="px-4 py-3 text-right font-semibold text-gray-900">
                                     ${{ "%.2f"|format(orden.subtotal) }}
                                 </td>
-
                                 <td></td>
-
                             </tr>
-
                             <tr>
-
-                                <td colspan="3" class="px-6 py-3 text-right text-sm font-medium text-gray-600">
+                                <td colspan="3" class="px-4 py-3 text-right text-sm font-medium text-gray-600">
                                     IVA (16%)
                                 </td>
-
-                                <td class="px-6 py-3 text-right font-semibold text-gray-900">
+                                <td class="px-4 py-3 text-right font-semibold text-gray-900">
                                     ${{ "%.2f"|format(orden.iva) }}
                                 </td>
-
                                 <td></td>
-
                             </tr>
-
                             <tr class="border-t border-gray-300">
-
-                                <td colspan="3" class="px-6 py-5 text-right text-base font-semibold text-gray-900">
+                                <td colspan="3" class="px-4 py-4 text-right text-base font-semibold text-gray-900">
                                     Total
                                 </td>
-
-                                <td class="px-6 py-5 text-right">
-
-                                    <div class="text-2xl font-bold text-gray-900">
+                                <td class="px-4 py-4 text-right">
+                                    <div class="text-xl font-bold text-gray-900">
                                         ${{ "%.2f"|format(orden.total) }}
                                     </div>
-
                                 </td>
-
                                 <td></td>
-
                             </tr>
-
                         </tfoot>
-
                     </table>
-
                 </div>
-
             </div>
-
         </div>
-
     </div>
-
 </div>
 
 <script>
-    (() => {
-
-        const tabManual = document.getElementById('tab-manual');
-        const tabBusqueda = document.getElementById('tab-busqueda');
-
-        const panelManual = document.getElementById('panel-manual');
-        const panelBusqueda = document.getElementById('panel-busqueda');
-
-        tabManual.addEventListener('click', () => {
-
-            tabManual.classList.add(
-                'text-emerald-600',
-                'border-b-2',
-                'border-emerald-500',
-                '-mb-px'
-            );
-
-            tabManual.classList.remove('text-gray-500');
-
-            tabBusqueda.classList.remove(
-                'text-emerald-600',
-                'border-b-2',
-                'border-emerald-500',
-                '-mb-px'
-            );
-
-            tabBusqueda.classList.add('text-gray-500');
-
-            panelManual.classList.remove('hidden');
-            panelBusqueda.classList.add('hidden');
-
-        });
-
-        tabBusqueda.addEventListener('click', () => {
-
-            tabBusqueda.classList.add(
-                'text-emerald-600',
-                'border-b-2',
-                'border-emerald-500',
-                '-mb-px'
-            );
-
-            tabBusqueda.classList.remove('text-gray-500');
-
-            tabManual.classList.remove(
-                'text-emerald-600',
-                'border-b-2',
-                'border-emerald-500',
-                '-mb-px'
-            );
-
-            tabManual.classList.add('text-gray-500');
-
-            panelBusqueda.classList.remove('hidden');
-            panelManual.classList.add('hidden');
-
-        });
-
+    (function() {
+        const toggleButton = document.getElementById('toggle-panel-btn');
+        const panel = document.getElementById('panel-agregar-producto');
+        const icon = document.getElementById('toggle-icon');
+        
+        if (toggleButton && panel && icon) {
+            toggleButton.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                // Toggle del panel
+                if (panel.classList.contains('hidden')) {
+                    panel.classList.remove('hidden');
+                    // Rotar flecha hacia abajo (180 grados)
+                    icon.style.transform = 'rotate(90deg)';
+                } else {
+                    panel.classList.add('hidden');
+                    // Rotar flecha hacia la derecha (0 grados)
+                    icon.style.transform = 'rotate(0deg)';
+                }
+            });
+        }
     })();
 </script>
 {% endblock %}
