@@ -11,6 +11,7 @@ class ProveedorProductos(ABC):
     @abstractmethod
     def buscar_producto(
         self,
-        texto: str,
+        nombre: str | None = None,
+        sku: str | None = None,
     ) -> ProductoProveedor:
         raise NotImplementedError

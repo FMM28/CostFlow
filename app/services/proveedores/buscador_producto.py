@@ -6,6 +6,7 @@ from flask import current_app
 from app.models.producto_proveedor import ProductoProveedor
 from app.services.proveedores.CVAService import CVAService
 from app.services.proveedores.IngramService import IngramService
+from app.services.proveedores.SyscomService import SyscomService
 
 logger = logging.getLogger(__name__)
 
@@ -15,6 +16,7 @@ class BuscadorProducto:
     PROVEEDORES = [
         CVAService,
         # IngramService,
+        SyscomService,
     ]
 
     MAX_WORKERS = 4
@@ -24,38 +26,43 @@ class BuscadorProducto:
         cls,
         app,
         proveedor,
-        texto: str,
+        nombre: str | None,
+        sku: str | None,
     ) -> ProductoProveedor | None:
 
         with app.app_context():
 
-            nombre = proveedor.__name__
+            nombre_proveedor = proveedor.__name__
 
             try:
                 logger.debug(
-                    "Buscando '%s' en %s...",
-                    texto,
+                    "Buscando nombre='%s', sku='%s' en %s...",
                     nombre,
+                    sku,
+                    nombre_proveedor,
                 )
 
-                resultado = proveedor.buscar_producto(texto)
+                resultado = proveedor.buscar_producto(
+                    nombre=nombre,
+                    sku=sku,
+                )
 
                 if resultado:
                     logger.debug(
                         "Resultado encontrado en %s.",
-                        nombre,
+                        nombre_proveedor,
                     )
                     return resultado
 
                 logger.debug(
                     "Sin resultados en %s.",
-                    nombre,
+                    nombre_proveedor,
                 )
 
             except Exception:
                 logger.exception(
                     "Error al consultar %s.",
-                    nombre,
+                    nombre_proveedor,
                 )
 
             return None
@@ -63,18 +70,23 @@ class BuscadorProducto:
     @classmethod
     def buscar(
         cls,
-        texto: str,
+        nombre: str | None = None,
+        sku: str | None = None,
     ) -> list[ProductoProveedor]:
 
-        if not texto or not texto.strip():
+        nombre = (nombre or "").strip()
+        sku = (sku or "").strip()
+
+        if not nombre and not sku:
             logger.warning(
-                "Se llamó a buscar() con un texto vacío o nulo."
+                "Se llamó a buscar() sin nombre ni SKU."
             )
             return []
 
         logger.info(
-            "Iniciando búsqueda para '%s' en %d proveedor(es).",
-            texto,
+            "Iniciando búsqueda nombre='%s', sku='%s' en %d proveedor(es).",
+            nombre,
+            sku,
             len(cls.PROVEEDORES),
         )
 
@@ -97,7 +109,8 @@ class BuscadorProducto:
                     cls._buscar_en_proveedor,
                     app,
                     proveedor,
-                    texto,
+                    nombre,
+                    sku,
                 ): proveedor.__name__
                 for proveedor in cls.PROVEEDORES
             }

@@ -500,7 +500,7 @@ def orden_detalle_proveedores(id_detalle):
             )
         )
         
-    productos = BuscadorProducto.buscar(texto=detalle.clave_producto)
+    productos = BuscadorProducto.buscar(nombre=detalle.producto, sku=detalle.clave_producto)
 
     return render_template(
         'admin/proveedores.html',

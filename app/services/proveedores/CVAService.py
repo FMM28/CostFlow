@@ -124,8 +124,8 @@ class CVAService(ProveedorProductos):
         return CVAService._make_request(params)
 
     @staticmethod
-    def buscar_producto(texto: str) -> ProductoProveedor:
-        resultados = CVAService._buscar_por_codigo(texto)
+    def buscar_producto(nombre: str | None = None, sku: str | None = None) -> ProductoProveedor:
+        resultados = CVAService._buscar_por_codigo(sku)
 
         if not resultados:
             return None
