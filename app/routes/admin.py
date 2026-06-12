@@ -163,18 +163,44 @@ def nueva_orden_post():
     """
     Procesa la creación de una orden con sus detalles.
     """
+
+    def obtener_detalles_form():
+        detalles = {}
+
+        for key in request.form:
+            match = re.match(r'detalles\[(\d+)\]\[(\w+)\]', key)
+            if match:
+                idx = int(match.group(1))
+                campo = match.group(2)
+
+                if idx not in detalles:
+                    detalles[idx] = {}
+
+                detalles[idx][campo] = request.form.get(key)
+
+        return [detalles[i] for i in sorted(detalles.keys())]
+
+    def render_formulario():
+        return render_template(
+            'admin/nueva_orden.html',
+            today=request.form.get('fecha_creacion') or datetime.now().strftime('%Y-%m-%d'),
+            form_data=request.form,
+            detalles=obtener_detalles_form()
+        )
+
     try:
         clave_orden = request.form.get('clave_orden', '').strip()
         comprador = request.form.get('comprador', '').strip()
         fecha_creacion_str = request.form.get('fecha_creacion', '').strip()
-        estado = 'pendiente'  # Fijo
+        estado = 'pendiente'
 
         if not clave_orden:
             flash("La clave de la orden es obligatoria.", "error")
-            return redirect(url_for('admin.nueva_orden'))
+            return render_formulario()
+
         if not comprador:
             flash("El comprador es obligatorio.", "error")
-            return redirect(url_for('admin.nueva_orden'))
+            return render_formulario()
 
         fecha_creacion = None
         if fecha_creacion_str:
@@ -182,83 +208,95 @@ def nueva_orden_post():
                 fecha_creacion = datetime.strptime(fecha_creacion_str, '%Y-%m-%d')
             except ValueError:
                 flash("Formato de fecha inválido.", "error")
-                return redirect(url_for('admin.nueva_orden'))
+                return render_formulario()
 
-        # Extraer detalles simplificados
         detalles_raw = {}
         for key in request.form:
             match = re.match(r'detalles\[(\d+)\]\[(\w+)\]', key)
             if match:
                 idx = int(match.group(1))
                 campo = match.group(2)
+
                 if idx not in detalles_raw:
                     detalles_raw[idx] = {}
+
                 detalles_raw[idx][campo] = request.form.get(key)
 
         if not detalles_raw:
             flash("Debe agregar al menos un producto a la orden.", "error")
-            return redirect(url_for('admin.nueva_orden'))
+            return render_formulario()
 
         detalles_list = [detalles_raw[i] for i in sorted(detalles_raw.keys())]
 
-        # Validar campos requeridos de cada detalle
         for i, det in enumerate(detalles_list):
             if not det.get('producto'):
-                flash(f"El producto #{i+1} no tiene nombre.", "error")
-                return redirect(url_for('admin.nueva_orden'))
+                flash(f"El producto #{i + 1} no tiene nombre.", "error")
+                return render_formulario()
+
             try:
                 cantidad = int(det.get('cantidad', 0))
                 if cantidad <= 0:
                     raise ValueError
-            except ValueError:
-                flash(f"El producto #{i+1} debe tener una cantidad válida > 0.", "error")
-                return redirect(url_for('admin.nueva_orden'))
+            except (ValueError, TypeError):
+                flash(
+                    f"El producto #{i + 1} debe tener una cantidad válida mayor a 0.",
+                    "error"
+                )
+                return render_formulario()
 
-        # Preparar detalles con valores por defecto para campos no incluidos
         for det in detalles_list:
             det.setdefault('precio_unitario', '0.00')
             det.setdefault('ganancia_unitaria', '0.00')
             det.setdefault('costo_envio', '0.00')
             det.setdefault('margen_ganancia', '0.00')
-            # id_proveedor se deja nulo
-            if 'id_proveedor' not in det:
-                det['id_proveedor'] = None
-
-        id_usuario = current_user.id
+            det.setdefault('id_proveedor', None)
 
         data_orden = {
             "clave_orden": clave_orden,
-            "id_usuario": id_usuario,
+            "id_usuario": current_user.id_usuario,
             "comprador": comprador,
             "estado": estado,
             "total": "0.00",
         }
+
         if fecha_creacion:
             data_orden["fecha_creacion"] = fecha_creacion
 
         orden, error = OrdenService.create(data_orden)
         if error:
             flash(f"Error al crear la orden: {error}", "error")
-            return redirect(url_for('admin.nueva_orden'))
+            return render_formulario()
 
-        detalles_creados, error_detalles = OrdenDetalleService.add_bulk(orden.id_orden, detalles_list)
+        detalles_creados, error_detalles = OrdenDetalleService.add_bulk(
+            orden.id_orden,
+            detalles_list
+        )
+
         if error_detalles:
             OrdenService.delete(orden.id_orden)
             flash(f"Error al agregar productos: {error_detalles}", "error")
-            return redirect(url_for('admin.nueva_orden'))
-        
-        nuevo_total, error_total = OrdenService.recalculate_total(orden.id_orden)
+            return render_formulario()
+
+        nuevo_total, error_total = OrdenService.recalculate_total(
+            orden.id_orden
+        )
+
         if error_total:
             OrdenService.delete(orden.id_orden)
             flash(error_total, "error")
-            return redirect(url_for('admin.nueva_orden'))
+            return render_formulario()
 
-        flash(f"Orden '{orden.clave_orden}' creada exitosamente con {len(detalles_creados)} producto(s).", "success")
+        flash(
+            f"Orden '{orden.clave_orden}' creada exitosamente con "
+            f"{len(detalles_creados)} producto(s).",
+            "success"
+        )
+
         return redirect(url_for('admin.ordenes'))
 
     except Exception as e:
         flash(f"Error inesperado: {str(e)}", "error")
-        return redirect(url_for('admin.nueva_orden'))
+        return render_formulario()
 
 
 @admin_bp.get('/ordenes/<int:id_orden>')

@@ -11,17 +11,33 @@
             <p class="text-gray-500 mt-1">Completa los datos de la orden y agrega productos</p>
         </div>
         <a href="{{ url_for('admin.ordenes') }}"
-           class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-xl hover:bg-gray-50 transition-colors">
+            class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-xl hover:bg-gray-50 transition-colors">
             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
             </svg>
             Volver al listado
         </a>
     </div>
 
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <div class="space-y-3">
+        {% for category, message in messages %}
+        <div class="px-4 py-3 rounded-xl border text-sm font-medium
+                    {% if category == 'success' %} bg-emerald-50 border-emerald-200 text-emerald-800
+                    {% elif category == 'error' %} bg-red-50 border-red-200 text-red-800
+                    {% elif category == 'warning' %} bg-amber-50 border-amber-200 text-amber-800
+                    {% else %} bg-blue-50 border-blue-200 text-blue-800 {% endif %}">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    {% endwith %}
+
     <form method="post" action="{{ url_for('admin.nueva_orden_post') }}" class="space-y-8">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        
+
         <div class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
             <h2 class="text-lg font-medium text-gray-900 mb-4">Información de la orden</h2>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -30,22 +46,24 @@
                         Clave de orden <span class="text-red-500">*</span>
                     </label>
                     <input type="text" name="clave_orden" id="clave_orden" required
-                           placeholder="Ej. ORD-2025-001"
-                           class="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500">
+                        value="{{ form_data.get('clave_orden', '') if form_data else '' }}"
+                        placeholder="Ej. ORD-2025-001"
+                        class="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500">
                 </div>
                 <div>
                     <label for="comprador" class="block text-sm font-medium text-gray-700 mb-1">
                         Comprador <span class="text-red-500">*</span>
                     </label>
                     <input type="text" name="comprador" id="comprador" required
-                           placeholder="Nombre del comprador"
-                           class="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500">
+                        value="{{ form_data.get('comprador', '') if form_data else '' }}"
+                        placeholder="Nombre del comprador"
+                        class="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500">
                 </div>
                 <div>
                     <label for="fecha_creacion" class="block text-sm font-medium text-gray-700 mb-1">Fecha</label>
                     <input type="date" name="fecha_creacion" id="fecha_creacion"
-                           value="{{ today | default('') }}"
-                           class="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500">
+                        value="{{ form_data.get('fecha_creacion', today) if form_data else today }}"
+                        class="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500">
                 </div>
             </div>
             <input type="hidden" name="estado" value="pendiente">
@@ -60,10 +78,14 @@
                 <table class="min-w-full divide-y divide-gray-200" id="tabla-productos">
                     <thead class="bg-gray-50">
                         <tr>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Producto</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">SKU / Clave</th>
-                            <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Cantidad</th>
-                            <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"></th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Producto</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                SKU / Clave</th>
+                            <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Cantidad</th>
+                            <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            </th>
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200" id="lista-productos">
@@ -75,8 +97,10 @@
                     </tbody>
                     <tfoot class="bg-gray-50 border-t border-gray-200">
                         <tr>
-                            <td colspan="2" class="px-4 py-3 text-right text-sm font-medium text-gray-700">Total de productos:</td>
-                            <td class="px-4 py-3 text-right text-sm font-medium text-gray-900" id="total-productos">0</td>
+                            <td colspan="2" class="px-4 py-3 text-right text-sm font-medium text-gray-700">Total de
+                                productos:</td>
+                            <td class="px-4 py-3 text-right text-sm font-medium text-gray-900" id="total-productos">0
+                            </td>
                             <td></td>
                         </tr>
                     </tfoot>
@@ -86,23 +110,25 @@
             <div class="p-5 border-t border-gray-200 bg-gray-50/50">
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
                     <div class="md:col-span-2">
-                        <label class="block text-xs font-medium text-gray-700 mb-1">Nombre del producto <span class="text-red-500">*</span></label>
+                        <label class="block text-xs font-medium text-gray-700 mb-1">Nombre del producto <span
+                                class="text-red-500">*</span></label>
                         <input type="text" id="prod-nombre" placeholder="Ej. Cable USB-C 1m"
-                               class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500/50">
+                            class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500/50">
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-gray-700 mb-1">SKU / Clave</label>
                         <input type="text" id="prod-clave" placeholder="Opcional"
-                               class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500/50">
+                            class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500/50">
                     </div>
                     <div class="flex gap-2">
                         <div class="flex-1">
-                            <label class="block text-xs font-medium text-gray-700 mb-1">Cantidad <span class="text-red-500">*</span></label>
+                            <label class="block text-xs font-medium text-gray-700 mb-1">Cantidad <span
+                                    class="text-red-500">*</span></label>
                             <input type="number" id="prod-cantidad" min="1" value="1"
-                                   class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500/50">
+                                class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500/50">
                         </div>
                         <button type="button" id="btn-agregar-manual"
-                                class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium rounded-lg transition-colors shadow-sm whitespace-nowrap mt-5">
+                            class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium rounded-lg transition-colors shadow-sm whitespace-nowrap mt-5">
                             + Agregar
                         </button>
                     </div>
@@ -112,11 +138,11 @@
 
         <div class="flex justify-end gap-3">
             <a href="{{ url_for('admin.ordenes') }}"
-               class="px-6 py-2.5 bg-white border border-gray-300 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+                class="px-6 py-2.5 bg-white border border-gray-300 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
                 Cancelar
             </a>
             <button type="submit"
-                    class="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium rounded-xl transition-colors shadow-sm">
+                class="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium rounded-xl transition-colors shadow-sm">
                 Guardar cotización
             </button>
         </div>
@@ -124,137 +150,176 @@
 </div>
 
 <script>
-    (function() {
-        let productos = [];
-        let nextId = 1;
+(function () {
+    let productos = [];
 
-        const tbody = document.getElementById('lista-productos');
-        const emptyRow = document.getElementById('empty-row');
-        const totalProductosSpan = document.getElementById('total-productos');
+    {% if detalles %}
+    {% for det in detalles %}
+    productos.push({
+        tempId: {{ loop.index }},
+        producto: {{ (det.producto or '')|tojson }},
+        clave_producto: {{ (det.clave_producto or '')|tojson }},
+        cantidad: {{ det.cantidad|default(1)|int }}
+    });
+    {% endfor %}
+    {% endif %}
 
-        const nombreInp = document.getElementById('prod-nombre');
-        const claveInp = document.getElementById('prod-clave');
-        const cantidadInp = document.getElementById('prod-cantidad');
+    let nextId = productos.length > 0 ? Math.max(...productos.map(p => p.tempId)) + 1 : 1;
 
-        function escapeHtml(text) {
-            if (!text) return text;
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
+    const tbody = document.getElementById('lista-productos');
+    const emptyRow = document.getElementById('empty-row');
+    const totalProductosSpan = document.getElementById('total-productos');
+
+    const nombreInp = document.getElementById('prod-nombre');
+    const claveInp = document.getElementById('prod-clave');
+    const cantidadInp = document.getElementById('prod-cantidad');
+
+    function renderizarTabla() {
+        if (productos.length === 0) {
+            if (emptyRow) emptyRow.classList.remove('hidden');
+            const rows = tbody.querySelectorAll('tr:not(#empty-row)');
+            rows.forEach(row => row.remove());
+            if (totalProductosSpan) totalProductosSpan.textContent = '0';
+            return;
         }
 
-        function renderizarTabla() {
-            if (productos.length === 0) {
-                emptyRow.classList.remove('hidden');
-                Array.from(tbody.children).forEach(row => {
-                    if (row.id !== 'empty-row') row.remove();
-                });
-                totalProductosSpan.textContent = '0';
-                return;
-            }
+        if (emptyRow) emptyRow.classList.add('hidden');
 
-            emptyRow.classList.add('hidden');
-            const fragment = document.createDocumentFragment();
-            let totalCantidad = 0;
+        const rows = tbody.querySelectorAll('tr:not(#empty-row)');
+        rows.forEach(row => row.remove());
 
-            productos.forEach((prod, index) => {
-                totalCantidad += parseInt(prod.cantidad) || 0;
+        let totalCantidad = 0;
+        const fragment = document.createDocumentFragment();
 
-                const tr = document.createElement('tr');
-                tr.className = 'hover:bg-gray-50';
-                tr.dataset.id = prod.tempId;
+        productos.forEach((prod, index) => {
+            const cantidadVal = parseInt(prod.cantidad) || 0;
+            totalCantidad += cantidadVal;
 
-                tr.innerHTML = `
-                    <td class="px-4 py-3 text-sm text-gray-900 font-medium">${escapeHtml(prod.producto)}</td>
-                    <td class="px-4 py-3 text-sm text-gray-500">${escapeHtml(prod.clave_producto) || '—'}</td>
-                    <td class="px-4 py-3 text-sm text-gray-900 text-right">${prod.cantidad}</td>
-                    <td class="px-4 py-3 text-right">
-                        <button type="button" class="text-red-500 hover:text-red-700 text-sm eliminar-producto" data-id="${prod.tempId}">
-                            Eliminar
-                        </button>
-                    </td>
-                `;
+            const tr = document.createElement('tr');
+            tr.className = 'hover:bg-gray-50';
+            tr.dataset.id = prod.tempId;
 
-                // Agregar campos ocultos para el envío al backend
-                const campos = ['producto', 'clave_producto', 'cantidad'];
-                campos.forEach(campo => {
-                    const input = document.createElement('input');
-                    input.type = 'hidden';
-                    input.name = `detalles[${index}][${campo}]`;
-                    input.value = prod[campo] || '';
-                    tr.appendChild(input);
-                });
+            const tdProducto = document.createElement('td');
+            tdProducto.className = 'px-4 py-3 text-sm text-gray-900 font-medium';
+            tdProducto.textContent = prod.producto || '—';
 
-                fragment.appendChild(tr);
-            });
+            const tdClave = document.createElement('td');
+            tdClave.className = 'px-4 py-3 text-sm text-gray-500';
+            tdClave.textContent = prod.clave_producto || '—';
 
-            Array.from(tbody.children).forEach(row => {
-                if (row.id !== 'empty-row') row.remove();
-            });
-            tbody.appendChild(fragment);
-            totalProductosSpan.textContent = totalCantidad;
+            const tdCantidad = document.createElement('td');
+            tdCantidad.className = 'px-4 py-3 text-sm text-gray-900 text-right';
+            tdCantidad.textContent = prod.cantidad;
 
-            document.querySelectorAll('.eliminar-producto').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    const id = parseInt(btn.dataset.id);
-                    productos = productos.filter(p => p.tempId !== id);
-                    renderizarTabla();
-                });
-            });
+            const tdAccion = document.createElement('td');
+            tdAccion.className = 'px-4 py-3 text-right';
+            const btnEliminar = document.createElement('button');
+            btnEliminar.type = 'button';
+            btnEliminar.className = 'text-red-500 hover:text-red-700 text-sm eliminar-producto';
+            btnEliminar.textContent = 'Eliminar';
+            btnEliminar.dataset.id = prod.tempId;
+            tdAccion.appendChild(btnEliminar);
+
+            tr.appendChild(tdProducto);
+            tr.appendChild(tdClave);
+            tr.appendChild(tdCantidad);
+            tr.appendChild(tdAccion);
+
+            const inputProducto = document.createElement('input');
+            inputProducto.type = 'hidden';
+            inputProducto.name = `detalles[${index}][producto]`;
+            inputProducto.value = prod.producto || '';
+            tr.appendChild(inputProducto);
+
+            const inputClave = document.createElement('input');
+            inputClave.type = 'hidden';
+            inputClave.name = `detalles[${index}][clave_producto]`;
+            inputClave.value = prod.clave_producto || '';
+            tr.appendChild(inputClave);
+
+            const inputCantidad = document.createElement('input');
+            inputCantidad.type = 'hidden';
+            inputCantidad.name = `detalles[${index}][cantidad]`;
+            inputCantidad.value = prod.cantidad;
+            tr.appendChild(inputCantidad);
+
+            fragment.appendChild(tr);
+        });
+
+        tbody.appendChild(fragment);
+        if (totalProductosSpan) totalProductosSpan.textContent = totalCantidad;
+
+        document.querySelectorAll('.eliminar-producto').forEach(btn => {
+            btn.removeEventListener('click', handleEliminar);
+            btn.addEventListener('click', handleEliminar);
+        });
+    }
+
+    function handleEliminar(e) {
+        const id = parseInt(e.currentTarget.dataset.id);
+        productos = productos.filter(p => p.tempId !== id);
+        renderizarTabla();
+    }
+
+    function agregarProductoManual() {
+        const nombre = nombreInp.value.trim();
+        if (!nombre) {
+            alert('El nombre del producto es obligatorio');
+            return;
         }
 
-        function agregarProductoManual() {
-            const nombre = nombreInp.value.trim();
-            if (!nombre) {
-                alert('El nombre del producto es obligatorio');
-                return;
-            }
-
-            const cantidad = parseInt(cantidadInp.value);
-            if (!cantidad || cantidad < 1) {
-                alert('La cantidad debe ser mayor a 0');
-                return;
-            }
-
-            const nuevoProducto = {
-                tempId: nextId++,
-                producto: nombre,
-                clave_producto: claveInp.value.trim() || null,
-                cantidad: cantidad
-            };
-
-            productos.push(nuevoProducto);
-            renderizarTabla();
-            limpiarFormularioManual();
+        let cantidad = parseInt(cantidadInp.value);
+        if (isNaN(cantidad) || cantidad < 1) {
+            alert('La cantidad debe ser mayor a 0');
+            return;
         }
 
-        function limpiarFormularioManual() {
-            nombreInp.value = '';
-            claveInp.value = '';
-            cantidadInp.value = '1';
-        }
+        const nuevoProducto = {
+            tempId: nextId++,
+            producto: nombre,
+            clave_producto: claveInp.value.trim() || '',
+            cantidad: cantidad
+        };
 
-        document.getElementById('btn-agregar-manual').addEventListener('click', agregarProductoManual);
-        
-        const inputs = [nombreInp, claveInp, cantidadInp];
-        inputs.forEach(input => {
+        productos.push(nuevoProducto);
+        renderizarTabla();
+        limpiarFormularioManual();
+    }
+
+    function limpiarFormularioManual() {
+        nombreInp.value = '';
+        claveInp.value = '';
+        cantidadInp.value = '1';
+    }
+
+    const btnAgregar = document.getElementById('btn-agregar-manual');
+    if (btnAgregar) {
+        btnAgregar.addEventListener('click', agregarProductoManual);
+    }
+
+    const inputs = [nombreInp, claveInp, cantidadInp];
+    inputs.forEach(input => {
+        if (input) {
             input.addEventListener('keypress', (e) => {
                 if (e.key === 'Enter') {
                     e.preventDefault();
                     agregarProductoManual();
                 }
             });
-        });
+        }
+    });
 
-        const form = document.querySelector('form');
+    const form = document.querySelector('form');
+    if (form) {
         form.addEventListener('submit', (e) => {
             if (productos.length === 0) {
                 e.preventDefault();
                 alert('Debe agregar al menos un producto a la orden');
             }
         });
+    }
 
-        renderizarTabla();
-    })();
+    renderizarTabla();
+})();
 </script>
 {% endblock %}
