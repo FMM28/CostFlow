@@ -417,8 +417,8 @@ def orden_detalle_update(id_detalle):
         flash(error_total, "error")
         return redirect(
             url_for(
-                "admin.orden_detalle",
-                id_orden=detalle.id_orden,
+                "admin.orden_detalle_show",
+                id_detalle=id_detalle,
             )
         )
 
@@ -426,8 +426,8 @@ def orden_detalle_update(id_detalle):
 
     return redirect(
         url_for(
-            "admin.orden_detalle",
-            id_orden=detalle.id_orden,
+            "admin.orden_detalle_show",
+            id_detalle=id_detalle,
         )
     )
 
