@@ -570,14 +570,7 @@ def orden_detalle_seleccionar_proveedor(id_detalle):
     )
 
     if not proveedor:
-        flash("Proveedor no encontrado", "error")
-
-        return redirect(
-            url_for(
-                "admin.orden_detalle_show",
-                id_detalle=id_detalle,
-            )
-        )
+        proveedor, error = ProveedorService.create({"nombre": proveedor_nombre})
 
     data = {
         "id_proveedor": proveedor.id_proveedor
@@ -587,6 +580,11 @@ def orden_detalle_seleccionar_proveedor(id_detalle):
 
     if not detalle.url_imagen and imagen:
         data["url_imagen"] = imagen
+        
+    url_producto = request.form.get("url")
+    
+    if url_producto:
+        data["url_producto"] = url_producto
 
     moneda = request.form.get("moneda")
     precio = request.form.get(
