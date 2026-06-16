@@ -7,6 +7,7 @@ from app.models.producto_proveedor import ProductoProveedor
 from app.services.proveedores.CVAService import CVAService
 from app.services.proveedores.IngramService import IngramService
 from app.services.proveedores.SyscomService import SyscomService
+from app.services.proveedores.SiclikService import SiclikService
 
 logger = logging.getLogger(__name__)
 
@@ -17,6 +18,7 @@ class BuscadorProducto:
         CVAService,
         # IngramService,
         SyscomService,
+        SiclikService,
     ]
 
     MAX_WORKERS = 4

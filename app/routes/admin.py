@@ -1,6 +1,7 @@
 from flask import Blueprint, jsonify, render_template, request, redirect, url_for, flash
 from flask_login import login_required, current_user
 from app.services.proveedor_service import ProveedorService
+from app.services.proveedores.SiclikService import SiclikService
 from app.services.user_service import UserService
 from app.services.orden_service import OrdenService
 from app.services.orden_detalle_service import OrdenDetalleService
@@ -404,6 +405,7 @@ def orden_agregar_detalle(id_orden):
 
 @admin_bp.get('/ordenes/detalles/<int:id_detalle>')
 @login_required
+@role_required("admin")
 def orden_detalle_show(id_detalle):
 
     detalle = OrdenDetalleService.get_by_id(id_detalle)
@@ -522,6 +524,7 @@ def orden_delete(id_orden):
 
 @admin_bp.get('/ordenes/<int:id_detalle>/proveedores')
 @login_required
+@role_required("admin")
 def orden_detalle_proveedores(id_detalle):
     
     detalle = OrdenDetalleService.get_by_id(id_detalle)
@@ -549,6 +552,7 @@ def orden_detalle_proveedores(id_detalle):
     
 @admin_bp.post('/ordenes/<int:id_detalle>/proveedores')
 @login_required
+@role_required("admin")
 def orden_detalle_seleccionar_proveedor(id_detalle):
 
     detalle = OrdenDetalleService.get_by_id(id_detalle)
@@ -673,6 +677,7 @@ def orden_detalle_seleccionar_proveedor(id_detalle):
 
 @admin_bp.post('/ordenes/<int:id_detalle>/proveedores/manual')
 @login_required
+@role_required("admin")
 def orden_detalle_asignar_proveedor_manual(id_detalle):
 
     detalle = OrdenDetalleService.get_by_id(id_detalle)
@@ -731,3 +736,78 @@ def orden_detalle_asignar_proveedor_manual(id_detalle):
             id_detalle=id_detalle,
         )
     )
+    
+    
+@admin_bp.get("/proveedores")
+@login_required
+@role_required("admin")
+def proveedores():
+    return render_template(
+        'admin/config_proveedores.html',
+        siclik_activo=SiclikService.sesion_activa()
+    )
+    
+    
+@admin_bp.get("/proveedores/siclik")
+@login_required
+@role_required("admin")
+def siclik():
+    return render_template(
+        "admin/siclik.html",
+        autenticado=SiclikService.sesion_activa()
+    )
+    
+    
+@admin_bp.post("/proveedores/siclik/iniciar")
+@login_required
+@role_required("admin")
+def iniciar_siclik():
+
+    try:
+
+        SiclikService.iniciar_autenticacion()
+
+        return jsonify({
+            "success": True,
+            "message":
+                "Código enviado por WhatsApp"
+        })
+
+    except Exception as e:
+
+        return jsonify({
+            "success": False,
+            "message": str(e)
+        }), 500
+        
+
+@admin_bp.post("/proveedores/siclik/confirmar")
+@login_required
+@role_required("admin")
+def confirmar_siclik():
+
+    try:
+
+        codigo = (request.json.get("codigo"))
+
+        if not codigo:
+
+            return jsonify({
+                "success": False,
+                "message":
+                    "Código requerido"
+            }), 400
+
+        SiclikService.confirmar_autenticacion(codigo)
+
+        return jsonify({
+            "success": True,
+            "message":
+                "Siclik autenticado"
+        })
+
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "message": str(e)
+        }), 500
