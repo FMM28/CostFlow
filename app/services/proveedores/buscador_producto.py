@@ -8,6 +8,7 @@ from app.services.proveedores.CVAService import CVAService
 from app.services.proveedores.IngramService import IngramService
 from app.services.proveedores.SyscomService import SyscomService
 from app.services.proveedores.SiclikService import SiclikService
+from app.services.proveedores.TechsmartService import TechSmartService
 
 logger = logging.getLogger(__name__)
 
@@ -19,6 +20,7 @@ class BuscadorProducto:
         # IngramService,
         SyscomService,
         SiclikService,
+        TechSmartService,
     ]
 
     MAX_WORKERS = 4
