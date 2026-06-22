@@ -45,7 +45,10 @@ def _validate_password(password: str) -> Tuple[bool, Optional[str]]:
     if not password:
         return False, "La contraseña es requerida."
     if len(password) < MIN_PASSWORD_LENGTH:
-        return False, f"La contraseña debe tener al menos {MIN_PASSWORD_LENGTH} caracteres."
+        return (
+            False,
+            f"La contraseña debe tener al menos {MIN_PASSWORD_LENGTH} caracteres.",
+        )
     if not re.search(r"[A-Z]", password):
         return False, "La contraseña debe contener al menos una letra mayúscula."
     if not re.search(r"[0-9]", password):
@@ -69,9 +72,11 @@ def _validate_nombre(value: str) -> Tuple[bool, Optional[str]]:
     return True, None
 
 
-def _validate_apellido(value: Optional[str], field_label: str, required: bool = True) -> Tuple[bool, Optional[str], Optional[str]]:
+def _validate_apellido(
+    value: Optional[str], field_label: str, required: bool = True
+) -> Tuple[bool, Optional[str], Optional[str]]:
     """
-    Valida ap_paterno y ap_materno — String(45). 
+    Valida ap_paterno y ap_materno — String(45).
     Retorna (is_valid, error_message, normalized_value).
     """
     if not value or not value.strip():
@@ -94,7 +99,7 @@ class UserService:
 
         Args:
             include_deleted: Si es True incluye registros con soft delete.
-        
+
         Returns:
             List[Usuario]: Lista de usuarios (vacía si hay error).
         """
@@ -124,15 +129,17 @@ class UserService:
         if usuario is None:
             logger.warning("Usuario con id %s no encontrado.", id_usuario)
             return None
-        
+
         if not include_deleted and usuario.deleted_at is not None:
             logger.warning("Usuario con id %s ha sido eliminado.", id_usuario)
             return None
-        
+
         return usuario
 
     @staticmethod
-    def get_by_username(username: str, include_deleted: bool = False) -> Optional[Usuario]:
+    def get_by_username(
+        username: str, include_deleted: bool = False
+    ) -> Optional[Usuario]:
         """
         Busca un usuario por username (case-insensitive).
 
@@ -143,7 +150,7 @@ class UserService:
         if not is_valid:
             logger.warning("Username inválido '%s': %s", username, error)
             return None
-        
+
         username = username.strip()
         try:
             query = Usuario.query.filter(Usuario.username.ilike(username))
@@ -151,7 +158,9 @@ class UserService:
                 query = query.filter(Usuario.deleted_at.is_(None))
             return query.first()
         except SQLAlchemyError as exc:
-            logger.exception("Error al buscar usuario por username='%s': %s", username, exc)
+            logger.exception(
+                "Error al buscar usuario por username='%s': %s", username, exc
+            )
             return None
 
     @staticmethod
@@ -165,19 +174,21 @@ class UserService:
         if not nombre or not nombre.strip():
             logger.warning("Término de búsqueda vacío.")
             return []
-        
+
         try:
             search_term = f"%{nombre.strip()}%"
             query = Usuario.query.filter(
-                (Usuario.nombre.ilike(search_term)) |
-                (Usuario.ap_paterno.ilike(search_term)) |
-                (Usuario.ap_materno.ilike(search_term))
+                (Usuario.nombre.ilike(search_term))
+                | (Usuario.ap_paterno.ilike(search_term))
+                | (Usuario.ap_materno.ilike(search_term))
             )
             if not include_deleted:
                 query = query.filter(Usuario.deleted_at.is_(None))
             return query.order_by(Usuario.nombre).all()
         except SQLAlchemyError as exc:
-            logger.exception("Error al buscar usuarios por nombre='%s': %s", nombre, exc)
+            logger.exception(
+                "Error al buscar usuarios por nombre='%s': %s", nombre, exc
+            )
             return []
 
     @staticmethod
@@ -192,7 +203,7 @@ class UserService:
         if not is_valid:
             logger.warning("Rol inválido '%s': %s", role, error)
             return []
-        
+
         try:
             query = Usuario.query.filter(Usuario.role == role.strip())
             if not include_deleted:
@@ -222,37 +233,41 @@ class UserService:
         is_valid, error = _validate_username(username)
         if not is_valid:
             return None, error
-        
+
         is_valid, error = _validate_email(email)
         if not is_valid:
             return None, error
-        
+
         is_valid, error = _validate_role(role)
         if not is_valid:
             return None, error
-        
+
         is_valid, error = _validate_nombre(nombre)
         if not is_valid:
             return None, error
-        
-        is_valid, error, ap_paterno_norm = _validate_apellido(ap_paterno, "El apellido paterno", required=True)
+
+        is_valid, error, ap_paterno_norm = _validate_apellido(
+            ap_paterno, "El apellido paterno", required=True
+        )
         if not is_valid:
             return None, error
-        
-        is_valid, error, ap_materno_norm = _validate_apellido(ap_materno, "El apellido materno", required=False)
+
+        is_valid, error, ap_materno_norm = _validate_apellido(
+            ap_materno, "El apellido materno", required=False
+        )
         if not is_valid:
             return None, error
-        
+
         is_valid, error = _validate_password(password)
         if not is_valid:
             return None, error
-        
+
         # Sanitize inputs
         username = username.strip()
         email = email.strip().lower()
         role = role.strip()
         nombre = nombre.strip()
-        
+
         # Verificar unicidad
         try:
             if Usuario.query.filter(Usuario.username.ilike(username)).first():
@@ -277,11 +292,15 @@ class UserService:
         try:
             db.session.add(usuario)
             db.session.commit()
-            logger.info("Usuario creado: id=%s username='%s'.", usuario.id_usuario, username)
+            logger.info(
+                "Usuario creado: id=%s username='%s'.", usuario.id_usuario, username
+            )
             return usuario, None
         except IntegrityError as exc:
             db.session.rollback()
-            logger.warning("IntegrityError al crear usuario username='%s': %s", username, exc)
+            logger.warning(
+                "IntegrityError al crear usuario username='%s': %s", username, exc
+            )
             return None, "Conflicto de datos al crear el usuario."
         except OperationalError as exc:
             db.session.rollback()
@@ -318,73 +337,75 @@ class UserService:
             is_valid, error = _validate_username(username)
             if not is_valid:
                 return None, error
-            
+
             username = username.strip()
             try:
                 duplicate = Usuario.query.filter(
-                    Usuario.username.ilike(username),
-                    Usuario.id_usuario != id_usuario
+                    Usuario.username.ilike(username), Usuario.id_usuario != id_usuario
                 ).first()
                 if duplicate:
                     return None, "El nombre de usuario ya está en uso."
             except SQLAlchemyError as exc:
                 logger.exception("Error al verificar unicidad de username: %s", exc)
                 return None, "Error de base de datos al verificar username."
-            
+
             usuario.username = username
 
         if email is not None:
             is_valid, error = _validate_email(email)
             if not is_valid:
                 return None, error
-            
+
             email = email.strip().lower()
             try:
                 duplicate = Usuario.query.filter(
-                    Usuario.email.ilike(email),
-                    Usuario.id_usuario != id_usuario
+                    Usuario.email.ilike(email), Usuario.id_usuario != id_usuario
                 ).first()
                 if duplicate:
                     return None, "El email ya está registrado."
             except SQLAlchemyError as exc:
                 logger.exception("Error al verificar unicidad de email: %s", exc)
                 return None, "Error de base de datos al verificar email."
-            
+
             usuario.email = email
 
         if role is not None:
             is_valid, error = _validate_role(role)
             if not is_valid:
                 return None, error
-            
+
             usuario.role = role.strip()
 
         if nombre is not None:
             is_valid, error = _validate_nombre(nombre)
             if not is_valid:
                 return None, error
-            
+
             usuario.nombre = nombre.strip()
 
         if ap_paterno is not None:
-            is_valid, error, ap_paterno_norm = _validate_apellido(ap_paterno, "El apellido paterno", required=True)
+            is_valid, error, ap_paterno_norm = _validate_apellido(
+                ap_paterno, "El apellido paterno", required=True
+            )
             if not is_valid:
                 return None, error
-            
+
             usuario.ap_paterno = ap_paterno_norm
 
         if ap_materno is not None:
-            is_valid, error, ap_materno_norm = _validate_apellido(ap_materno, "El apellido materno", required=False)
+            is_valid, error, ap_materno_norm = _validate_apellido(
+                ap_materno, "El apellido materno", required=False
+            )
             if not is_valid:
                 return None, error
-            
+
             usuario.ap_materno = ap_materno_norm
 
         if password is not None:
             is_valid, error = _validate_password(password)
             if not is_valid:
                 return None, error
-            
+
             usuario.set_password(password)
 
         try:
@@ -393,7 +414,9 @@ class UserService:
             return usuario, None
         except IntegrityError as exc:
             db.session.rollback()
-            logger.warning("IntegrityError al actualizar usuario id=%s: %s", id_usuario, exc)
+            logger.warning(
+                "IntegrityError al actualizar usuario id=%s: %s", id_usuario, exc
+            )
             return None, "Conflicto de datos al actualizar el usuario."
         except SQLAlchemyError as exc:
             db.session.rollback()
@@ -419,7 +442,9 @@ class UserService:
             return True, None
         except SQLAlchemyError as exc:
             db.session.rollback()
-            logger.exception("Error al hacer soft delete de usuario id=%s: %s", id_usuario, exc)
+            logger.exception(
+                "Error al hacer soft delete de usuario id=%s: %s", id_usuario, exc
+            )
             return False, "Error de base de datos al eliminar el usuario."
 
     @staticmethod
@@ -471,14 +496,19 @@ class UserService:
                 id_usuario,
                 exc,
             )
-            return False, "No se puede eliminar permanentemente el usuario porque tiene registros asociados."
+            return (
+                False,
+                "No se puede eliminar permanentemente el usuario porque tiene registros asociados.",
+            )
         except SQLAlchemyError as exc:
             db.session.rollback()
             logger.exception("Error al eliminar usuario id=%s: %s", id_usuario, exc)
             return False, "Error de base de datos al eliminar el usuario."
 
     @staticmethod
-    def change_password(id_usuario: int, current_password: str, new_password: str) -> Tuple[bool, Optional[str]]:
+    def change_password(
+        id_usuario: int, current_password: str, new_password: str
+    ) -> Tuple[bool, Optional[str]]:
         """
         Cambia la contraseña de un usuario activo tras validar la actual.
 
@@ -503,5 +533,7 @@ class UserService:
             return True, None
         except SQLAlchemyError as exc:
             db.session.rollback()
-            logger.exception("Error al cambiar contraseña de usuario id=%s: %s", id_usuario, exc)
+            logger.exception(
+                "Error al cambiar contraseña de usuario id=%s: %s", id_usuario, exc
+            )
             return False, "Error de base de datos al cambiar la contraseña."

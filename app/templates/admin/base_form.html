@@ -1,7 +1,7 @@
 {% extends "admin/base.html" %}
 
 {% block title %}
-    {% block form_title %}Formulario{% endblock %}
+{% block form_title %}Formulario{% endblock %}
 {% endblock %}
 
 {% block content %}
@@ -21,11 +21,11 @@
 
     <!-- Flash messages -->
     {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            <div class="space-y-3">
-                {% for category, message in messages %}
+    {% if messages %}
+    <div class="space-y-3">
+        {% for category, message in messages %}
 
-                    <div class="
+        <div class="
                         px-4 py-3 rounded-xl text-sm border
                         {% if category == 'success' %}
                             bg-emerald-50 border-emerald-200 text-emerald-700
@@ -37,12 +37,12 @@
                             bg-gray-50 border-gray-200 text-gray-700
                         {% endif %}
                     ">
-                        {{ message }}
-                    </div>
+            {{ message }}
+        </div>
 
-                {% endfor %}
-            </div>
-        {% endif %}
+        {% endfor %}
+    </div>
+    {% endif %}
     {% endwith %}
 
     <!-- Card -->
@@ -59,8 +59,7 @@
 
                 {% block form_actions %}
 
-                <a href="{{ url_for('admin.users') }}"
-                   class="inline-flex items-center justify-center
+                <a href="{{ url_for('admin.users') }}" class="inline-flex items-center justify-center
                           px-6 py-2.5
                           text-sm font-medium
                           text-gray-700
@@ -70,21 +69,14 @@
                           hover:bg-gray-50
                           transition-colors">
 
-                    <svg class="w-4 h-4 mr-2"
-                         fill="none"
-                         stroke="currentColor"
-                         viewBox="0 0 24 24">
-                        <path stroke-linecap="round"
-                              stroke-linejoin="round"
-                              stroke-width="2"
-                              d="M15 19l-7-7 7-7"/>
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
                     </svg>
 
                     Cancelar
                 </a>
 
-                <button type="submit"
-                        class="inline-flex items-center justify-center
+                <button type="submit" class="inline-flex items-center justify-center
                                px-6 py-2.5
                                text-sm font-medium
                                text-white
@@ -93,14 +85,8 @@
                                hover:bg-emerald-700
                                transition-colors">
 
-                    <svg class="w-4 h-4 mr-2"
-                         fill="none"
-                         stroke="currentColor"
-                         viewBox="0 0 24 24">
-                        <path stroke-linecap="round"
-                              stroke-linejoin="round"
-                              stroke-width="2"
-                              d="M5 13l4 4L19 7"/>
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                     </svg>
 
                     Guardar

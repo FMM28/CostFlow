@@ -31,7 +31,7 @@ class SyscomService(ProveedorProductos):
         if not url:
             logger.error("SYSCOM_URL no está configurada")
             raise ValueError("La URL de SYSCOM no está configurada (SYSCOM_URL)")
-        return url.rstrip('/')
+        return url.rstrip("/")
 
     @classmethod
     def _get_full_url(cls, endpoint: str) -> str:
@@ -68,9 +68,9 @@ class SyscomService(ProveedorProductos):
                 data={
                     "grant_type": "client_credentials",
                     "client_id": client_id,
-                    "client_secret": client_secret
+                    "client_secret": client_secret,
                 },
-                timeout=10
+                timeout=10,
             )
             response.raise_for_status()
             data = response.json()
@@ -93,10 +93,7 @@ class SyscomService(ProveedorProductos):
         token = cls._get_access_token()
         if not token:
             return None
-        return {
-            "Authorization": f"Bearer {token}",
-            "Accept": "application/json"
-        }
+        return {"Authorization": f"Bearer {token}", "Accept": "application/json"}
 
     @classmethod
     def _buscar_producto(cls, nombre: str | None, sku: str | None) -> Optional[dict]:
@@ -110,10 +107,7 @@ class SyscomService(ProveedorProductos):
 
         url = cls._get_full_url("/productos")
 
-        params = {
-            "busqueda": f"{nombre} + {sku}",
-            "pagina": 1
-        }
+        params = {"busqueda": f"{nombre} + {sku}", "pagina": 1}
 
         try:
             response = cls._get_session().get(
@@ -124,7 +118,9 @@ class SyscomService(ProveedorProductos):
 
             productos = data.get("productos", [])
             if not productos:
-                logger.info("SYSCOM no devolvió resultados para '%s'", params["busqueda"])
+                logger.info(
+                    "SYSCOM no devolvió resultados para '%s'", params["busqueda"]
+                )
                 return None
 
             if sku:
@@ -137,7 +133,12 @@ class SyscomService(ProveedorProductos):
             return productos[0]
 
         except requests.RequestException as e:
-            logger.error("Error buscando producto (sku='%s', nombre='%s') en SYSCOM: %s", sku, nombre, e)
+            logger.error(
+                "Error buscando producto (sku='%s', nombre='%s') en SYSCOM: %s",
+                sku,
+                nombre,
+                e,
+            )
             return None
 
     @classmethod
@@ -154,7 +155,7 @@ class SyscomService(ProveedorProductos):
                 existencias_sucursal.append(
                     ExistenciaSucursal(
                         sucursal=sucursal.upper().replace("_", " "),
-                        existencia=cantidad_int
+                        existencia=cantidad_int,
                     )
                 )
                 existencia_total += cantidad_int
@@ -196,7 +197,9 @@ class SyscomService(ProveedorProductos):
         return None
 
     @classmethod
-    def buscar_producto(cls, nombre: str | None = None, sku: str | None = None) -> Optional[ProductoProveedor]:
+    def buscar_producto(
+        cls, nombre: str | None = None, sku: str | None = None
+    ) -> Optional[ProductoProveedor]:
         """
         Busca un producto por su SKU y nombre en SYSCOM.
         """
@@ -206,7 +209,9 @@ class SyscomService(ProveedorProductos):
         data = cls._buscar_producto(nombre, sku)
 
         if not data:
-            logger.info("No se encontró producto (sku='%s', nombre='%s') en SYSCOM", sku, nombre)
+            logger.info(
+                "No se encontró producto (sku='%s', nombre='%s') en SYSCOM", sku, nombre
+            )
             return None
 
         try:
@@ -224,11 +229,13 @@ class SyscomService(ProveedorProductos):
                 descuento=descuento,
                 existencias_sucursal=existencias_sucursal,
                 url=url_producto,
-                url_imagen=cls._get_imagen_principal(data)
+                url_imagen=cls._get_imagen_principal(data),
             )
 
             return producto
 
         except Exception as e:
-            logger.error("Error procesando datos del producto SYSCOM (sku='%s'): %s", sku, e)
+            logger.error(
+                "Error procesando datos del producto SYSCOM (sku='%s'): %s", sku, e
+            )
             return None

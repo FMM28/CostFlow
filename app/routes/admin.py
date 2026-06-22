@@ -114,42 +114,43 @@ def delete_user(user_id):
 
     return redirect(url_for("admin.users"))
 
+
 @admin_bp.route("/ordenes")
 @login_required
 @role_required("admin")
 def ordenes():
-    search = request.args.get('search', '').strip() or None
-    estado = request.args.get('estado', 'pendiente')
-    fecha_inicio = request.args.get('fecha_inicio', '').strip() or None
-    fecha_fin = request.args.get('fecha_fin', '').strip() or None
-    page = request.args.get('page', 1, type=int)
-    
+    search = request.args.get("search", "").strip() or None
+    estado = request.args.get("estado", "pendiente")
+    fecha_inicio = request.args.get("fecha_inicio", "").strip() or None
+    fecha_fin = request.args.get("fecha_fin", "").strip() or None
+    page = request.args.get("page", 1, type=int)
+
     ordenes, total_pages, error = OrdenService.search_orders(
         search=search,
         estado=estado,
         fecha_inicio=fecha_inicio,
         fecha_fin=fecha_fin,
         page=page,
-        per_page=12
+        per_page=12,
     )
-    
+
     if error:
-        flash(error, 'error')
+        flash(error, "error")
         ordenes, total_pages = [], 0
-    
+
     return render_template(
-        'admin/ordenes.html',
+        "admin/ordenes.html",
         ordenes=ordenes,
         page=page,
         total_pages=total_pages,
         search=search,
         estado_actual=estado,
         fecha_inicio=fecha_inicio,
-        fecha_fin=fecha_fin
+        fecha_fin=fecha_fin,
     )
 
 
-@admin_bp.get('/ordenes/create')
+@admin_bp.get("/ordenes/create")
 @login_required
 @role_required("admin")
 def nueva_orden():
@@ -157,11 +158,11 @@ def nueva_orden():
     Muestra el formulario para crear una nueva orden.
     """
     # Pasar la fecha actual formateada para el campo de fecha
-    today = datetime.now().strftime('%Y-%m-%d')
-    return render_template('admin/nueva_orden.html', today=today)
+    today = datetime.now().strftime("%Y-%m-%d")
+    return render_template("admin/nueva_orden.html", today=today)
 
 
-@admin_bp.post('/ordenes/create')
+@admin_bp.post("/ordenes/create")
 @login_required
 @role_required("admin")
 def nueva_orden_post():
@@ -173,7 +174,7 @@ def nueva_orden_post():
         detalles = {}
 
         for key in request.form:
-            match = re.match(r'detalles\[(\d+)\]\[(\w+)\]', key)
+            match = re.match(r"detalles\[(\d+)\]\[(\w+)\]", key)
             if match:
                 idx = int(match.group(1))
                 campo = match.group(2)
@@ -187,17 +188,18 @@ def nueva_orden_post():
 
     def render_formulario():
         return render_template(
-            'admin/nueva_orden.html',
-            today=request.form.get('fecha_creacion') or datetime.now().strftime('%Y-%m-%d'),
+            "admin/nueva_orden.html",
+            today=request.form.get("fecha_creacion")
+            or datetime.now().strftime("%Y-%m-%d"),
             form_data=request.form,
-            detalles=obtener_detalles_form()
+            detalles=obtener_detalles_form(),
         )
 
     try:
-        clave_orden = request.form.get('clave_orden', '').strip()
-        comprador = request.form.get('comprador', '').strip()
-        fecha_creacion_str = request.form.get('fecha_creacion', '').strip()
-        estado = 'pendiente'
+        clave_orden = request.form.get("clave_orden", "").strip()
+        comprador = request.form.get("comprador", "").strip()
+        fecha_creacion_str = request.form.get("fecha_creacion", "").strip()
+        estado = "pendiente"
 
         if not clave_orden:
             flash("La clave de la orden es obligatoria.", "error")
@@ -210,14 +212,14 @@ def nueva_orden_post():
         fecha_creacion = None
         if fecha_creacion_str:
             try:
-                fecha_creacion = datetime.strptime(fecha_creacion_str, '%Y-%m-%d')
+                fecha_creacion = datetime.strptime(fecha_creacion_str, "%Y-%m-%d")
             except ValueError:
                 flash("Formato de fecha inválido.", "error")
                 return render_formulario()
 
         detalles_raw = {}
         for key in request.form:
-            match = re.match(r'detalles\[(\d+)\]\[(\w+)\]', key)
+            match = re.match(r"detalles\[(\d+)\]\[(\w+)\]", key)
             if match:
                 idx = int(match.group(1))
                 campo = match.group(2)
@@ -234,27 +236,27 @@ def nueva_orden_post():
         detalles_list = [detalles_raw[i] for i in sorted(detalles_raw.keys())]
 
         for i, det in enumerate(detalles_list):
-            if not det.get('producto'):
+            if not det.get("producto"):
                 flash(f"El producto #{i + 1} no tiene nombre.", "error")
                 return render_formulario()
 
             try:
-                cantidad = int(det.get('cantidad', 0))
+                cantidad = int(det.get("cantidad", 0))
                 if cantidad <= 0:
                     raise ValueError
             except (ValueError, TypeError):
                 flash(
                     f"El producto #{i + 1} debe tener una cantidad válida mayor a 0.",
-                    "error"
+                    "error",
                 )
                 return render_formulario()
 
         for det in detalles_list:
-            det.setdefault('precio_unitario', '0.00')
-            det.setdefault('ganancia_unitaria', '0.00')
-            det.setdefault('costo_envio', '0.00')
-            det.setdefault('margen_ganancia', '0.00')
-            det.setdefault('id_proveedor', None)
+            det.setdefault("precio_unitario", "0.00")
+            det.setdefault("ganancia_unitaria", "0.00")
+            det.setdefault("costo_envio", "0.00")
+            det.setdefault("margen_ganancia", "0.00")
+            det.setdefault("id_proveedor", None)
 
         data_orden = {
             "clave_orden": clave_orden,
@@ -273,8 +275,7 @@ def nueva_orden_post():
             return render_formulario()
 
         detalles_creados, error_detalles = OrdenDetalleService.add_bulk(
-            orden.id_orden,
-            detalles_list
+            orden.id_orden, detalles_list
         )
 
         if error_detalles:
@@ -282,9 +283,7 @@ def nueva_orden_post():
             flash(f"Error al agregar productos: {error_detalles}", "error")
             return render_formulario()
 
-        nuevo_total, error_total = OrdenService.recalculate_total(
-            orden.id_orden
-        )
+        nuevo_total, error_total = OrdenService.recalculate_total(orden.id_orden)
 
         if error_total:
             OrdenService.delete(orden.id_orden)
@@ -294,17 +293,17 @@ def nueva_orden_post():
         flash(
             f"Orden '{orden.clave_orden}' creada exitosamente con "
             f"{len(detalles_creados)} producto(s).",
-            "success"
+            "success",
         )
 
-        return redirect(url_for('admin.ordenes'))
+        return redirect(url_for("admin.ordenes"))
 
     except Exception as e:
         flash(f"Error inesperado: {str(e)}", "error")
         return render_formulario()
 
 
-@admin_bp.get('/ordenes/<int:id_orden>')
+@admin_bp.get("/ordenes/<int:id_orden>")
 @login_required
 @role_required("admin")
 def orden_detalle(id_orden):
@@ -314,18 +313,16 @@ def orden_detalle(id_orden):
     orden, detalles, error = OrdenService.get_with_details(id_orden)
     if error or not orden:
         flash(error or "Orden no encontrada", "error")
-        return redirect(url_for('admin.ordenes'))
-    
+        return redirect(url_for("admin.ordenes"))
+
     proveedores = ProveedorService.get_all()
 
     return render_template(
-        'admin/detalle_orden.html',
-        orden=orden,
-        proveedores=proveedores
+        "admin/detalle_orden.html", orden=orden, proveedores=proveedores
     )
 
 
-@admin_bp.post('/ordenes/<int:id_orden>/update')
+@admin_bp.post("/ordenes/<int:id_orden>/update")
 @login_required
 @role_required("admin")
 def orden_update(id_orden):
@@ -344,10 +341,10 @@ def orden_update(id_orden):
     else:
         flash("Orden actualizada correctamente", "success")
 
-    return redirect(url_for('admin.orden_detalle', id_orden=id_orden))
+    return redirect(url_for("admin.orden_detalle", id_orden=id_orden))
 
 
-@admin_bp.post('/ordenes/<int:id_orden>/detalles')
+@admin_bp.post("/ordenes/<int:id_orden>/detalles")
 @login_required
 @role_required("admin")
 def orden_agregar_detalle(id_orden):
@@ -356,22 +353,22 @@ def orden_agregar_detalle(id_orden):
         orden = OrdenService.get_by_id(id_orden)
         if not orden:
             flash("La orden no existe.", "error")
-            return redirect(url_for('admin.ordenes'))
+            return redirect(url_for("admin.ordenes"))
 
-        producto = request.form.get('producto', '').strip()
-        clave_producto = request.form.get('clave_producto', '').strip() or None
-        
+        producto = request.form.get("producto", "").strip()
+        clave_producto = request.form.get("clave_producto", "").strip() or None
+
         try:
-            cantidad = int(request.form.get('cantidad', 0))
+            cantidad = int(request.form.get("cantidad", 0))
             if cantidad <= 0:
                 raise ValueError
         except (ValueError, TypeError):
             flash("La cantidad debe ser un número válido mayor a 0.", "error")
-            return redirect(url_for('admin.orden_detalle', id_orden=id_orden))
+            return redirect(url_for("admin.orden_detalle", id_orden=id_orden))
 
         if not producto:
             flash("El nombre del producto es obligatorio.", "error")
-            return redirect(url_for('admin.orden_detalle', id_orden=id_orden))
+            return redirect(url_for("admin.orden_detalle", id_orden=id_orden))
 
         data = {
             "producto": producto,
@@ -381,46 +378,43 @@ def orden_agregar_detalle(id_orden):
             "ganancia_unitaria": 0.00,  # Valor por defecto
             "costo_envio": 0.00,  # Valor por defecto
             "margen_ganancia": 0.00,  # Valor por defecto
-            "id_proveedor": None  # Se deja nulo por defecto
+            "id_proveedor": None,  # Se deja nulo por defecto
         }
 
         detalle, error = OrdenDetalleService.add_detalle(id_orden, data)
-        
+
         if error:
             flash(f"Error al agregar el producto: {error}", "error")
-            return redirect(url_for('admin.orden_detalle', id_orden=id_orden))
+            return redirect(url_for("admin.orden_detalle", id_orden=id_orden))
 
         # Recalcular totales de la orden
         nuevo_total, error_total = OrdenService.recalculate_total(id_orden)
-        
+
         if error_total:
-            if detalle and detalle.get('id_detalle'):
-                OrdenDetalleService.delete(detalle['id_detalle'])
+            if detalle and detalle.get("id_detalle"):
+                OrdenDetalleService.delete(detalle["id_detalle"])
             flash(f"Error al actualizar los totales: {error_total}", "error")
-            return redirect(url_for('admin.orden_detalle', id_orden=id_orden))
+            return redirect(url_for("admin.orden_detalle", id_orden=id_orden))
 
         flash(f"Producto '{producto}' agregado exitosamente a la orden.", "success")
-        return redirect(url_for('admin.orden_detalle', id_orden=id_orden))
+        return redirect(url_for("admin.orden_detalle", id_orden=id_orden))
 
     except Exception as e:
         flash(f"Error inesperado al agregar producto: {str(e)}", "error")
-        return redirect(url_for('admin.orden_detalle', id_orden=id_orden))
+        return redirect(url_for("admin.orden_detalle", id_orden=id_orden))
 
 
-@admin_bp.get('/ordenes/detalles/<int:id_detalle>')
+@admin_bp.get("/ordenes/detalles/<int:id_detalle>")
 @login_required
 @role_required("admin")
 def orden_detalle_show(id_detalle):
 
     detalle = OrdenDetalleService.get_by_id(id_detalle)
 
-    return render_template(
-        'admin/detalle_show.html',
-        detalle=detalle
-    )
+    return render_template("admin/detalle_show.html", detalle=detalle)
 
 
-@admin_bp.post('/ordenes/detalles/<int:id_detalle>/update')
+@admin_bp.post("/ordenes/detalles/<int:id_detalle>/update")
 @login_required
 @role_required("admin")
 def orden_detalle_update(id_detalle):
@@ -429,7 +423,7 @@ def orden_detalle_update(id_detalle):
 
     if not detalle_actual:
         flash("Producto no encontrado", "error")
-        return redirect(url_for('admin.ordenes'))
+        return redirect(url_for("admin.ordenes"))
 
     data = {
         "producto": request.form.get("producto", "").strip(),
@@ -455,7 +449,7 @@ def orden_detalle_update(id_detalle):
                 id_orden=detalle_actual.id_orden,
             )
         )
-        
+
     nuevo_total, error_total = OrdenService.recalculate_total(detalle.id_orden)
     if error_total:
         flash(error_total, "error")
@@ -476,7 +470,7 @@ def orden_detalle_update(id_detalle):
     )
 
 
-@admin_bp.post('/ordenes/detalles/<int:id_detalle>/delete')
+@admin_bp.post("/ordenes/detalles/<int:id_detalle>/delete")
 @login_required
 @role_required("admin")
 def orden_delete_detalle(id_detalle):
@@ -485,7 +479,7 @@ def orden_delete_detalle(id_detalle):
 
     if not detalle:
         flash("Producto no encontrado", "error")
-        return redirect(url_for('admin.ordenes'))
+        return redirect(url_for("admin.ordenes"))
 
     id_orden = detalle.id_orden
 
@@ -493,19 +487,18 @@ def orden_delete_detalle(id_detalle):
 
     if not success:
         flash(error, "error")
-        
+
     nuevo_total, error_total = OrdenService.recalculate_total(id_orden)
     if error_total:
         flash(error_total, "error")
-        return redirect(url_for('admin.orden_detalle', id_orden=id_orden))
-    
+        return redirect(url_for("admin.orden_detalle", id_orden=id_orden))
+
     flash("Producto eliminado", "success")
 
-    return redirect(
-        url_for('admin.orden_detalle',id_orden=id_orden))
+    return redirect(url_for("admin.orden_detalle", id_orden=id_orden))
 
 
-@admin_bp.post('/ordenes/<int:id_orden>/delete')
+@admin_bp.post("/ordenes/<int:id_orden>/delete")
 @login_required
 @role_required("admin")
 def orden_delete(id_orden):
@@ -514,7 +507,7 @@ def orden_delete(id_orden):
 
     if error or not orden:
         flash(error or "Orden no encontrada", "error")
-        return redirect(url_for('admin.ordenes'))
+        return redirect(url_for("admin.ordenes"))
 
     success, error = OrdenService.delete(id_orden)
 
@@ -523,19 +516,19 @@ def orden_delete(id_orden):
     else:
         flash("Orden eliminada correctamente", "success")
 
-    return redirect(url_for('admin.ordenes'))
+    return redirect(url_for("admin.ordenes"))
 
 
-@admin_bp.get('/ordenes/<int:id_detalle>/proveedores')
+@admin_bp.get("/ordenes/<int:id_detalle>/proveedores")
 @login_required
 @role_required("admin")
 def orden_detalle_proveedores(id_detalle):
-    
+
     detalle = OrdenDetalleService.get_by_id(id_detalle)
     if not detalle:
         flash("Producto no encontrado", "error")
-        return redirect(url_for('admin.ordenes'))
-    
+        return redirect(url_for("admin.ordenes"))
+
     if not detalle.clave_producto:
         flash("El producto no tiene clave SKU para buscar proveedores", "error")
         return redirect(
@@ -544,17 +537,17 @@ def orden_detalle_proveedores(id_detalle):
                 id_detalle=id_detalle,
             )
         )
-        
-    productos = BuscadorProducto.buscar(nombre=detalle.producto, sku=detalle.clave_producto)
+
+    productos = BuscadorProducto.buscar(
+        nombre=detalle.producto, sku=detalle.clave_producto
+    )
 
     return render_template(
-        'admin/proveedores.html',
-        productos=productos,
-        id_detalle=id_detalle
+        "admin/proveedores.html", productos=productos, id_detalle=id_detalle
     )
-    
-    
-@admin_bp.post('/ordenes/<int:id_detalle>/proveedores')
+
+
+@admin_bp.post("/ordenes/<int:id_detalle>/proveedores")
 @login_required
 @role_required("admin")
 def orden_detalle_seleccionar_proveedor(id_detalle):
@@ -563,17 +556,13 @@ def orden_detalle_seleccionar_proveedor(id_detalle):
 
     if not detalle:
         flash("Producto no encontrado", "error")
-        return redirect(url_for('admin.ordenes'))
+        return redirect(url_for("admin.ordenes"))
 
     existencia = request.form.get("existencia", type=int)
 
     if existencia is not None:
-
         if existencia <= 0:
-            flash(
-                "El proveedor seleccionado no tiene existencia disponible",
-                "error"
-            )
+            flash("El proveedor seleccionado no tiene existencia disponible", "error")
 
             return redirect(
                 url_for(
@@ -589,7 +578,7 @@ def orden_detalle_seleccionar_proveedor(id_detalle):
                     f"insuficiente ({existencia} disponibles) "
                     f"para la cantidad requerida ({detalle.cantidad})."
                 ),
-                "error"
+                "error",
             )
 
             return redirect(
@@ -611,65 +600,46 @@ def orden_detalle_seleccionar_proveedor(id_detalle):
             )
         )
 
-    proveedor = ProveedorService.search_by_nombre(
-        proveedor_nombre
-    )
+    proveedor = ProveedorService.search_by_nombre(proveedor_nombre)
 
     if not proveedor:
         proveedor, error = ProveedorService.create({"nombre": proveedor_nombre})
 
-    data = {
-        "id_proveedor": proveedor.id_proveedor
-    }
+    data = {"id_proveedor": proveedor.id_proveedor}
 
     imagen = request.form.get("url_imagen")
 
     if not detalle.url_imagen and imagen:
         data["url_imagen"] = imagen
-        
+
     url_producto = request.form.get("url")
-    
+
     if url_producto:
         data["url_producto"] = url_producto
 
     moneda = request.form.get("moneda")
-    precio = request.form.get(
-        "precio",
-        type=float
-    )
+    precio = request.form.get("precio", type=float)
 
     if moneda and precio is not None:
         precio_mxn, error = CurrencyService.calcular_conversion_MXN(
-            precio=precio,
-            from_currency=moneda
+            precio=precio, from_currency=moneda
         )
-        
+
         if error:
             flash(error, "error")
-            return redirect(
-                url_for("admin.orden_detalle_show",id_detalle=id_detalle)
-            )
+            return redirect(url_for("admin.orden_detalle_show", id_detalle=id_detalle))
 
         data["precio_unitario"] = precio_mxn
 
     success, error = OrdenDetalleService.update_detalle(
-        id_detalle=id_detalle,
-        data=data
+        id_detalle=id_detalle, data=data
     )
 
     if not success:
-
-        flash(
-            error or "No se pudo asignar el proveedor",
-            "error"
-        )
+        flash(error or "No se pudo asignar el proveedor", "error")
 
     else:
-
-        flash(
-            "Proveedor asignado correctamente",
-            "success"
-        )
+        flash("Proveedor asignado correctamente", "success")
 
     return redirect(
         url_for(
@@ -677,9 +647,9 @@ def orden_detalle_seleccionar_proveedor(id_detalle):
             id_detalle=id_detalle,
         )
     )
-    
 
-@admin_bp.post('/ordenes/<int:id_detalle>/proveedores/manual')
+
+@admin_bp.post("/ordenes/<int:id_detalle>/proveedores/manual")
 @login_required
 @role_required("admin")
 def orden_detalle_asignar_proveedor_manual(id_detalle):
@@ -688,7 +658,7 @@ def orden_detalle_asignar_proveedor_manual(id_detalle):
 
     if not detalle:
         flash("Producto no encontrado", "error")
-        return redirect(url_for('admin.ordenes'))
+        return redirect(url_for("admin.ordenes"))
 
     proveedor_nombre = request.form.get("proveedor").strip()
 
@@ -714,25 +684,16 @@ def orden_detalle_asignar_proveedor_manual(id_detalle):
                 )
             )
 
-    data = {
-        "id_proveedor": proveedor.id_proveedor
-    }
+    data = {"id_proveedor": proveedor.id_proveedor}
 
     success, error = OrdenDetalleService.update_detalle(
-        id_detalle=id_detalle,
-        data=data
+        id_detalle=id_detalle, data=data
     )
 
     if not success:
-        flash(
-            error or "No se pudo asignar el proveedor",
-            "error"
-        )
+        flash(error or "No se pudo asignar el proveedor", "error")
     else:
-        flash(
-            "Proveedor asignado correctamente",
-            "success"
-        )
+        flash("Proveedor asignado correctamente", "success")
 
     return redirect(
         url_for(
@@ -740,50 +701,39 @@ def orden_detalle_asignar_proveedor_manual(id_detalle):
             id_detalle=id_detalle,
         )
     )
-    
-    
+
+
 @admin_bp.get("/proveedores")
 @login_required
 @role_required("admin")
 def proveedores():
     return render_template(
-        'admin/config_proveedores.html',
-        siclik_activo=SiclikService.sesion_activa()
+        "admin/config_proveedores.html", siclik_activo=SiclikService.sesion_activa()
     )
-    
-    
+
+
 @admin_bp.get("/proveedores/siclik")
 @login_required
 @role_required("admin")
 def siclik():
     return render_template(
-        "admin/siclik.html",
-        autenticado=SiclikService.sesion_activa()
+        "admin/siclik.html", autenticado=SiclikService.sesion_activa()
     )
-    
-    
+
+
 @admin_bp.post("/proveedores/siclik/iniciar")
 @login_required
 @role_required("admin")
 def iniciar_siclik():
 
     try:
-
         SiclikService.iniciar_autenticacion()
 
-        return jsonify({
-            "success": True,
-            "message":
-                "Código enviado por WhatsApp"
-        })
+        return jsonify({"success": True, "message": "Código enviado por WhatsApp"})
 
     except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
 
-        return jsonify({
-            "success": False,
-            "message": str(e)
-        }), 500
-        
 
 @admin_bp.post("/proveedores/siclik/confirmar")
 @login_required
@@ -791,32 +741,19 @@ def iniciar_siclik():
 def confirmar_siclik():
 
     try:
-
-        codigo = (request.json.get("codigo"))
+        codigo = request.json.get("codigo")
 
         if not codigo:
-
-            return jsonify({
-                "success": False,
-                "message":
-                    "Código requerido"
-            }), 400
+            return jsonify({"success": False, "message": "Código requerido"}), 400
 
         SiclikService.confirmar_autenticacion(codigo)
 
-        return jsonify({
-            "success": True,
-            "message":
-                "Siclik autenticado"
-        })
+        return jsonify({"success": True, "message": "Siclik autenticado"})
 
     except Exception as e:
-        return jsonify({
-            "success": False,
-            "message": str(e)
-        }), 500
-        
-        
+        return jsonify({"success": False, "message": str(e)}), 500
+
+
 @admin_bp.get("/proveedores/importacion-digital")
 @login_required
 @role_required("admin")
@@ -870,8 +807,8 @@ def importacion_digital_excel():
             os.remove(ruta_temporal)
 
     return redirect(redireccion)
-        
-        
+
+
 @admin_bp.get("/proveedores/arroba-computer")
 @login_required
 @role_required("admin")

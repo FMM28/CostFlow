@@ -13,7 +13,6 @@ logger = logging.getLogger(__name__)
 
 
 class CVAService(ProveedorProductos):
-
     _CAMPOS_SUCURSAL = {
         "CENTRO_DE_DISTRIBUCION_MEXICO",
         "CENTRO_DE_DISTRIBUCION_MONTERREY",
@@ -57,7 +56,9 @@ class CVAService(ProveedorProductos):
         for campo in item:
             nombre_campo = campo.tag
 
-            if nombre_campo in CVAService._CAMPOS_SUCURSAL or nombre_campo.startswith("VENTAS_"):
+            if nombre_campo in CVAService._CAMPOS_SUCURSAL or nombre_campo.startswith(
+                "VENTAS_"
+            ):
                 try:
                     existencia = int(campo.text or 0)
                 except (TypeError, ValueError):
@@ -67,7 +68,7 @@ class CVAService(ProveedorProductos):
                     existencias_sucursal.append(
                         ExistenciaSucursal(
                             sucursal=nombre_campo.replace("_", " "),
-                            existencia=existencia
+                            existencia=existencia,
                         )
                     )
                     existencia_total += existencia
@@ -96,14 +97,10 @@ class CVAService(ProveedorProductos):
             precio=Decimal(item.findtext("precio") or "0"),
             moneda=CVAService._parse_moneda(item),
             existencia=existencia_total,
-            descuento=(
-                Decimal(descuento)
-                if descuento and descuento.strip()
-                else None
-            ),
+            descuento=(Decimal(descuento) if descuento and descuento.strip() else None),
             existencias_sucursal=existencias_sucursal,
             url=None,
-            url_imagen=item.findtext("imagen")
+            url_imagen=item.findtext("imagen"),
         )
 
     @staticmethod
@@ -131,13 +128,15 @@ class CVAService(ProveedorProductos):
             "cliente": current_app.config["CVA_CLIENTE"],
             "codigo": codigo,
             "promos": "1",
-            "sucursales": "1"
+            "sucursales": "1",
         }
 
         return CVAService._make_request(params)
 
     @staticmethod
-    def buscar_producto(nombre: str | None = None, sku: str | None = None) -> ProductoProveedor | None:
+    def buscar_producto(
+        nombre: str | None = None, sku: str | None = None
+    ) -> ProductoProveedor | None:
         """
         Busca un producto por su código (SKU) en CVA.
         Retorna None si no se encuentra o si ocurre algún error.

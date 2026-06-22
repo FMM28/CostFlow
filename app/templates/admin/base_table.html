@@ -1,7 +1,7 @@
 {% extends "admin/base.html" %}
 
 {% block title %}
-    {% block table_title %}Listado{% endblock %}
+{% block table_title %}Listado{% endblock %}
 {% endblock %}
 
 {% block content %}
@@ -26,10 +26,10 @@
 
     <!-- Flash -->
     {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            <div class="space-y-2">
-                {% for category, message in messages %}
-                    <div class="
+    {% if messages %}
+    <div class="space-y-2">
+        {% for category, message in messages %}
+        <div class="
                         px-4 py-2 rounded-md text-sm border
                         {% if category == 'success' %}
                             border-green-600 text-green-700 bg-white
@@ -41,11 +41,11 @@
                             border-gray-300 text-gray-700 bg-white
                         {% endif %}
                     ">
-                        {{ message }}
-                    </div>
-                {% endfor %}
-            </div>
-        {% endif %}
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
     {% endwith %}
 
     <!-- Tabla -->

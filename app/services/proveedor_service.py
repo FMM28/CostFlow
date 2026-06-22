@@ -13,7 +13,6 @@ logger = logging.getLogger(__name__)
 
 
 class ProveedorService:
-
     @staticmethod
     def get_all(include_deleted: bool = False) -> List[Proveedor]:
         """
@@ -21,7 +20,7 @@ class ProveedorService:
 
         Args:
             include_deleted: Si es True incluye registros con soft delete.
-        
+
         Returns:
             List[Proveedor]: Lista de proveedores (vacía si hay error).
         """
@@ -35,7 +34,9 @@ class ProveedorService:
             return []
 
     @staticmethod
-    def get_by_id(id_proveedor: int, include_deleted: bool = False) -> Optional[Proveedor]:
+    def get_by_id(
+        id_proveedor: int, include_deleted: bool = False
+    ) -> Optional[Proveedor]:
         """
         Retorna un proveedor por su PK.
 
@@ -51,25 +52,25 @@ class ProveedorService:
         if proveedor is None:
             logger.warning("Proveedor con id %s no encontrado", id_proveedor)
             return None
-        
+
         if not include_deleted and proveedor.deleted_at is not None:
             logger.warning("Proveedor con id %s ha sido eliminado", id_proveedor)
             return None
-        
+
         return proveedor
 
     @staticmethod
     def search_by_nombre(nombre: str, include_deleted: bool = False) -> Proveedor:
         """
         Busca proveedores cuyo nombre contenga la cadena indicada (case-insensitive).
-        
+
         Returns:
             List[Proveedor]: Lista de proveedores encontrados (vacía si no hay resultados o error).
         """
         if not nombre or not nombre.strip():
             logger.warning("Término de búsqueda vacío")
             return []
-        
+
         try:
             query = Proveedor.query.filter(
                 Proveedor.nombre.ilike(f"%{nombre.strip()}%")
@@ -87,14 +88,14 @@ class ProveedorService:
         Crea un nuevo proveedor.
 
         Campos requeridos: nombre.
-        
+
         Returns:
             Tuple[Optional[Proveedor], Optional[str]]: (proveedor_creado, mensaje_error)
         """
         nombre = str(data.get("nombre", "")).strip()
         if not nombre:
             return None, "El campo 'nombre' es obligatorio"
-        
+
         if len(nombre) > 100:
             return None, "El nombre no puede exceder 100 caracteres"
 
@@ -103,11 +104,15 @@ class ProveedorService:
         try:
             db.session.add(proveedor)
             db.session.commit()
-            logger.info("Proveedor creado: id=%s nombre='%s'", proveedor.id_proveedor, nombre)
+            logger.info(
+                "Proveedor creado: id=%s nombre='%s'", proveedor.id_proveedor, nombre
+            )
             return proveedor, None
         except IntegrityError as exc:
             db.session.rollback()
-            logger.warning("IntegrityError al crear proveedor nombre='%s': %s", nombre, exc)
+            logger.warning(
+                "IntegrityError al crear proveedor nombre='%s': %s", nombre, exc
+            )
             return None, f"Ya existe un proveedor con el nombre '{nombre}'"
         except SQLAlchemyError as exc:
             db.session.rollback()
@@ -115,7 +120,9 @@ class ProveedorService:
             return None, "Error de base de datos al crear el proveedor"
 
     @staticmethod
-    def update(id_proveedor: int, data: dict) -> Tuple[Optional[Proveedor], Optional[str]]:
+    def update(
+        id_proveedor: int, data: dict
+    ) -> Tuple[Optional[Proveedor], Optional[str]]:
         """
         Actualiza el nombre de un proveedor activo.
 
@@ -143,7 +150,9 @@ class ProveedorService:
             return proveedor, None
         except IntegrityError as exc:
             db.session.rollback()
-            logger.warning("IntegrityError al actualizar proveedor id=%s: %s", id_proveedor, exc)
+            logger.warning(
+                "IntegrityError al actualizar proveedor id=%s: %s", id_proveedor, exc
+            )
             return None, f"Ya existe un proveedor con el nombre '{data.get('nombre')}'"
         except SQLAlchemyError as exc:
             db.session.rollback()
@@ -160,7 +169,10 @@ class ProveedorService:
         """
         proveedor = ProveedorService.get_by_id(id_proveedor)
         if proveedor is None:
-            return False, f"Proveedor con id {id_proveedor} no encontrado o ya eliminado"
+            return (
+                False,
+                f"Proveedor con id {id_proveedor} no encontrado o ya eliminado",
+            )
 
         try:
             proveedor.deleted_at = datetime.now(tz=timezone.utc)
@@ -169,7 +181,9 @@ class ProveedorService:
             return True, None
         except SQLAlchemyError as exc:
             db.session.rollback()
-            logger.error("Error al hacer soft delete de proveedor id=%s: %s", id_proveedor, exc)
+            logger.error(
+                "Error al hacer soft delete de proveedor id=%s: %s", id_proveedor, exc
+            )
             return False, "Error de base de datos al eliminar el proveedor"
 
     @staticmethod
@@ -218,7 +232,8 @@ class ProveedorService:
             db.session.rollback()
             logger.warning(
                 "IntegrityError al eliminar proveedor id=%s (tiene detalles asociados): %s",
-                id_proveedor, exc
+                id_proveedor,
+                exc,
             )
             return False, (
                 f"No se puede eliminar el proveedor {id_proveedor} "

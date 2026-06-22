@@ -5,13 +5,14 @@
         <div class="flex items-center space-x-3">
             <!-- Avatar con indicador de estado -->
             <div class="relative">
-                <div class="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center ring-2 ring-gray-700/50 shadow-md">
-                    <img src="{{ url_for('static', filename='icons/usuario.svg') }}" 
-                         alt="avatar" 
-                         class="w-5 h-5 opacity-80">
+                <div
+                    class="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center ring-2 ring-gray-700/50 shadow-md">
+                    <img src="{{ url_for('static', filename='icons/usuario.svg') }}" alt="avatar"
+                        class="w-5 h-5 opacity-80">
                 </div>
                 <!-- Indicador online -->
-                <span class="absolute bottom-0 right-0 block h-2.5 w-2.5 rounded-full ring-2 ring-gray-900 bg-green-400"></span>
+                <span
+                    class="absolute bottom-0 right-0 block h-2.5 w-2.5 rounded-full ring-2 ring-gray-900 bg-green-400"></span>
             </div>
 
             <div class="flex flex-col min-w-0">
@@ -25,43 +26,43 @@
 
     <!-- Menú de navegación -->
     <nav class="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-        
+
         <!-- Item: Dashboard -->
-        <a href="{{ url_for('admin.dashboard') }}" 
-           class="group flex items-center px-3 py-2.5 rounded-lg text-gray-300 hover:bg-gray-800 hover:text-white transition-all duration-200">
+        <a href="{{ url_for('admin.dashboard') }}"
+            class="group flex items-center px-3 py-2.5 rounded-lg text-gray-300 hover:bg-gray-800 hover:text-white transition-all duration-200">
             <div class="p-1.5 rounded-md group-hover:bg-gray-700/50 transition-colors">
-                <img src="{{ url_for('static', filename='icons/home.svg') }}" 
-                     class="w-5 h-5 opacity-70 group-hover:opacity-100">
+                <img src="{{ url_for('static', filename='icons/home.svg') }}"
+                    class="w-5 h-5 opacity-70 group-hover:opacity-100">
             </div>
             <span class="ml-3 text-sm font-medium">Dashboard</span>
         </a>
 
         <!-- Item: Usuarios -->
-        <a href="{{ url_for('admin.users') }}" 
-           class="group flex items-center px-3 py-2.5 rounded-lg text-gray-300 hover:bg-gray-800 hover:text-white transition-all duration-200">
+        <a href="{{ url_for('admin.users') }}"
+            class="group flex items-center px-3 py-2.5 rounded-lg text-gray-300 hover:bg-gray-800 hover:text-white transition-all duration-200">
             <div class="p-1.5 rounded-md group-hover:bg-gray-700/50 transition-colors">
-                <img src="{{ url_for('static', filename='icons/usuario.svg') }}" 
-                     class="w-5 h-5 opacity-70 group-hover:opacity-100">
+                <img src="{{ url_for('static', filename='icons/usuario.svg') }}"
+                    class="w-5 h-5 opacity-70 group-hover:opacity-100">
             </div>
             <span class="ml-3 text-sm font-medium">Usuarios</span>
         </a>
 
         <!-- Item: Órdenes -->
-        <a href="{{ url_for('admin.ordenes') }}" 
-           class="group flex items-center px-3 py-2.5 rounded-lg text-gray-300 hover:bg-gray-800 hover:text-white transition-all duration-200">
+        <a href="{{ url_for('admin.ordenes') }}"
+            class="group flex items-center px-3 py-2.5 rounded-lg text-gray-300 hover:bg-gray-800 hover:text-white transition-all duration-200">
             <div class="p-1.5 rounded-md group-hover:bg-gray-700/50 transition-colors">
-                <img src="{{ url_for('static', filename='icons/ordenes.svg') }}" 
-                     class="w-5 h-5 opacity-70 group-hover:opacity-100">
+                <img src="{{ url_for('static', filename='icons/ordenes.svg') }}"
+                    class="w-5 h-5 opacity-70 group-hover:opacity-100">
             </div>
             <span class="ml-3 text-sm font-medium">Órdenes</span>
         </a>
 
         <!-- Item: Proveedores -->
-        <a href="{{ url_for('admin.proveedores') }}" 
-           class="group flex items-center px-3 py-2.5 rounded-lg text-gray-300 hover:bg-gray-800 hover:text-white transition-all duration-200">
+        <a href="{{ url_for('admin.proveedores') }}"
+            class="group flex items-center px-3 py-2.5 rounded-lg text-gray-300 hover:bg-gray-800 hover:text-white transition-all duration-200">
             <div class="p-1.5 rounded-md group-hover:bg-gray-700/50 transition-colors">
-                <img src="{{ url_for('static', filename='icons/proveedores.svg') }}" 
-                     class="w-5 h-5 opacity-70 group-hover:opacity-100">
+                <img src="{{ url_for('static', filename='icons/proveedores.svg') }}"
+                    class="w-5 h-5 opacity-70 group-hover:opacity-100">
             </div>
             <span class="ml-3 text-sm font-medium">Proveedores</span>
         </a>
@@ -71,11 +72,11 @@
 
     <!-- Cerrar sesión -->
     <div class="px-3 py-4 border-t border-gray-800/60">
-        <a href="{{ url_for('auth.logout') }}" 
-           class="group flex items-center px-3 py-2.5 rounded-lg text-gray-400 hover:bg-red-500/10 hover:text-red-400 transition-all duration-200">
+        <a href="{{ url_for('auth.logout') }}"
+            class="group flex items-center px-3 py-2.5 rounded-lg text-gray-400 hover:bg-red-500/10 hover:text-red-400 transition-all duration-200">
             <div class="p-1.5 rounded-md group-hover:bg-red-500/20 transition-colors">
-                <img src="{{ url_for('static', filename='icons/logout.svg') }}" 
-                     class="w-5 h-5 opacity-70 group-hover:opacity-100">
+                <img src="{{ url_for('static', filename='icons/logout.svg') }}"
+                    class="w-5 h-5 opacity-70 group-hover:opacity-100">
             </div>
             <span class="ml-3 text-sm font-medium">Cerrar sesión</span>
         </a>

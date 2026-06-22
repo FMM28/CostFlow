@@ -16,7 +16,7 @@ class CurrencyService:
     def convertir(from_currency: str, to_currency: str):
 
         url = (
-            f"{CurrencyService.BASE_URL}@{"latest"}/v1/currencies/"
+            f"{CurrencyService.BASE_URL}@{'latest'}/v1/currencies/"
             f"{from_currency.lower()}.json"
         )
 
@@ -50,7 +50,9 @@ class CurrencyService:
             return None
 
     @staticmethod
-    def calcular_conversion_MXN(precio: float, from_currency: str) -> tuple[float, str | None]:
+    def calcular_conversion_MXN(
+        precio: float, from_currency: str
+    ) -> tuple[float, str | None]:
         currency = from_currency.strip().lower()
 
         if currency == "mxn":

@@ -19,7 +19,6 @@ logger = logging.getLogger(__name__)
 
 
 class TechSmartService(ProveedorProductos):
-
     PROVEEDOR = "techsmart"
 
     def __init__(self):
@@ -42,7 +41,7 @@ class TechSmartService(ProveedorProductos):
     @classmethod
     def _get_instance(cls):
         """Obtiene una instancia de la clase para acceder a las URLs."""
-        if not hasattr(cls, '_instance'):
+        if not hasattr(cls, "_instance"):
             cls._instance = cls()
         return cls._instance
 
@@ -75,7 +74,6 @@ class TechSmartService(ProveedorProductos):
         }
 
         try:
-
             response = requests.get(
                 instance.CATALOGO_URL,
                 params=params,
@@ -105,8 +103,7 @@ class TechSmartService(ProveedorProductos):
         )
 
         if sesion:
-
-            cookies = (sesion.cookies or {})
+            cookies = sesion.cookies or {}
 
             if cls._sesion_activa(cookies):
                 return cookies
@@ -124,7 +121,7 @@ class TechSmartService(ProveedorProductos):
 
         try:
             instance = cls._get_instance()
-            
+
             response = requests.get(
                 instance.CLIENTES_URL,
                 cookies=cookies,
@@ -132,14 +129,13 @@ class TechSmartService(ProveedorProductos):
                 timeout=10,
             )
 
-            if (response.status_code == 302):
+            if response.status_code == 302:
+                location = response.headers.get("Location", "")
 
-                location = (response.headers.get("Location", ""))
-
-                if (location.rstrip("/") == instance.BASE_URL.rstrip("/")):
+                if location.rstrip("/") == instance.BASE_URL.rstrip("/"):
                     return False
 
-            return (response.status_code == 200)
+            return response.status_code == 200
 
         except Exception:
             logger.exception("Error validando sesión TechSmart.")
@@ -150,7 +146,7 @@ class TechSmartService(ProveedorProductos):
 
         try:
             instance = cls._get_instance()
-            
+
             payload = {
                 "rfc": current_app.config["TECHSMART_RFC"],
                 "usuario": current_app.config["TECHSMART_USUARIO"],
@@ -165,10 +161,9 @@ class TechSmartService(ProveedorProductos):
 
             response.raise_for_status()
 
-            cookies = (response.cookies.get_dict())
+            cookies = response.cookies.get_dict()
 
             if not cookies:
-
                 raise Exception("No se recibieron cookies.")
 
             cls._guardar_sesion(cookies)
@@ -195,7 +190,6 @@ class TechSmartService(ProveedorProductos):
         ahora = datetime.now()
 
         if not sesion:
-
             sesion = SesionProveedor(
                 proveedor=cls.PROVEEDOR,
                 cookies=cookies,
@@ -205,9 +199,8 @@ class TechSmartService(ProveedorProductos):
             db.session.add(sesion)
 
         else:
-
             sesion.cookies = cookies
-            sesion.updated_at = (ahora)
+            sesion.updated_at = ahora
 
         db.session.commit()
 
@@ -228,28 +221,20 @@ class TechSmartService(ProveedorProductos):
         cards = soup.select(".card.rounded")
 
         for card in cards:
-
             try:
+                modelo = cls._obtener_modelo(card)
 
-                modelo = (cls._obtener_modelo(card))
-
-                if (
-                    sku_buscado
-                    and 
-                    modelo.upper() != sku_buscado.upper()
-                ):
+                if sku_buscado and modelo.upper() != sku_buscado.upper():
                     continue
 
-                codigo = (cls._obtener_codigo(card))
+                codigo = cls._obtener_codigo(card)
 
                 if not codigo:
                     continue
 
-                existencias = (
-                    cls._obtener_existencias(
-                        codigo,
-                        cookies,
-                    )
+                existencias = cls._obtener_existencias(
+                    codigo,
+                    cookies,
                 )
 
                 return ProductoProveedor(
@@ -278,7 +263,7 @@ class TechSmartService(ProveedorProductos):
 
         try:
             instance = cls._get_instance()
-            
+
             response = requests.post(
                 instance.EXISTENCIAS_URL,
                 data={
@@ -292,25 +277,17 @@ class TechSmartService(ProveedorProductos):
 
             data = response.json()
 
-            if data.get(
-                "error"
-            ) != "no":
-
+            if data.get("error") != "no":
                 return []
 
-            patron = re.compile(
-                r"Sucursal\s+(.*?):\s+(\d+)\s+pza\(s\)"
-            )
+            patron = re.compile(r"Sucursal\s+(.*?):\s+(\d+)\s+pza\(s\)")
 
             return [
                 ExistenciaSucursal(
                     sucursal=sucursal.strip(),
-                    existencia=int(
-                        cantidad
-                    ),
+                    existencia=int(cantidad),
                 )
-                for sucursal, cantidad
-                in patron.findall(
+                for sucursal, cantidad in patron.findall(
                     data.get(
                         "msg",
                         "",
@@ -327,9 +304,7 @@ class TechSmartService(ProveedorProductos):
 
         nodo = card.select_one(".text-card")
 
-        return (
-            nodo.get_text(" ", strip=True) if nodo else ""
-        )
+        return nodo.get_text(" ", strip=True) if nodo else ""
 
     @staticmethod
     def _obtener_modelo(card) -> str:
@@ -347,16 +322,12 @@ class TechSmartService(ProveedorProductos):
             ),
         )
 
-        return (
-            match.group(1) if match else ""
-        )
+        return match.group(1) if match else ""
 
     @staticmethod
     def _obtener_codigo(card) -> str | None:
 
-        boton = card.select_one(
-            '[onclick*="muestraExistencias"]'
-        )
+        boton = card.select_one('[onclick*="muestraExistencias"]')
 
         if not boton:
             return None
@@ -369,9 +340,7 @@ class TechSmartService(ProveedorProductos):
             ),
         )
 
-        return (
-            match.group(1) if match else None
-        )
+        return match.group(1) if match else None
 
     @staticmethod
     def _obtener_precios(card) -> tuple[Decimal, Decimal | None]:
@@ -379,18 +348,15 @@ class TechSmartService(ProveedorProductos):
         precios = []
 
         for font in card.select(".table-bottom_des font"):
+            texto = font.get_text(strip=True)
 
-            texto = (font.get_text(strip=True))
-
-            if ("$" not in texto or "USD" not in texto):
+            if "$" not in texto or "USD" not in texto:
                 continue
 
             try:
-
                 precios.append(
                     Decimal(
-                        texto
-                        .replace("$", "")
+                        texto.replace("$", "")
                         .replace("USD", "")
                         .replace(",", "")
                         .strip()
@@ -401,14 +367,12 @@ class TechSmartService(ProveedorProductos):
                 continue
 
         if len(precios) >= 2:
-
             return (
                 precios[0],
                 precios[1],
             )
 
         if len(precios) == 1:
-
             return (
                 precios[0],
                 None,
@@ -426,21 +390,14 @@ class TechSmartService(ProveedorProductos):
         base_url: str,
     ) -> str | None:
 
-        imagen = card.select_one(
-            ".img-catalogo"
-        )
+        imagen = card.select_one(".img-catalogo")
 
         if not imagen:
             return None
 
-        src = imagen.get(
-            "src"
-        )
+        src = imagen.get("src")
 
         if not src:
             return None
 
-        return (
-            f"{base_url}/"
-            f"{src.removeprefix('../')}"
-        )
+        return f"{base_url}/{src.removeprefix('../')}"

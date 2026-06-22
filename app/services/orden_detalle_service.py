@@ -26,13 +26,11 @@ _DECIMAL_100 = Decimal("100")
 
 
 class OrdenDetalleService:
-
     @staticmethod
     def get_by_orden(id_orden: int) -> List[OrdenDetalle]:
         try:
             return (
-                OrdenDetalle.query
-                .filter_by(id_orden=id_orden)
+                OrdenDetalle.query.filter_by(id_orden=id_orden)
                 .order_by(OrdenDetalle.id_detalle.asc())
                 .all()
             )
@@ -161,9 +159,7 @@ class OrdenDetalleService:
             )
             return None
 
-        divisor = Decimal("1") - (
-            margen_ganancia / _DECIMAL_100
-        )
+        divisor = Decimal("1") - (margen_ganancia / _DECIMAL_100)
 
         if divisor <= 0:
             logger.warning(
@@ -172,9 +168,7 @@ class OrdenDetalleService:
             )
             return None
 
-        precio_producto_con_margen = (
-            precio_unitario / divisor
-        )
+        precio_producto_con_margen = precio_unitario / divisor
 
         precio_venta = OrdenDetalleService._round(
             precio_producto_con_margen + costo_envio
@@ -184,9 +178,7 @@ class OrdenDetalleService:
             precio_producto_con_margen - precio_unitario
         )
 
-        subtotal = OrdenDetalleService._round(
-            precio_venta * cantidad
-        )
+        subtotal = OrdenDetalleService._round(precio_venta * cantidad)
 
         return {
             "precio_unitario": OrdenDetalleService._round(precio_unitario),
@@ -202,7 +194,6 @@ class OrdenDetalleService:
     def _sync_total_orden(id_orden: int) -> bool:
 
         try:
-
             db.session.flush()
 
             orden = db.session.get(Orden, id_orden)
@@ -221,15 +212,11 @@ class OrdenDetalleService:
                         0,
                     )
                 )
-                .filter(
-                    OrdenDetalle.id_orden == id_orden
-                )
+                .filter(OrdenDetalle.id_orden == id_orden)
                 .scalar()
             )
 
-            orden.total = OrdenDetalleService._round(
-                Decimal(str(total))
-            )
+            orden.total = OrdenDetalleService._round(Decimal(str(total)))
 
             return True
 
@@ -253,7 +240,6 @@ class OrdenDetalleService:
             return None, error
 
         try:
-
             orden = db.session.get(Orden, id_orden)
 
             if orden is None:
@@ -316,7 +302,6 @@ class OrdenDetalleService:
             return [], "No se recibieron productos"
 
         try:
-
             orden = db.session.get(Orden, id_orden)
 
             if orden is None:
@@ -325,7 +310,6 @@ class OrdenDetalleService:
             detalles = []
 
             for idx, item in enumerate(items, start=1):
-
                 error = OrdenDetalleService._validate_data_requerida(item)
 
                 if error:
@@ -402,7 +386,6 @@ class OrdenDetalleService:
         )
 
         for campo in campos_simples:
-
             if campo not in data:
                 continue
 
@@ -422,22 +405,15 @@ class OrdenDetalleService:
                 )
 
         if _CAMPOS_NUMERICOS & data.keys():
-
             merged = {
                 "precio_unitario": detalle.precio_unitario,
                 "costo_envio": detalle.costo_envio,
                 "cantidad": detalle.cantidad,
                 "margen_ganancia": detalle.margen_ganancia,
-                **{
-                    k: v
-                    for k, v in data.items()
-                    if k in _CAMPOS_NUMERICOS
-                },
+                **{k: v for k, v in data.items() if k in _CAMPOS_NUMERICOS},
             }
 
-            calculados = OrdenDetalleService._calcular_campos(
-                merged
-            )
+            calculados = OrdenDetalleService._calcular_campos(merged)
 
             if calculados is None:
                 return None, "Datos numéricos inválidos"
@@ -450,10 +426,7 @@ class OrdenDetalleService:
                 )
 
         try:
-
-            if not OrdenDetalleService._sync_total_orden(
-                detalle.id_orden
-            ):
+            if not OrdenDetalleService._sync_total_orden(detalle.id_orden):
                 db.session.rollback()
                 return None, "No fue posible actualizar el total"
 
@@ -497,7 +470,6 @@ class OrdenDetalleService:
         id_orden = detalle.id_orden
 
         try:
-
             db.session.delete(detalle)
 
             if not OrdenDetalleService._sync_total_orden(id_orden):
@@ -528,13 +500,8 @@ class OrdenDetalleService:
     ) -> Tuple[int, Optional[str]]:
 
         try:
-
-            cantidad = (
-                OrdenDetalle.query
-                .filter_by(id_orden=id_orden)
-                .delete(
-                    synchronize_session=False
-                )
+            cantidad = OrdenDetalle.query.filter_by(id_orden=id_orden).delete(
+                synchronize_session=False
             )
 
             if not OrdenDetalleService._sync_total_orden(id_orden):

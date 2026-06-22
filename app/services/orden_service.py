@@ -18,7 +18,6 @@ ESTADOS_VALIDOS = frozenset({"pendiente", "aprobada", "completada", "cancelada"}
 
 
 class OrdenService:
-
     @staticmethod
     def get_all(
         id_usuario: Optional[int] = None,
@@ -26,22 +25,22 @@ class OrdenService:
     ) -> List[Orden]:
         """
         Retorna todas las órdenes, con filtros opcionales por usuario y estado.
-        
+
         Returns:
             List[Orden]: Lista de órdenes (vacía si hay error o no hay resultados).
         """
         try:
             query = Orden.query
-            
+
             if id_usuario is not None:
                 query = query.filter_by(id_usuario=id_usuario)
-            
+
             if estado is not None:
                 if estado not in ESTADOS_VALIDOS:
                     logger.warning("Estado de filtro inválido: '%s'", estado)
                     return []
                 query = query.filter_by(estado=estado)
-            
+
             return query.order_by(Orden.fecha_creacion.desc()).all()
         except SQLAlchemyError as exc:
             logger.error("Error al obtener órdenes: %s", exc)
@@ -51,7 +50,7 @@ class OrdenService:
     def get_by_id(id_orden: int) -> Optional[Orden]:
         """
         Retorna una orden por su PK.
-        
+
         Returns:
             Optional[Orden]: Orden encontrada o None si no existe/hay error.
         """
@@ -68,14 +67,14 @@ class OrdenService:
     def get_by_clave(clave_orden: str) -> Optional[Orden]:
         """
         Retorna una orden por su clave única.
-        
+
         Returns:
             Optional[Orden]: Orden encontrada o None si no existe/hay error.
         """
         if not clave_orden or not clave_orden.strip():
             logger.warning("Clave de orden vacía")
             return None
-        
+
         try:
             orden = Orden.query.filter_by(clave_orden=clave_orden.strip()).first()
             if orden is None:
@@ -91,18 +90,18 @@ class OrdenService:
         clave = str(data.get("clave_orden", "")).strip()
         if not clave:
             return "El campo 'clave_orden' es obligatorio"
-        
+
         if not data.get("id_usuario"):
             return "El campo 'id_usuario' es obligatorio"
-        
+
         comprador = str(data.get("comprador", "")).strip()
         if not comprador:
             return "El campo 'comprador' es obligatorio"
-        
+
         estado = data.get("estado", "pendiente")
         if estado not in ESTADOS_VALIDOS:
             return f"Estado '{estado}' no válido. Opciones: {sorted(ESTADOS_VALIDOS)}"
-        
+
         return None
 
     @staticmethod
@@ -121,7 +120,7 @@ class OrdenService:
 
         Campos requeridos: clave_orden, id_usuario, comprador.
         Campos opcionales: estado (default 'pendiente'), total (default 0.00).
-        
+
         Returns:
             Tuple[Optional[Orden], Optional[str]]: (orden_creada, mensaje_error)
         """
@@ -141,7 +140,9 @@ class OrdenService:
             if duplicado:
                 return None, f"Ya existe una orden con la clave '{clave}'"
         except SQLAlchemyError as exc:
-            logger.error("Error al verificar duplicado de clave_orden='%s': %s", clave, exc)
+            logger.error(
+                "Error al verificar duplicado de clave_orden='%s': %s", clave, exc
+            )
             return None, "Error de base de datos al verificar la orden"
 
         # Crear orden
@@ -153,12 +154,14 @@ class OrdenService:
                 estado=estado,
                 total=total,
             )
-            
+
             db.session.add(orden)
             db.session.commit()
-            logger.info("Orden creada: id=%s clave='%s'", orden.id_orden, orden.clave_orden)
+            logger.info(
+                "Orden creada: id=%s clave='%s'", orden.id_orden, orden.clave_orden
+            )
             return orden, None
-            
+
         except IntegrityError as exc:
             db.session.rollback()
             logger.warning("IntegrityError al crear orden clave='%s': %s", clave, exc)
@@ -174,7 +177,7 @@ class OrdenService:
         Actualiza campos editables de una orden existente.
 
         Campos actualizables: clave_orden, comprador, estado, total.
-        
+
         Returns:
             Tuple[Optional[Orden], Optional[str]]: (orden_actualizada, mensaje_error)
         """
@@ -190,16 +193,20 @@ class OrdenService:
             nueva_clave = str(data["clave_orden"]).strip()
             if not nueva_clave:
                 return None, "La 'clave_orden' no puede estar vacía"
-            
+
             if nueva_clave != orden.clave_orden:
                 try:
                     existe = Orden.query.filter_by(clave_orden=nueva_clave).first()
                     if existe:
                         return None, f"Ya existe una orden con la clave '{nueva_clave}'"
                 except SQLAlchemyError as exc:
-                    logger.error("Error al verificar nueva clave_orden='%s': %s", nueva_clave, exc)
+                    logger.error(
+                        "Error al verificar nueva clave_orden='%s': %s",
+                        nueva_clave,
+                        exc,
+                    )
                     return None, "Error de base de datos al verificar la clave"
-                
+
                 orden.clave_orden = nueva_clave
 
         # Actualizar comprador
@@ -213,7 +220,10 @@ class OrdenService:
         if "estado" in data:
             estado = data["estado"]
             if estado not in ESTADOS_VALIDOS:
-                return None, f"Estado '{estado}' no válido. Opciones: {sorted(ESTADOS_VALIDOS)}"
+                return (
+                    None,
+                    f"Estado '{estado}' no válido. Opciones: {sorted(ESTADOS_VALIDOS)}",
+                )
             orden.estado = estado
 
         # Actualizar total
@@ -221,13 +231,15 @@ class OrdenService:
             total = OrdenService._to_decimal(data["total"])
             if total is not None:
                 orden.total = total
-                
+
         # Actualizar fecha_creacion
         if "fecha_creacion" in data:
             try:
                 fecha_str = str(data["fecha_creacion"]).strip()
                 if fecha_str:
-                    orden.fecha_creacion = datetime.strptime(fecha_str, '%Y-%m-%d').date()
+                    orden.fecha_creacion = datetime.strptime(
+                        fecha_str, "%Y-%m-%d"
+                    ).date()
             except ValueError:
                 return None, "Formato de 'fecha_creacion' inválido (use 'YYYY-MM-DD')"
 
@@ -237,7 +249,9 @@ class OrdenService:
             return orden, None
         except IntegrityError as exc:
             db.session.rollback()
-            logger.warning("IntegrityError al actualizar orden id=%s: %s", id_orden, exc)
+            logger.warning(
+                "IntegrityError al actualizar orden id=%s: %s", id_orden, exc
+            )
             return None, "Conflicto de datos al actualizar la orden"
         except SQLAlchemyError as exc:
             db.session.rollback()
@@ -248,12 +262,15 @@ class OrdenService:
     def update_estado(id_orden: int, estado: str) -> Tuple[bool, Optional[str]]:
         """
         Cambia únicamente el estado de una orden, validando el valor permitido.
-        
+
         Returns:
             Tuple[bool, Optional[str]]: (éxito, mensaje_error)
         """
         if estado not in ESTADOS_VALIDOS:
-            return False, f"Estado '{estado}' no válido. Opciones: {sorted(ESTADOS_VALIDOS)}"
+            return (
+                False,
+                f"Estado '{estado}' no válido. Opciones: {sorted(ESTADOS_VALIDOS)}",
+            )
 
         orden = OrdenService.get_by_id(id_orden)
         if orden is None:
@@ -280,17 +297,15 @@ class OrdenService:
             return None, f"Orden con id {id_orden} no encontrada"
 
         try:
-            subtotal = db.session.query(
-                db.func.sum(OrdenDetalle.subtotal)
-            ).filter_by(
-                id_orden=id_orden
-            ).scalar()
+            subtotal = (
+                db.session.query(db.func.sum(OrdenDetalle.subtotal))
+                .filter_by(id_orden=id_orden)
+                .scalar()
+            )
 
             subtotal = Decimal(str(subtotal or 0))
 
-            iva = (subtotal * Decimal("0.16")).quantize(
-                Decimal("0.01")
-            )
+            iva = (subtotal * Decimal("0.16")).quantize(Decimal("0.01"))
 
             total = subtotal + iva
 
@@ -304,18 +319,14 @@ class OrdenService:
 
         except SQLAlchemyError as exc:
             db.session.rollback()
-            logger.error(
-                "Error al recalcular total de orden id=%s: %s",
-                id_orden,
-                exc
-            )
+            logger.error("Error al recalcular total de orden id=%s: %s", id_orden, exc)
             return None, "Error de base de datos al recalcular el total"
 
     @staticmethod
     def delete(id_orden: int) -> Tuple[bool, Optional[str]]:
         """
         Elimina la orden y sus detalles (cascade configurado en el modelo).
-        
+
         Returns:
             Tuple[bool, Optional[str]]: (éxito, mensaje_error)
         """
@@ -331,19 +342,24 @@ class OrdenService:
         except IntegrityError as exc:
             db.session.rollback()
             logger.warning("IntegrityError al eliminar orden id=%s: %s", id_orden, exc)
-            return False, f"No se puede eliminar la orden {id_orden} por restricciones de integridad"
+            return (
+                False,
+                f"No se puede eliminar la orden {id_orden} por restricciones de integridad",
+            )
         except SQLAlchemyError as exc:
             db.session.rollback()
             logger.error("Error al eliminar orden id=%s: %s", id_orden, exc)
             return False, "Error de base de datos al eliminar la orden"
 
     @staticmethod
-    def get_with_details(id_orden: int) -> Tuple[Optional[Orden], List[OrdenDetalle], Optional[str]]:
+    def get_with_details(
+        id_orden: int,
+    ) -> Tuple[Optional[Orden], List[OrdenDetalle], Optional[str]]:
         """
         Obtiene una orden con todos sus detalles.
-        
+
         Returns:
-            Tuple[Optional[Orden], List[OrdenDetalle], Optional[str]]: 
+            Tuple[Optional[Orden], List[OrdenDetalle], Optional[str]]:
                 (orden, detalles, mensaje_error)
         """
         orden = OrdenService.get_by_id(id_orden)
@@ -361,7 +377,7 @@ class OrdenService:
     def get_stats() -> dict:
         """
         Obtiene estadísticas básicas de órdenes.
-        
+
         Returns:
             dict: Diccionario con estadísticas (vacío si hay error).
         """
@@ -370,20 +386,24 @@ class OrdenService:
             for estado in ESTADOS_VALIDOS:
                 count = Orden.query.filter_by(estado=estado).count()
                 stats[estado] = count
-            
+
             stats["total"] = sum(stats.values())
-            
+
             # Total en dinero de órdenes completadas
-            total_completadas = db.session.query(db.func.sum(Orden.total)).filter_by(
-                estado="completada"
-            ).scalar()
-            stats["total_completadas"] = float(total_completadas) if total_completadas else 0.0
-            
+            total_completadas = (
+                db.session.query(db.func.sum(Orden.total))
+                .filter_by(estado="completada")
+                .scalar()
+            )
+            stats["total_completadas"] = (
+                float(total_completadas) if total_completadas else 0.0
+            )
+
             return stats
         except SQLAlchemyError as exc:
             logger.error("Error al obtener estadísticas de órdenes: %s", exc)
             return {}
-        
+
     @staticmethod
     def search_orders(
         search: Optional[str] = None,
@@ -391,11 +411,11 @@ class OrdenService:
         fecha_inicio: Optional[str] = None,
         fecha_fin: Optional[str] = None,
         page: int = 1,
-        per_page: int = 12
+        per_page: int = 12,
     ) -> Tuple[List[Orden], int, Optional[str]]:
         """
         Busca órdenes con filtros y paginación.
-        
+
         Args:
             search: Texto para buscar en clave_orden o comprador.
             estado: Filtrar por estado (pendiente, aprobada, completada, cancelada).
@@ -403,51 +423,52 @@ class OrdenService:
             fecha_fin: Fecha final en formato YYYY-MM-DD.
             page: Número de página (1-indexado).
             per_page: Cantidad de resultados por página.
-            
+
         Returns:
             Tuple[List[Orden], int, Optional[str]]: (lista de órdenes, total de páginas, mensaje_error)
         """
         try:
             query = Orden.query
-            
+
             # Filtro por estado
             if estado:
                 if estado not in ESTADOS_VALIDOS:
                     return [], 0, f"Estado '{estado}' no válido"
                 query = query.filter_by(estado=estado)
-            
+
             # Filtro por rango de fechas
             if fecha_inicio or fecha_fin:
                 from datetime import datetime
+
                 try:
                     if fecha_inicio:
-                        inicio_dt = datetime.strptime(fecha_inicio, '%Y-%m-%d')
+                        inicio_dt = datetime.strptime(fecha_inicio, "%Y-%m-%d")
                         query = query.filter(Orden.fecha_creacion >= inicio_dt)
                     if fecha_fin:
-                        fin_dt = datetime.strptime(fecha_fin, '%Y-%m-%d')
+                        fin_dt = datetime.strptime(fecha_fin, "%Y-%m-%d")
                         # Incluir todo el día final
                         fin_dt = fin_dt.replace(hour=23, minute=59, second=59)
                         query = query.filter(Orden.fecha_creacion <= fin_dt)
                 except ValueError:
                     return [], 0, "Formato de fecha inválido (use YYYY-MM-DD)"
-            
+
             # Búsqueda por texto
             if search:
                 search_term = f"%{search.strip()}%"
                 query = query.filter(
                     db.or_(
                         Orden.clave_orden.ilike(search_term),
-                        Orden.comprador.ilike(search_term)
+                        Orden.comprador.ilike(search_term),
                     )
                 )
-            
+
             # Ordenar y paginar
             paginated = query.order_by(Orden.fecha_creacion.desc()).paginate(
                 page=page, per_page=per_page, error_out=False
             )
-            
+
             return paginated.items, paginated.pages, None
-            
+
         except SQLAlchemyError as exc:
             logger.error("Error en búsqueda de órdenes: %s", exc)
             return [], 0, "Error de base de datos al buscar órdenes"
