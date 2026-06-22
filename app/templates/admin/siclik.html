@@ -1,113 +1,175 @@
 {% extends "admin/base.html" %}
 
 {% block title %}
-Siclik
+    Siclik · Autenticación
 {% endblock %}
 
 {% block content %}
+<div class="py-10 px-4 sm:px-6 lg:px-8">
 
-<div class="max-w-2xl mx-auto py-12 px-4">
+    <div class="max-w-2xl mx-auto space-y-6">
 
-    <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-10 space-y-8">
-
-        <!-- Header -->
-        <div class="flex items-center gap-4">
-            <div class="w-14 h-14 rounded-2xl bg-gray-900 flex items-center justify-center">
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+        {# ---------- Encabezado ---------- #}
+        <div class="flex items-start gap-4">
+            <div class="flex-shrink-0 h-14 w-14 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 shadow-lg shadow-emerald-500/20 flex items-center justify-center">
+                <svg class="h-7 w-7 text-white" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"/>
                 </svg>
             </div>
-            <div>
-                <h1 class="text-3xl font-bold text-gray-900 tracking-tight">
+            <div class="flex-1">
+                <nav class="text-xs font-medium text-slate-500 mb-2 tracking-wide uppercase">
+                    <a href="{{ url_for('admin.proveedores') }}" class="hover:text-emerald-600 transition">Proveedores</a>
+                    <span class="mx-1.5 text-slate-300">/</span>
+                    <span class="text-slate-700">Siclik</span>
+                </nav>
+                <h1 class="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
                     Siclik CompuSoluciones
                 </h1>
-                <p class="text-gray-500 mt-1 text-sm">
-                    Configuración de autenticación
+                <p class="mt-1.5 text-sm text-slate-500">
+                    Configuración de autenticación para integración con WhatsApp
                 </p>
             </div>
         </div>
 
-        <!-- Divider -->
-        <div class="border-t border-gray-100"></div>
+        {# ---------- Estado de sesión ---------- #}
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+            
+            <div class="px-6 py-4 border-b border-slate-100 bg-slate-50/60">
+                <div class="flex items-center gap-2">
+                    <svg class="h-5 w-5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z"/>
+                    </svg>
+                    <h2 class="text-base font-semibold text-slate-800">Estado de conexión</h2>
+                </div>
+            </div>
 
-        <!-- Estado de sesión -->
-        <div class="flex items-center justify-between p-4 rounded-xl {% if autenticado %}bg-emerald-50 border border-emerald-100{% else %}bg-rose-50 border border-rose-100{% endif %} transition-all">
-            <div class="flex items-center gap-3">
-                <div class="relative">
-                    <div class="w-3 h-3 rounded-full {% if autenticado %}bg-emerald-500{% else %}bg-rose-500{% endif %}"></div>
+            <div class="p-6">
+                <div class="flex items-center justify-between p-4 rounded-xl {% if autenticado %}bg-emerald-50 border border-emerald-200{% else %}bg-rose-50 border border-rose-200{% endif %} transition-all">
+                    <div class="flex items-center gap-3">
+                        <div class="relative">
+                            <div class="w-3 h-3 rounded-full {% if autenticado %}bg-emerald-500{% else %}bg-rose-500{% endif %}"></div>
+                            {% if autenticado %}
+                            <div class="absolute inset-0 w-3 h-3 rounded-full bg-emerald-500 animate-ping opacity-75"></div>
+                            {% endif %}
+                        </div>
+                        <div>
+                            <span class="font-semibold {% if autenticado %}text-emerald-800{% else %}text-rose-800{% endif %}">
+                                {% if autenticado %}
+                                    Sesión activa
+                                {% else %}
+                                    Requiere autenticación
+                                {% endif %}
+                            </span>
+                            <p class="text-xs {% if autenticado %}text-emerald-600{% else %}text-rose-600{% endif %}">
+                                {% if autenticado %}
+                                    La sesión está activa y puedes realizar operaciones con Siclik.
+                                {% else %}
+                                    Conecta tu cuenta para comenzar
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
                     {% if autenticado %}
-                    <div class="absolute inset-0 w-3 h-3 rounded-full bg-emerald-500 animate-ping opacity-75"></div>
+                    <svg class="h-6 w-6 text-emerald-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    {% else %}
+                    <svg class="h-6 w-6 text-rose-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/>
+                    </svg>
                     {% endif %}
                 </div>
-                <div>
-                    <span class="font-semibold {% if autenticado %}text-emerald-800{% else %}text-rose-800{% endif %}">
-                        {% if autenticado %}
-                            Sesión activa
-                        {% else %}
-                            Requiere autenticación
-                        {% endif %}
-                    </span>
-                    <p class="text-xs {% if autenticado %}text-emerald-600{% else %}text-rose-600{% endif %}">
-                        {% if autenticado %}
-                            La sesión está activa y puedes realizar operaciones con Siclik.
-                        {% else %}
-                            Conecta tu cuenta para comenzar
-                        {% endif %}
-                    </p>
-                </div>
             </div>
-            {% if autenticado %}
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            {% else %}
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-rose-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-            </svg>
-            {% endif %}
         </div>
 
-        <!-- Acciones -->
-        <div class="space-y-6">
+        {# ---------- Tarjeta principal ---------- #}
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
 
-            <!-- Paso 1: Solicitar código -->
-            <div class="space-y-3">
-                <div class="flex items-center gap-2 mb-2">
-                    <span class="w-7 h-7 rounded-full bg-gray-100 text-gray-700 flex items-center justify-center text-sm font-bold">1</span>
-                    <span class="text-sm font-medium text-gray-700">Solicitar código de verificación</span>
-                </div>
-                <button id="btn-iniciar" class="w-full px-5 py-3 rounded-xl bg-gray-900 hover:bg-emerald-600 text-white font-medium transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+            <div class="px-6 py-5 border-b border-slate-100 bg-slate-50/60">
+                <div class="flex items-center gap-2">
+                    <svg class="h-5 w-5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 01.865-.501 48.172 48.172 0 003.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z"/>
                     </svg>
-                    Solicitar código WhatsApp
-                </button>
+                    <h2 class="text-base font-semibold text-slate-800">Autenticación WhatsApp</h2>
+                </div>
+                <p class="mt-1 text-xs text-slate-500">Sigue los pasos para conectar tu cuenta de Siclik</p>
             </div>
 
-            <!-- Paso 2: Confirmar código -->
-            <div class="space-y-3">
-                <div class="flex items-center gap-2 mb-2">
-                    <span class="w-7 h-7 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center text-sm font-bold">2</span>
-                    <span class="text-sm font-medium text-gray-700">Introduce el código recibido</span>
-                </div>
-                <div class="flex gap-3">
-                    <input id="codigo" type="text" placeholder="Código de verificación" class="flex-1 border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent transition-all text-gray-700 placeholder-gray-400">
-                    <button id="btn-confirmar" class="px-6 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-medium transition-all duration-200 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+            <div class="p-6 space-y-8">
+
+                {# ---------- Paso 1: Solicitar código ---------- #}
+                <div class="space-y-4">
+                    <div class="flex items-center gap-3">
+                        <div class="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-slate-100 to-slate-200 border border-slate-300 flex items-center justify-center text-sm font-bold text-slate-700 shadow-sm">
+                            1
+                        </div>
+                        <div>
+                            <h3 class="text-sm font-semibold text-slate-800">Solicitar código de verificación</h3>
+                            <p class="text-xs text-slate-500 mt-0.5">Recibirás un código por WhatsApp</p>
+                        </div>
+                    </div>
+                    
+                    <button id="btn-iniciar" class="w-full px-5 py-3.5 rounded-xl bg-gradient-to-r from-slate-800 to-slate-900 hover:from-emerald-600 hover:to-teal-600 text-white font-medium transition-all duration-200 flex items-center justify-center gap-2.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:from-slate-300 disabled:to-slate-300 shadow-sm hover:shadow-md">
+                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
                         </svg>
-                        Confirmar
+                        Solicitar código WhatsApp
                     </button>
                 </div>
+
+                {# ---------- Divider ---------- #}
+                <div class="relative">
+                    <div class="absolute inset-0 flex items-center">
+                        <div class="w-full border-t border-slate-200"></div>
+                    </div>
+                    <div class="relative flex justify-center text-xs uppercase">
+                        <span class="bg-white px-3 text-slate-400 font-medium">Siguiente paso</span>
+                    </div>
+                </div>
+
+                {# ---------- Paso 2: Confirmar código ---------- #}
+                <div class="space-y-4">
+                    <div class="flex items-center gap-3">
+                        <div class="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-emerald-100 to-teal-100 border border-emerald-300 flex items-center justify-center text-sm font-bold text-emerald-700 shadow-sm">
+                            2
+                        </div>
+                        <div>
+                            <h3 class="text-sm font-semibold text-slate-800">Introduce el código recibido</h3>
+                            <p class="text-xs text-slate-500 mt-0.5">Ingresa el código de 6 dígitos</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex gap-3">
+                        <input id="codigo" type="text" placeholder="Código de verificación" class="flex-1 border border-slate-300 rounded-xl px-4 py-3.5 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all text-slate-700 placeholder-slate-400 shadow-sm">
+                        <button id="btn-confirmar" class="px-6 py-3.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-medium transition-all duration-200 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow-md">
+                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/>
+                            </svg>
+                            Confirmar
+                        </button>
+                    </div>
+                </div>
+
+                {# ---------- Mensaje de estado ---------- #}
+                <div id="mensaje" class="min-h-[1.5rem] transition-all duration-300"></div>
+
             </div>
+        </div>
 
-            <!-- Mensaje de estado -->
-            <div id="mensaje" class="text-sm min-h-[1.5rem] transition-all duration-300"></div>
-
+        {# ---------- Pie informativo ---------- #}
+        <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
+            <div class="flex items-start gap-3">
+                <svg class="h-5 w-5 text-slate-400 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z"/>
+                </svg>
+                <div class="text-xs text-slate-600">
+                    <p class="font-medium text-slate-700 mb-1">Información importante</p>
+                    <p>El código de verificación tiene una validez limitada. Si no lo recibes en unos minutos, solicita uno nuevo.</p>
+                </div>
+            </div>
         </div>
 
     </div>
-
 </div>
 
 <script>
@@ -149,12 +211,12 @@ Siclik
     document.getElementById("btn-iniciar").addEventListener("click", async function() {
         this.disabled = true;
         mensaje.innerHTML = `
-            <div class="flex items-center gap-2 p-3 rounded-lg bg-gray-50 border border-gray-200 text-gray-700">
-                <svg class="w-4 h-4 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <div class="flex items-center gap-3 p-4 rounded-xl bg-slate-50 border border-slate-200 text-slate-700 shadow-sm">
+                <svg class="w-5 h-5 animate-spin flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
-                Enviando solicitud...
+                <span class="text-sm font-medium">Enviando solicitud...</span>
             </div>
         `;
 
@@ -166,22 +228,22 @@ Siclik
 
             const isSuccess = data.success !== false;
             mensaje.innerHTML = `
-                <div class="flex items-center gap-2 p-3 rounded-lg ${isSuccess ? 'bg-emerald-50 border border-emerald-100 text-emerald-700' : 'bg-rose-50 border border-rose-100 text-rose-700'}">
+                <div class="flex items-center gap-3 p-4 rounded-xl ${isSuccess ? 'bg-emerald-50 border border-emerald-200 text-emerald-800' : 'bg-rose-50 border border-rose-200 text-rose-800'} shadow-sm">
                     ${isSuccess 
-                        ? '<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>'
-                        : '<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>'
+                        ? '<svg class="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>'
+                        : '<svg class="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9.75 9.75l4.5 4.5m0-4.5l-4.5 4.5M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>'
                     }
-                    ${data.message || (isSuccess ? "Código enviado correctamente" : "Error al enviar el código")}
+                    <span class="text-sm font-medium">${data.message || (isSuccess ? "Código enviado correctamente" : "Error al enviar el código")}</span>
                 </div>
             `;
             
         } catch (error) {
             mensaje.innerHTML = `
-                <div class="flex items-center gap-2 p-3 rounded-lg bg-rose-50 border border-rose-100 text-rose-700">
-                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                <div class="flex items-center gap-3 p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 shadow-sm">
+                    <svg class="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"/>
                     </svg>
-                    Error: ${error.message}
+                    <span class="text-sm font-medium">Error: ${error.message}</span>
                 </div>
             `;
         } finally {
@@ -194,11 +256,11 @@ Siclik
 
         if (!codigo) {
             mensaje.innerHTML = `
-                <div class="flex items-center gap-2 p-3 rounded-lg bg-amber-50 border border-amber-100 text-amber-700">
-                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                <div class="flex items-center gap-3 p-4 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 shadow-sm">
+                    <svg class="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/>
                     </svg>
-                    Por favor ingresa el código
+                    <span class="text-sm font-medium">Por favor ingresa el código</span>
                 </div>
             `;
             return;
@@ -206,12 +268,12 @@ Siclik
 
         this.disabled = true;
         mensaje.innerHTML = `
-            <div class="flex items-center gap-2 p-3 rounded-lg bg-gray-50 border border-gray-200 text-gray-700">
-                <svg class="w-4 h-4 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <div class="flex items-center gap-3 p-4 rounded-xl bg-slate-50 border border-slate-200 text-slate-700 shadow-sm">
+                <svg class="w-5 h-5 animate-spin flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
-                Validando código...
+                <span class="text-sm font-medium">Validando código...</span>
             </div>
         `;
 
@@ -226,12 +288,12 @@ Siclik
 
             const isSuccess = data.success !== false;
             mensaje.innerHTML = `
-                <div class="flex items-center gap-2 p-3 rounded-lg ${isSuccess ? 'bg-emerald-50 border border-emerald-100 text-emerald-700' : 'bg-rose-50 border border-rose-100 text-rose-700'}">
+                <div class="flex items-center gap-3 p-4 rounded-xl ${isSuccess ? 'bg-emerald-50 border border-emerald-200 text-emerald-800' : 'bg-rose-50 border border-rose-200 text-rose-800'} shadow-sm">
                     ${isSuccess 
-                        ? '<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>'
-                        : '<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>'
+                        ? '<svg class="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>'
+                        : '<svg class="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9.75 9.75l4.5 4.5m0-4.5l-4.5 4.5M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>'
                     }
-                    ${data.message || (isSuccess ? "Código confirmado correctamente" : "Error al confirmar")}
+                    <span class="text-sm font-medium">${data.message || (isSuccess ? "Código confirmado correctamente" : "Error al confirmar")}</span>
                 </div>
             `;
 
@@ -243,11 +305,11 @@ Siclik
             
         } catch (error) {
             mensaje.innerHTML = `
-                <div class="flex items-center gap-2 p-3 rounded-lg bg-rose-50 border border-rose-100 text-rose-700">
-                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                <div class="flex items-center gap-3 p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 shadow-sm">
+                    <svg class="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"/>
                     </svg>
-                    Error: ${error.message}
+                    <span class="text-sm font-medium">Error: ${error.message}</span>
                 </div>
             `;
         } finally {
@@ -261,5 +323,4 @@ Siclik
         }
     });
 </script>
-
 {% endblock %}

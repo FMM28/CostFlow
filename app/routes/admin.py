@@ -6,11 +6,15 @@ from app.services.user_service import UserService
 from app.services.orden_service import OrdenService
 from app.services.orden_detalle_service import OrdenDetalleService
 from app.services.proveedores.buscador_producto import BuscadorProducto
+from app.services.proveedores.ImportacionDigitalService import ImportacionDigitalService
+from app.services.proveedores.ArrobaComputerService import ArrobaComputerService
 from app.services.CurrencyService import CurrencyService
 from app.auth.decorators import role_required
 from datetime import datetime
 import re
-
+from werkzeug.utils import secure_filename
+import tempfile
+import os
 
 
 admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
@@ -811,3 +815,113 @@ def confirmar_siclik():
             "success": False,
             "message": str(e)
         }), 500
+        
+        
+@admin_bp.get("/proveedores/importacion-digital")
+@login_required
+@role_required("admin")
+def importacion_digital():
+    return render_template(
+        "admin/carga_excel.html",
+        proveedor="Importación Digital",
+        direccion_subida=url_for("admin.importacion_digital_excel"),
+        mensaje="",
+    )
+
+
+@admin_bp.post("/proveedores/importacion-digital/subir")
+@login_required
+@role_required("admin")
+def importacion_digital_excel():
+
+    redireccion = url_for("admin.importacion_digital")
+
+    archivo = request.files.get("excel")
+
+    if not archivo or archivo.filename == "":
+        flash("Selecciona un archivo.", "error")
+
+        return redirect(redireccion)
+
+    if not archivo.filename.lower().endswith((".xlsx", ".xls")):
+        flash("Archivo no válido.", "error")
+
+        return redirect(redireccion)
+
+    ruta_temporal = None
+
+    try:
+        extension = os.path.splitext(secure_filename(archivo.filename))[1]
+
+        with tempfile.NamedTemporaryFile(suffix=extension, delete=False) as temp:
+            archivo.save(temp.name)
+
+            ruta_temporal = temp.name
+
+        cantidad = ImportacionDigitalService.subir_excel(ruta_temporal)
+
+        flash(f"{cantidad} productos importados.", "success")
+
+    except Exception as e:
+        flash(str(e), "error")
+
+    finally:
+        if ruta_temporal and os.path.exists(ruta_temporal):
+            os.remove(ruta_temporal)
+
+    return redirect(redireccion)
+        
+        
+@admin_bp.get("/proveedores/arroba-computer")
+@login_required
+@role_required("admin")
+def arroba_computer():
+    return render_template(
+        "admin/carga_excel.html",
+        proveedor="Arroba Computer",
+        direccion_subida=url_for("admin.arroba_computer_excel"),
+        mensaje="Antes de importar el catálogo, verifica y actualiza el valor del tipo de cambio en el archivo Excel.",
+    )
+
+
+@admin_bp.post("/proveedores/arroba-computer/subir")
+@login_required
+@role_required("admin")
+def arroba_computer_excel():
+
+    redireccion = url_for("admin.arroba_computer")
+
+    archivo = request.files.get("excel")
+
+    if not archivo or archivo.filename == "":
+        flash("Selecciona un archivo.", "error")
+
+        return redirect(redireccion)
+
+    if not archivo.filename.lower().endswith((".xlsx", ".xls")):
+        flash("Archivo no válido.", "error")
+
+        return redirect(redireccion)
+
+    ruta_temporal = None
+
+    try:
+        extension = os.path.splitext(secure_filename(archivo.filename))[1]
+
+        with tempfile.NamedTemporaryFile(suffix=extension, delete=False) as temp:
+            archivo.save(temp.name)
+
+            ruta_temporal = temp.name
+
+        cantidad = ArrobaComputerService.subir_excel(ruta_temporal)
+
+        flash(f"{cantidad} productos importados.", "success")
+
+    except Exception as e:
+        flash(str(e), "error")
+
+    finally:
+        if ruta_temporal and os.path.exists(ruta_temporal):
+            os.remove(ruta_temporal)
+
+    return redirect(redireccion)

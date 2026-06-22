@@ -9,12 +9,12 @@ from app.services.proveedores.IngramService import IngramService
 from app.services.proveedores.SyscomService import SyscomService
 from app.services.proveedores.SiclikService import SiclikService
 from app.services.proveedores.TechsmartService import TechSmartService
+from app.services.proveedores.ProveedoresBDService import ProveedoresBDService
 
 logger = logging.getLogger(__name__)
 
 
 class BuscadorProducto:
-
     PROVEEDORES = [
         CVAService,
         # IngramService,
@@ -35,7 +35,6 @@ class BuscadorProducto:
     ) -> ProductoProveedor | None:
 
         with app.app_context():
-
             nombre_proveedor = proveedor.__name__
 
             try:
@@ -82,9 +81,7 @@ class BuscadorProducto:
         sku = (sku or "").strip()
 
         if not nombre and not sku:
-            logger.warning(
-                "Se llamó a buscar() sin nombre ni SKU."
-            )
+            logger.warning("Se llamó a buscar() sin nombre ni SKU.")
             return []
 
         logger.info(
@@ -107,7 +104,6 @@ class BuscadorProducto:
             max_workers=max_workers,
             thread_name_prefix="proveedor",
         ) as executor:
-
             futures = {
                 executor.submit(
                     cls._buscar_en_proveedor,
@@ -120,7 +116,6 @@ class BuscadorProducto:
             }
 
             for future in as_completed(futures):
-
                 try:
                     resultado = future.result()
 
@@ -128,13 +123,23 @@ class BuscadorProducto:
                         resultados.append(resultado)
 
                 except Exception:
-                    logger.exception(
-                        "Error recuperando resultado de búsqueda."
-                    )
+                    logger.exception("Error recuperando resultado de búsqueda.")
 
+        proveedores_bd = ProveedoresBDService.buscar_producto(nombre=nombre, sku=sku)
+
+        resultados.extend(proveedores_bd)
+
+        # Filtrar productos con existencia > 0
+        resultados = [p for p in resultados if p.existencia and p.existencia > 0]
+
+        # Ordenar los productos
         resultados.sort(
             key=lambda producto: (
-                producto.precio,
+                # 1. Precio final (precio con descuento si existe, sino precio original)
+                producto.descuento
+                if producto.descuento and producto.descuento > 0
+                else producto.precio,
+                # 2. Existencia (orden descendente)
                 -(producto.existencia or 0),
             )
         )

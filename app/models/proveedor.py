@@ -1,6 +1,7 @@
 from app.extensions import db
 from .base import BaseModel
 
+
 class Proveedor(BaseModel):
     __tablename__ = "proveedor"
 
@@ -9,3 +10,6 @@ class Proveedor(BaseModel):
     deleted_at = db.Column(db.DateTime, nullable=True)
 
     detalles = db.relationship("OrdenDetalle", back_populates="proveedor", lazy=True)
+    productos = db.relationship(
+        "Producto", back_populates="proveedor", cascade="all, delete-orphan", lazy=True
+    )
