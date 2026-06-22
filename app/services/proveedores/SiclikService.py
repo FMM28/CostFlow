@@ -243,6 +243,19 @@ class SiclikService(ProveedorProductos):
             return False
 
     @classmethod
+    def _eliminar_sesion_bd(cls):
+        """Elimina las cookies de la base de datos para forzar una nueva autenticación"""
+        try:
+            sesion = SesionProveedor.query.get("siclik")
+            if sesion:
+                db.session.delete(sesion)
+                db.session.commit()
+                logger.info("Sesión Siclik eliminada de la base de datos")
+        except Exception as e:
+            logger.error(f"Error al eliminar sesión de BD: {e}")
+            db.session.rollback()
+
+    @classmethod
     def _obtener_detalle(cls, sku):
         try:
             response = cls._get_session().get(
@@ -252,11 +265,17 @@ class SiclikService(ProveedorProductos):
                     "Origin": "https://siclik.mx",
                     "Referer": "https://siclik.mx/",
                 },
-                timeout=20,
+                timeout=15,
             )
 
             if response.status_code == 404:
                 return None
+
+            if response.status_code == 401:
+                logger.warning(f"Error 401 al obtener detalle de {sku}, eliminando cookies")
+                cls._eliminar_sesion_bd()
+                cls._session = None
+                raise requests.exceptions.HTTPError("La sesion de Siclik Compusoluciones ha vencido.")
 
             response.raise_for_status()
             return response.json()
@@ -341,4 +360,4 @@ class SiclikService(ProveedorProductos):
 
         except Exception as e:
             logger.error(f"Error Siclik al buscar SKU {sku}: {e}")
-            return None
+            raise

@@ -32,7 +32,7 @@ class BuscadorProducto:
         proveedor,
         nombre: str | None,
         sku: str | None,
-    ) -> ProductoProveedor | None:
+    ) -> tuple[ProductoProveedor | None, str | None]:
 
         with app.app_context():
             nombre_proveedor = proveedor.__name__
@@ -55,34 +55,36 @@ class BuscadorProducto:
                         "Resultado encontrado en %s.",
                         nombre_proveedor,
                     )
-                    return resultado
+                    return resultado, None
 
                 logger.debug(
                     "Sin resultados en %s.",
                     nombre_proveedor,
                 )
 
-            except Exception:
+                return None, None
+
+            except Exception as e:
                 logger.exception(
                     "Error al consultar %s.",
                     nombre_proveedor,
                 )
 
-            return None
+                return None, f"{nombre_proveedor}: {str(e)}"
 
     @classmethod
     def buscar(
         cls,
         nombre: str | None = None,
         sku: str | None = None,
-    ) -> list[ProductoProveedor]:
+    ) -> tuple[list[ProductoProveedor], list[str]]:
 
         nombre = (nombre or "").strip()
         sku = (sku or "").strip()
 
         if not nombre and not sku:
             logger.warning("Se llamó a buscar() sin nombre ni SKU.")
-            return []
+            return [], []
 
         logger.info(
             "Iniciando búsqueda nombre='%s', sku='%s' en %d proveedor(es).",
@@ -92,6 +94,7 @@ class BuscadorProducto:
         )
 
         resultados: list[ProductoProveedor] = []
+        errores: list[str] = []
 
         app = current_app._get_current_object()
 
@@ -117,29 +120,30 @@ class BuscadorProducto:
 
             for future in as_completed(futures):
                 try:
-                    resultado = future.result()
+                    resultado, error = future.result()
 
                     if resultado:
                         resultados.append(resultado)
 
-                except Exception:
+                    if error:
+                        errores.append(error)
+
+                except Exception as e:
+                    proveedor_nombre = futures.get(future, "desconocido")
                     logger.exception("Error recuperando resultado de búsqueda.")
+                    errores.append(f"{proveedor_nombre}: {str(e)}")
 
         proveedores_bd = ProveedoresBDService.buscar_producto(nombre=nombre, sku=sku)
 
         resultados.extend(proveedores_bd)
 
-        # Filtrar productos con existencia > 0
         resultados = [p for p in resultados if p.existencia and p.existencia > 0]
 
-        # Ordenar los productos
         resultados.sort(
             key=lambda producto: (
-                # 1. Precio final (precio con descuento si existe, sino precio original)
                 producto.descuento
                 if producto.descuento and producto.descuento > 0
                 else producto.precio,
-                # 2. Existencia (orden descendente)
                 -(producto.existencia or 0),
             )
         )
@@ -150,4 +154,4 @@ class BuscadorProducto:
             len(cls.PROVEEDORES),
         )
 
-        return resultados
+        return resultados, errores

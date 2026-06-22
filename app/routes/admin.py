@@ -538,9 +538,14 @@ def orden_detalle_proveedores(id_detalle):
             )
         )
 
-    productos = BuscadorProducto.buscar(
+    productos, errores = BuscadorProducto.buscar(
         nombre=detalle.producto, sku=detalle.clave_producto
     )
+    
+    print(len(errores))
+    for error in errores:
+        flash(error,"error")
+        print(f"print de error {error}")
 
     return render_template(
         "admin/proveedores.html", productos=productos, id_detalle=id_detalle
