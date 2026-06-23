@@ -70,10 +70,10 @@
                 </h2>
 
                 <form method="POST" action="{{ url_for('admin.orden_update', id_orden=orden.id_orden) }}"
-                    class="space-y-5">
+                    class="space-y-4">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
-                    <div class="space-y-1.5">
+                    <div class="space-y-1">
                         <label class="block text-sm font-medium text-gray-700">
                             Clave
                         </label>
@@ -82,7 +82,17 @@
                        focus:border-emerald-500 transition">
                     </div>
 
-                    <div class="space-y-1.5">
+                    <div class="space-y-1">
+                        <label class="block text-sm font-medium text-gray-700">
+                            Vendedor
+                        </label>
+                        <div
+                            class="w-full h-11 px-4 rounded-xl border border-gray-200 bg-gray-50 text-gray-700 flex items-center select-text">
+                            {{ orden.usuario.nombre }} {{ orden.usuario.ap_paterno }}
+                        </div>
+                    </div>
+
+                    <div class="space-y-1">
                         <label class="block text-sm font-medium text-gray-700">
                             Comprador
                         </label>
@@ -91,7 +101,7 @@
                        focus:border-emerald-500 transition">
                     </div>
 
-                    <div class="space-y-1.5">
+                    <div class="space-y-1">
                         <label class="block text-sm font-medium text-gray-700">
                             Fecha de creación
                         </label>
@@ -102,7 +112,7 @@
                        focus:border-emerald-500 transition">
                     </div>
 
-                    <div class="space-y-1.5">
+                    <div class="space-y-1">
                         <label class="block text-sm font-medium text-gray-700">
                             Estado
                         </label>
@@ -153,7 +163,7 @@
                     Resumen
                 </h2>
 
-                <div class="space-y-4">
+                <div class="space-y-2">
                     <div class="flex items-center justify-between">
                         <span class="text-sm text-gray-500">
                             Productos
@@ -181,7 +191,7 @@
                         </span>
                     </div>
 
-                    <div class="border-t border-gray-200 pt-4">
+                    <div class="border-t border-gray-200 pt-2">
                         <div class="flex items-center justify-between">
                             <span class="text-sm font-medium text-gray-700">
                                 Total

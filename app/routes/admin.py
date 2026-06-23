@@ -138,6 +138,9 @@ def ordenes():
         flash(error, "error")
         ordenes, total_pages = [], 0
 
+    if total_pages > 0 and page > total_pages:
+        page = total_pages
+
     return render_template(
         "admin/ordenes.html",
         ordenes=ordenes,
@@ -541,10 +544,10 @@ def orden_detalle_proveedores(id_detalle):
     productos, errores = BuscadorProducto.buscar(
         nombre=detalle.producto, sku=detalle.clave_producto
     )
-    
+
     print(len(errores))
     for error in errores:
-        flash(error,"error")
+        flash(error, "error")
         print(f"print de error {error}")
 
     return render_template(
