@@ -13,6 +13,8 @@ from app.models.orden_detalle import OrdenDetalle
 
 from datetime import datetime
 
+from app.models.usuario import Usuario
+
 logger = logging.getLogger(__name__)
 
 ESTADOS_VALIDOS = frozenset({"pendiente", "aprobada", "completada", "cancelada"})
@@ -465,14 +467,58 @@ class OrdenService:
 
             # Búsqueda
             if search and search.strip():
-                termino = f"%{search.strip()}%"
+                query = query.outerjoin(Orden.detalles).outerjoin(Orden.usuario)
 
-                query = query.filter(
-                    db.or_(
-                        Orden.clave_orden.ilike(termino),
-                        Orden.comprador.ilike(termino),
-                    )
-                )
+                bloques = [
+                    bloque.strip() for bloque in search.split("+") if bloque.strip()
+                ]
+
+                condiciones = []
+
+                for bloque in bloques:
+                    prefijo = None
+                    valor = bloque
+
+                    if ":" in bloque:
+                        prefijo, valor = bloque.split(":", 1)
+
+                        prefijo = prefijo.lower().strip()
+                        valor = valor.strip()
+
+                    termino = f"%{valor}%"
+
+                    # búsqueda especializada
+                    if prefijo == "sku":
+                        condicion = OrdenDetalle.clave_producto.ilike(termino)
+
+                    elif prefijo == "prod":
+                        condicion = OrdenDetalle.producto.ilike(termino)
+
+                    elif prefijo == "comp":
+                        condicion = Orden.comprador.ilike(termino)
+
+                    elif prefijo == "ord":
+                        condicion = Orden.clave_orden.ilike(termino)
+
+                    elif prefijo == "vend":
+                        condicion = db.or_(
+                            Usuario.nombre.ilike(termino),
+                            Usuario.ap_paterno.ilike(termino),
+                        )
+
+                    else:
+                        condicion = db.or_(
+                            Orden.clave_orden.ilike(termino),
+                            Orden.comprador.ilike(termino),
+                            OrdenDetalle.producto.ilike(termino),
+                            OrdenDetalle.clave_producto.ilike(termino),
+                            Usuario.nombre.ilike(termino),
+                            Usuario.ap_paterno.ilike(termino),
+                        )
+
+                    condiciones.append(condicion)
+
+                query = query.filter(db.and_(*condiciones)).distinct()
 
             # Orden estable
             query = query.order_by(
