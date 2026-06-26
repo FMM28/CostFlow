@@ -11,6 +11,7 @@ from app.services.proveedores.SiclikService import SiclikService
 from app.services.proveedores.TechsmartService import TechSmartService
 from app.services.proveedores.ProveedoresBDService import ProveedoresBDService
 from app.services.proveedores.GlomaService import GlomaService
+from app.services.proveedores.PCELService import PCELService
 
 logger = logging.getLogger(__name__)
 
@@ -23,6 +24,7 @@ class BuscadorProducto:
         SiclikService,
         TechSmartService,
         GlomaService,
+        PCELService,
     ]
 
     MAX_WORKERS = 4
