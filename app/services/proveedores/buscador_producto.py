@@ -10,6 +10,7 @@ from app.services.proveedores.SyscomService import SyscomService
 from app.services.proveedores.SiclikService import SiclikService
 from app.services.proveedores.TechsmartService import TechSmartService
 from app.services.proveedores.ProveedoresBDService import ProveedoresBDService
+from app.services.proveedores.GlomaService import GlomaService
 
 logger = logging.getLogger(__name__)
 
@@ -21,6 +22,7 @@ class BuscadorProducto:
         SyscomService,
         SiclikService,
         TechSmartService,
+        GlomaService,
     ]
 
     MAX_WORKERS = 4

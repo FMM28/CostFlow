@@ -45,3 +45,7 @@ class Config:
     TECHSMART_USUARIO=os.getenv("TECHSMART_USUARIO")
     TECHSMART_PASSWORD=os.getenv("TECHSMART_PASSWORD")
     TECHSMART_URL=os.getenv("TECHSMART_URL")
+    
+    GLOMA_USUARIO=os.getenv("GLOMA_USUARIO")
+    GLOMA_PASSWORD=os.getenv("GLOMA_PASSWORD")
+    GLOMA_URL=os.getenv("GLOMA_URL")
