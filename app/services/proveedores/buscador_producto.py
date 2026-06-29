@@ -4,15 +4,17 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from flask import current_app
 
 from app.models.producto_proveedor import ProductoProveedor
-from app.services.proveedores.CVAService import CVAService
-from app.services.proveedores.IngramService import IngramService
-from app.services.proveedores.SyscomService import SyscomService
-from app.services.proveedores.SiclikService import SiclikService
-from app.services.proveedores.TechsmartService import TechSmartService
-from app.services.proveedores.ProveedoresBDService import ProveedoresBDService
-from app.services.proveedores.GlomaService import GlomaService
-from app.services.proveedores.PCELService import PCELService
-from app.services.proveedores.AindiService import AindiService
+from app.services.proveedores import (
+    CVAService,
+    IngramService,
+    SyscomService,
+    SiclikService,
+    TechSmartService,
+    GlomaService,
+    PCELService,
+    AindiService,
+    ProveedoresBDService,
+)
 
 logger = logging.getLogger(__name__)
 

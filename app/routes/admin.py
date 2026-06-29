@@ -5,9 +5,11 @@ from app.services.proveedores.SiclikService import SiclikService
 from app.services.user_service import UserService
 from app.services.orden_service import OrdenService
 from app.services.orden_detalle_service import OrdenDetalleService
-from app.services.proveedores.buscador_producto import BuscadorProducto
-from app.services.proveedores.ImportacionDigitalService import ImportacionDigitalService
-from app.services.proveedores.ArrobaComputerService import ArrobaComputerService
+from app.services.proveedores import (
+    ImportacionDigitalService,
+    ArrobaComputerService,
+    BuscadorProducto,
+)
 from app.services.CurrencyService import CurrencyService
 from app.auth.decorators import role_required
 from datetime import datetime
