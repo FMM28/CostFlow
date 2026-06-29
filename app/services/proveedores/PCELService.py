@@ -3,7 +3,7 @@ import re
 from decimal import Decimal
 from urllib.parse import urljoin
 
-import requests
+from curl_cffi import requests
 from bs4 import BeautifulSoup
 
 from app.models.producto_proveedor import ProductoProveedor, ExistenciaSucursal
@@ -28,17 +28,20 @@ class PCELService(ProveedorProductos):
     @classmethod
     def _get_session(cls):
         if not hasattr(cls, "_session"):
-            cls._session = requests.Session()
+            cls._session = requests.Session(impersonate="chrome120")
+
             cls._session.headers.update(
                 {
                     "User-Agent": (
                         "Mozilla/5.0 (X11; Linux x86_64) "
                         "AppleWebKit/537.36 (KHTML, like Gecko) "
-                        "Chrome/137.0.0.0 Safari/537.36"
+                        "Chrome/120.0.0.0 Safari/537.36"
                     ),
-                    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
-                    "Accept-Language": "en-US,en;q=0.9,es;q=0.8",
-                    "Accept-Encoding": "gzip, deflate, br",
+                    "Accept": (
+                        "text/html,application/xhtml+xml,application/xml;"
+                        "q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8"
+                    ),
+                    "Accept-Language": "es-419,es;q=0.7,en;q=0.3",
                     "Connection": "keep-alive",
                     "Upgrade-Insecure-Requests": "1",
                     "Sec-Fetch-Dest": "document",
@@ -49,6 +52,7 @@ class PCELService(ProveedorProductos):
                     "DNT": "1",
                 }
             )
+
         return cls._session
 
     @staticmethod
@@ -79,23 +83,23 @@ class PCELService(ProveedorProductos):
                 ins.BUSCADOR_URL,
                 params={"q": termino},
                 allow_redirects=True,
-                timeout=15,
+                timeout=20,
             )
             response.raise_for_status()
 
-            if "/search" in response.url:
+            if "/search" in str(response.url):
                 logger.info("PCEL: producto '%s' no encontrado.", termino)
                 return None
 
-            html = response.content.decode(response.encoding or "utf-8")
+            html = response.text
             return cls._parse_producto(html, response.url)
 
         except requests.RequestException:
             logger.exception("Error consultando PCEL para '%s'.", termino)
-            return None
+            raise
         except Exception:
             logger.exception("Error procesando respuesta de PCEL para '%s'.", termino)
-            return None
+            raise
 
     @classmethod
     def _parse_producto(cls, html, url):
@@ -162,6 +166,7 @@ class PCELService(ProveedorProductos):
                         )
 
                         existencia_total += cantidad
+
         except Exception:
             logger.exception("Error obteniendo existencias del producto.")
 
