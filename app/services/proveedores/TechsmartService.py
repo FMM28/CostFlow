@@ -347,7 +347,7 @@ class TechSmartService(ProveedorProductos):
 
         precios = []
 
-        for font in card.select(".table-bottom_des font"):
+        for font in card.select("font"):
             texto = font.get_text(strip=True)
 
             if "$" not in texto or "USD" not in texto:
