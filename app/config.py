@@ -49,3 +49,6 @@ class Config:
     GLOMA_USUARIO=os.getenv("GLOMA_USUARIO")
     GLOMA_PASSWORD=os.getenv("GLOMA_PASSWORD")
     GLOMA_URL=os.getenv("GLOMA_URL")
+    
+    EXEL_USUARIO=os.getenv("EXEL_USUARIO")
+    EXEL_PASSWORD=os.getenv("EXEL_PASSWORD")

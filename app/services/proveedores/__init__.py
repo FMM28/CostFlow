@@ -9,6 +9,7 @@ from .PCELService import PCELService
 from .AindiService import AindiService
 from .ImportacionDigitalService import ImportacionDigitalService
 from .ArrobaComputerService import ArrobaComputerService
+from .ExelService import ExelService
 from .buscador_producto import BuscadorProducto
 
 __all__ = [
@@ -23,5 +24,6 @@ __all__ = [
     AindiService,
     ImportacionDigitalService,
     ArrobaComputerService,
+    ExelService,
     BuscadorProducto,
 ]

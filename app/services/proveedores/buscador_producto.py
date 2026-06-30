@@ -14,6 +14,7 @@ from app.services.proveedores import (
     PCELService,
     AindiService,
     ProveedoresBDService,
+    ExelService
 )
 
 logger = logging.getLogger(__name__)
@@ -29,6 +30,7 @@ class BuscadorProducto:
         GlomaService,
         PCELService,
         AindiService,
+        ExelService
     ]
 
     MAX_WORKERS = 4
