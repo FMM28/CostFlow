@@ -1,6 +1,6 @@
 from flask import Flask
 from .config import Config
-from .extensions import db, migrate, bcrypt, login_manager,csrf
+from .extensions import db, migrate, bcrypt, login_manager,csrf, init_redis
 from app import models
 from app.auth.login_manager import load_user
 from app.logging_config import setup_logging
@@ -16,6 +16,7 @@ def create_app():
     migrate.init_app(app, db)
     bcrypt.init_app(app)
     login_manager.init_app(app)
+    init_redis(app)
 
     setup_logging(app)
 

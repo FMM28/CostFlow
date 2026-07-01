@@ -4,9 +4,10 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from flask import current_app
 
 from app.models.producto_proveedor import ProductoProveedor
+from app.cache.productos_cache_service import ProductosCacheService
 from app.services.proveedores import (
     CVAService,
-    IngramService,
+    # IngramService,
     SyscomService,
     SiclikService,
     TechSmartService,
@@ -14,14 +15,14 @@ from app.services.proveedores import (
     PCELService,
     AindiService,
     ProveedoresBDService,
-    ExelService
+    ExelService,
 )
 
 logger = logging.getLogger(__name__)
 
 
 class BuscadorProducto:
-    PROVEEDORES = [
+    PROVEEDORES_EXTERNOS = [
         CVAService,
         # IngramService,
         SyscomService,
@@ -30,10 +31,14 @@ class BuscadorProducto:
         GlomaService,
         PCELService,
         AindiService,
-        ExelService
+        ExelService,
     ]
 
     MAX_WORKERS = 4
+
+    @classmethod
+    def _nombre_proveedor(cls, proveedor_service) -> str:
+        return proveedor_service.__name__.replace("Service", "").upper()
 
     @classmethod
     def _buscar_en_proveedor(
@@ -61,33 +66,18 @@ class BuscadorProducto:
                 )
 
                 if resultado:
-                    logger.debug(
-                        "Resultado encontrado en %s.",
-                        nombre_proveedor,
-                    )
+                    logger.debug("Resultado encontrado en %s.", nombre_proveedor)
                     return resultado, None
 
-                logger.debug(
-                    "Sin resultados en %s.",
-                    nombre_proveedor,
-                )
-
+                logger.debug("Sin resultados en %s.", nombre_proveedor)
                 return None, None
 
             except Exception as e:
-                logger.exception(
-                    "Error al consultar %s.",
-                    nombre_proveedor,
-                )
-
+                logger.exception("Error al consultar %s.", nombre_proveedor)
                 return None, f"{nombre_proveedor}: {str(e)}"
 
     @classmethod
-    def buscar(
-        cls,
-        nombre: str | None = None,
-        sku: str | None = None,
-    ) -> tuple[list[ProductoProveedor], list[str]]:
+    def buscar(cls, nombre=None, sku=None):
 
         nombre = (nombre or "").strip()
         sku = (sku or "").strip()
@@ -96,72 +86,93 @@ class BuscadorProducto:
             logger.warning("Se llamó a buscar() sin nombre ni SKU.")
             return [], []
 
-        logger.info(
-            "Iniciando búsqueda nombre='%s', sku='%s' en %d proveedor(es).",
-            nombre,
-            sku,
-            len(cls.PROVEEDORES),
-        )
+        app = current_app._get_current_object()
+        cache = ProductosCacheService()
 
-        resultados: list[ProductoProveedor] = []
+        resultados: dict[str, ProductoProveedor] = {}
         errores: list[str] = []
 
-        app = current_app._get_current_object()
+        provider_map = {cls._nombre_proveedor(p): p for p in cls.PROVEEDORES_EXTERNOS}
+        proveedores_externos_keys = set(provider_map.keys())
 
-        max_workers = min(
-            cls.MAX_WORKERS,
-            len(cls.PROVEEDORES),
+        # -------------------------
+        # 1. CACHE
+        # -------------------------
+        cached = cache.get(sku) if sku else None
+        proveedores_cacheados: set[str] = set()
+
+        if cached:
+            for proveedor_nombre, producto in cached.items():
+                key = proveedor_nombre.upper()
+                resultados[key] = producto
+                proveedores_cacheados.add(key)
+            print("Resultados cacheados: %s", list(cached.keys()))
+
+        # -------------------------
+        # 2. WORKERS
+        # -------------------------
+        faltantes = proveedores_externos_keys - proveedores_cacheados
+        providers_to_query = [provider_map[p] for p in faltantes]
+
+        nuevos_externos: list[ProductoProveedor] = []
+
+        if providers_to_query:
+            with ThreadPoolExecutor(
+                max_workers=min(cls.MAX_WORKERS, len(providers_to_query)),
+            ) as executor:
+                futures = {
+                    executor.submit(
+                        cls._buscar_en_proveedor,
+                        app,
+                        proveedor,
+                        nombre,
+                        sku,
+                    ): proveedor.__name__
+                    for proveedor in providers_to_query
+                }
+
+                for future in as_completed(futures):
+                    try:
+                        resultado, error = future.result()
+
+                        if resultado:
+                            key = resultado.proveedor.upper()
+                            resultados[key] = resultado
+                            nuevos_externos.append(resultado)
+
+                        if error:
+                            errores.append(error)
+
+                    except Exception as e:
+                        errores.append(str(e))
+
+        # -------------------------
+        # 3. BD
+        # -------------------------
+        bd_resultados = ProveedoresBDService.buscar_producto(
+            nombre=nombre,
+            sku=sku,
         )
 
-        with ThreadPoolExecutor(
-            max_workers=max_workers,
-            thread_name_prefix="proveedor",
-        ) as executor:
-            futures = {
-                executor.submit(
-                    cls._buscar_en_proveedor,
-                    app,
-                    proveedor,
-                    nombre,
-                    sku,
-                ): proveedor.__name__
-                for proveedor in cls.PROVEEDORES
-            }
+        for p in bd_resultados:
+            resultados[p.proveedor] = p
 
-            for future in as_completed(futures):
-                try:
-                    resultado, error = future.result()
+        # -------------------------
+        # 4. CACHE UPDATE
+        # -------------------------
+        if sku and nuevos_externos:
+            cache.set(sku, nuevos_externos)
 
-                    if resultado:
-                        resultados.append(resultado)
+        # -------------------------
+        # 5. FILTER + SORT
+        # -------------------------
+        final = [p for p in resultados.values() if p.existencia and p.existencia > 0]
 
-                    if error:
-                        errores.append(error)
-
-                except Exception as e:
-                    proveedor_nombre = futures.get(future, "desconocido")
-                    logger.exception("Error recuperando resultado de búsqueda.")
-                    errores.append(f"{proveedor_nombre}: {str(e)}")
-
-        proveedores_bd = ProveedoresBDService.buscar_producto(nombre=nombre, sku=sku)
-
-        resultados.extend(proveedores_bd)
-
-        resultados = [p for p in resultados if p.existencia and p.existencia > 0]
-
-        resultados.sort(
-            key=lambda producto: (
-                producto.descuento
-                if producto.descuento and producto.descuento > 0
-                else producto.precio,
-                -(producto.existencia or 0),
+        final.sort(
+            key=lambda p: (
+                p.descuento if p.descuento and p.descuento > 0 else p.precio,
+                -(p.existencia or 0),
             )
         )
 
-        logger.info(
-            "Búsqueda finalizada. %d/%d proveedor(es) retornaron resultados.",
-            len(resultados),
-            len(cls.PROVEEDORES),
-        )
-
-        return resultados, errores
+        return final, errores
