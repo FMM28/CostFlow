@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 import re
 from datetime import datetime, timezone
-from typing import Optional, Tuple, List, Union
+from typing import Optional, Tuple, List
 from sqlalchemy.exc import IntegrityError, OperationalError, SQLAlchemyError
 from app.extensions import db
 from app.models import Usuario
@@ -13,6 +13,7 @@ logger = logging.getLogger(__name__)
 # Regex patterns and constants
 EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 USERNAME_RE = re.compile(r"^[a-zA-Z0-9_.-]{3,45}$")
+NUMBER_RE = re.compile(r"^(?:\+(\d{1,3}))?(\d{10,15})$")
 MIN_PASSWORD_LENGTH = 8
 VALID_ROLES = ("admin", "vendedor")
 
@@ -87,6 +88,51 @@ def _validate_apellido(
     if len(value) > 45:
         return False, f"{field_label} no puede exceder 45 caracteres.", None
     return True, None, value
+
+
+def _validate_numero(value: Optional[str]) -> Tuple[bool, Optional[str], Optional[str]]:
+    """
+    Valida el campo numero — String(20).
+    Valida y estandariza números de celular con formato internacional o local.
+    Retorna (is_valid, error_message, normalized_value).
+    """
+    if not value or not value.strip():
+        return True, None, None  # Campo opcional
+
+    value = value.strip()
+    cleaned = re.sub(r"[\s\-\(\)\.]", "", value)
+
+    match = NUMBER_RE.match(cleaned)
+    if not match:
+        return (
+            False,
+            "Formato de número de celular inválido. Use formato: +[código país][número] o [número local]",
+            None,
+        )
+
+    country_code, phone_number = match.groups()
+
+    # Normalizar el número
+    if country_code:
+        # Formato internacional: +[código país][número]
+        normalized = f"+{country_code}{phone_number}"
+    else:
+        # Número local sin código de país
+        normalized = phone_number
+
+    # Validar longitud total (máximo 20 caracteres)
+    if len(normalized) > 20:
+        return False, "El número no puede exceder 20 caracteres.", None
+
+    # Validaciones adicionales para celular
+    if len(phone_number) < 10:
+        return False, "El número de celular debe tener al menos 10 dígitos.", None
+
+    # Validar que el número no sea todo ceros o dígitos repetidos
+    if phone_number.count(phone_number[0]) == len(phone_number):
+        return False, "Número de celular inválido (dígitos repetidos).", None
+
+    return True, None, normalized
 
 
 class UserService:
@@ -217,6 +263,9 @@ class UserService:
     def create(
         username: str,
         email: str,
+        numero: Optional[str],
+        puesto: Optional[str],
+        url_firma: Optional[str],
         role: str,
         nombre: str,
         ap_paterno: str,
@@ -237,6 +286,12 @@ class UserService:
         is_valid, error = _validate_email(email)
         if not is_valid:
             return None, error
+
+        numero_norm = None
+        if numero is not None:
+            is_valid, error, numero_norm = _validate_numero(numero)
+            if not is_valid:
+                return None, error
 
         is_valid, error = _validate_role(role)
         if not is_valid:
@@ -267,6 +322,8 @@ class UserService:
         email = email.strip().lower()
         role = role.strip()
         nombre = nombre.strip()
+        puesto = puesto.strip() if puesto else None
+        url_firma = url_firma.strip() if url_firma else None
 
         # Verificar unicidad
         try:
@@ -281,6 +338,9 @@ class UserService:
         usuario = Usuario(
             username=username,
             email=email,
+            numero=numero_norm,
+            puesto=puesto,
+            url_firma=url_firma,
             role=role,
             nombre=nombre,
             ap_paterno=ap_paterno_norm,
@@ -321,6 +381,9 @@ class UserService:
         ap_paterno: Optional[str] = None,
         password: Optional[str] = None,
         ap_materno: Optional[str] = None,
+        numero: Optional[str] = None,
+        puesto: Optional[str] = None,
+        url_firma: Optional[str] = None,
     ) -> Tuple[Optional[Usuario], Optional[str]]:
         """
         Actualiza los campos proporcionados de un usuario activo.
@@ -373,14 +436,12 @@ class UserService:
             is_valid, error = _validate_role(role)
             if not is_valid:
                 return None, error
-
             usuario.role = role.strip()
 
         if nombre is not None:
             is_valid, error = _validate_nombre(nombre)
             if not is_valid:
                 return None, error
-
             usuario.nombre = nombre.strip()
 
         if ap_paterno is not None:
@@ -389,7 +450,6 @@ class UserService:
             )
             if not is_valid:
                 return None, error
-
             usuario.ap_paterno = ap_paterno_norm
 
         if ap_materno is not None:
@@ -398,15 +458,25 @@ class UserService:
             )
             if not is_valid:
                 return None, error
-
             usuario.ap_materno = ap_materno_norm
 
-        if password is not None:
+        if password is not None and password.strip():
             is_valid, error = _validate_password(password)
             if not is_valid:
                 return None, error
-
             usuario.set_password(password)
+
+        if numero is not None:
+            is_valid, error, numero_norm = _validate_numero(numero)
+            if not is_valid:
+                return None, error
+            usuario.numero = numero_norm
+
+        if puesto is not None:
+            usuario.puesto = puesto.strip() if puesto else None
+
+        if url_firma is not None:
+            usuario.url_firma = url_firma.strip() if url_firma else None
 
         try:
             db.session.commit()
