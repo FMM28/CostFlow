@@ -7,10 +7,15 @@
 
     <!-- Header -->
     <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
-        <div>
-            <h1 class="text-3xl font-bold text-gray-900">
-                Orden {{ orden.clave_orden }}
-            </h1>
+        <div class="flex items-center gap-4">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900">
+                    Orden {{ orden.clave_orden }}
+                </h1>
+                <p class="text-sm text-gray-500 mt-1">
+                    Creada el {{ orden.fecha_creacion.strftime('%d/%m/%Y') if orden.fecha_creacion else '—' }}
+                </p>
+            </div>
         </div>
 
         <div class="flex flex-wrap items-center gap-3">
@@ -22,6 +27,26 @@
                 </svg>
                 Volver
             </a>
+
+            <!-- Términos y condiciones -->
+            <button type="button" id="btn-terminos"
+                class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-xl hover:bg-gray-100 transition">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                Términos
+            </button>
+
+            <!-- Exportar PDF -->
+            <button type="button" id="btn-exportar-pdf"
+                class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-violet-600 rounded-xl hover:bg-violet-700 transition shadow-sm">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+                Exportar PDF
+            </button>
 
             <!-- Eliminar -->
             <form method="POST" action="{{ url_for('admin.orden_delete', id_orden=orden.id_orden) }}"
@@ -49,7 +74,7 @@
             {% elif category == 'warning' %}
                 bg-amber-50 border-amber-200 text-amber-800
             {% else %}
-                bg-blue-50 border-blue-200 text-blue-800
+                bg-slate-50 border-slate-200 text-slate-800
             {% endif %}">
             {{ message }}
         </div>
@@ -65,12 +90,16 @@
         <div class="xl:col-span-3 space-y-6">
             <!-- Información -->
             <div class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
-                <h2 class="text-lg font-semibold text-gray-900 mb-5">
+                <h2 class="text-lg font-semibold text-gray-900 mb-5 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
                     Información
                 </h2>
 
                 <form method="POST" action="{{ url_for('admin.orden_update', id_orden=orden.id_orden) }}"
-                    class="space-y-4">
+                    class="space-y-4" id="form-orden">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
                     <div class="space-y-1">
@@ -114,6 +143,84 @@
 
                     <div class="space-y-1">
                         <label class="block text-sm font-medium text-gray-700">
+                            Tipo de cotización
+                        </label>
+
+                        <div class="relative">
+                            <select name="tipo_cotizacion" id="tipo_cotizacion" class="w-full h-11 px-4 pr-10 rounded-xl border border-gray-200 bg-white
+                   text-gray-700 appearance-none cursor-pointer
+                   focus:outline-none focus:ring-2 focus:ring-emerald-500/50
+                   focus:border-emerald-500 transition">
+
+                                <option value="" disabled {% if not orden.tipo_cotizacion %}selected{% endif %}>
+                                    Seleccione un tipo...
+                                </option>
+
+                                <option value="UNAM" {% if orden.tipo_cotizacion=='UNAM' %}selected{% endif %}>
+                                    UNAM
+                                </option>
+
+                                <option value="OTROS" {% if orden.tipo_cotizacion=='OTROS' %}selected{% endif %}>
+                                    OTROS
+                                </option>
+                            </select>
+
+                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
+                                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M19 9l-7 7-7-7" />
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+
+                    {% set info = orden.informacion_adicional or {} %}
+
+                    <!-- No. de solicitud (UNAM) -->
+                    <div id="campo_no_solicitud" class="space-y-1 hidden">
+                        <label class="block text-sm font-medium text-gray-700">
+                            No. de solicitud
+                        </label>
+                        <input type="text" name="no_solicitud" value="{{ info.get('no_solicitud', '') }}" class="w-full h-11 px-4 rounded-xl border border-gray-200 bg-white text-gray-700
+               focus:outline-none focus:ring-2 focus:ring-emerald-500/50
+               focus:border-emerald-500 transition">
+                    </div>
+
+                    <!-- Proveedor UNAM (UNAM) -->
+                    <div id="campo_proveedor_unam" class="space-y-1 hidden">
+                        <label class="block text-sm font-medium text-gray-700">
+                            Proveedor UNAM
+                        </label>
+                        <input type="text" name="proveedor_unam" value="{{ info.get('proveedor_unam', '') }}" class="w-full h-11 px-4 rounded-xl border border-gray-200 bg-white text-gray-700
+               focus:outline-none focus:ring-2 focus:ring-emerald-500/50
+               focus:border-emerald-500 transition">
+                    </div>
+
+                    <!-- Fecha de vigencia -->
+                    <div class="space-y-1">
+                        <label class="block text-sm font-medium text-gray-700">
+                            Fecha de vigencia
+                        </label>
+                        <input type="date" name="vigencia"
+                            value="{{ orden.vigencia.strftime('%Y-%m-%d') if orden.vigencia else '' }}" class="w-full h-11 px-4 rounded-xl border border-gray-200 bg-white text-gray-700
+                       focus:outline-none focus:ring-2 focus:ring-emerald-500/50
+                       focus:border-emerald-500 transition">
+                    </div>
+
+                    <!-- Incluir firma -->
+                    <div class="flex items-center gap-3 pt-2">
+                        <input type="checkbox" name="incluir_firma" id="incluir_firma" value="1" {% if
+                            orden.incluir_firma %}checked{% endif %}
+                            class="w-5 h-5 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500/50 cursor-pointer">
+                        <label for="incluir_firma" class="text-sm font-medium text-gray-700 cursor-pointer select-none">
+                            Incluir firma al generar documento
+                        </label>
+                    </div>
+
+                    <!-- Estado -->
+                    <div class="space-y-1">
+                        <label class="block text-sm font-medium text-gray-700">
                             Estado
                         </label>
 
@@ -150,58 +257,14 @@
                         </div>
                     </div>
 
+                    <input type="hidden" name="terminos_condiciones" id="terminos_condiciones"
+                        value="{{ orden.terminos_condiciones|e }}">
+
                     <button type="submit" class="w-full px-4 py-2.5 bg-emerald-600 text-white rounded-xl
                    hover:bg-emerald-700 transition font-medium">
                         Guardar cambios
                     </button>
                 </form>
-            </div>
-
-            <!-- Resumen -->
-            <div class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
-                <h2 class="text-lg font-semibold text-gray-900 mb-5">
-                    Resumen
-                </h2>
-
-                <div class="space-y-2">
-                    <div class="flex items-center justify-between">
-                        <span class="text-sm text-gray-500">
-                            Productos
-                        </span>
-                        <span class="font-semibold text-gray-900">
-                            {{ orden.detalles|length }}
-                        </span>
-                    </div>
-
-                    <div class="flex items-center justify-between">
-                        <span class="text-sm text-gray-500">
-                            Subtotal
-                        </span>
-                        <span class="font-semibold text-gray-900">
-                            ${{ "%.2f"|format(orden.subtotal) }}
-                        </span>
-                    </div>
-
-                    <div class="flex items-center justify-between">
-                        <span class="text-sm text-gray-500">
-                            IVA (16%)
-                        </span>
-                        <span class="font-semibold text-gray-900">
-                            ${{ "%.2f"|format(orden.iva) }}
-                        </span>
-                    </div>
-
-                    <div class="border-t border-gray-200 pt-2">
-                        <div class="flex items-center justify-between">
-                            <span class="text-sm font-medium text-gray-700">
-                                Total
-                            </span>
-                            <span class="text-2xl font-bold text-gray-900">
-                                ${{ "%.2f"|format(orden.total) }}
-                            </span>
-                        </div>
-                    </div>
-                </div>
             </div>
         </div>
 
@@ -210,14 +273,23 @@
             <!-- Agregar producto - Solo manual -->
             <div class="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
                 <button type="button" id="toggle-panel-btn"
-                    class="w-full px-6 py-4 flex items-center justify-between bg-gray-50 hover:bg-gray-100 transition group">
-                    <div class="text-left">
-                        <h2 class="text-lg font-semibold text-gray-900">
-                            Agregar producto
-                        </h2>
-                        <p class="text-sm text-gray-500">
-                            Añadir productos a la orden manualmente
-                        </p>
+                    class="w-full px-6 py-4 flex items-center justify-between bg-gradient-to-r from-gray-50 to-white hover:from-gray-100 hover:to-gray-50 transition group">
+                    <div class="flex items-center gap-3 text-left">
+                        <div
+                            class="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center group-hover:scale-110 transition-transform">
+                            <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 4v16m8-8H4" />
+                            </svg>
+                        </div>
+                        <div>
+                            <h2 class="text-lg font-semibold text-gray-900">
+                                Agregar producto
+                            </h2>
+                            <p class="text-sm text-gray-500">
+                                Añadir productos a la orden manualmente
+                            </p>
+                        </div>
                     </div>
                     <!-- Flecha que rotará -->
                     <svg class="w-5 h-5 text-gray-500 transition-transform duration-300 transform group-hover:scale-110"
@@ -270,13 +342,25 @@
             <!-- Tabla de productos -->
             <div class="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
                 <div class="px-6 py-5 border-b border-gray-200 bg-gray-50 flex items-center justify-between">
-                    <div>
-                        <h2 class="text-xl font-semibold text-gray-900">
-                            Productos
-                        </h2>
-                        <p class="text-sm text-gray-500 mt-1">
-                            {{ orden.detalles|length }} productos registrados
-                        </p>
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-gray-200 flex items-center justify-center">
+                            <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                            </svg>
+                        </div>
+                        <div>
+                            <h2 class="text-xl font-semibold text-gray-900">
+                                Productos
+                            </h2>
+                            <p class="text-sm text-gray-500 mt-0.5">
+                                <span class="inline-flex items-center gap-1.5">
+                                    <span class="font-semibold text-gray-700">{{ orden.detalles|length }}</span>
+                                    {{ 'producto' if orden.detalles|length == 1 else 'productos' }}
+                                    registrado{{ 's' if orden.detalles|length != 1 else '' }}
+                                </span>
+                            </p>
+                        </div>
                     </div>
                 </div>
 
@@ -301,7 +385,7 @@
                                     Subtotal
                                 </th>
                                 <th
-                                    class="px-4 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                    class="px-4 py-4 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">
                                     Acciones
                                 </th>
                             </tr>
@@ -314,18 +398,28 @@
                                 <td class="px-4 py-4">
                                     <div class="flex items-center gap-3">
                                         <!-- Imagen -->
-                                        <div class="flex-shrink-0">
+                                        <div class="flex-shrink-0 relative w-12 h-12">
                                             {% if detalle.url_imagen %}
-                                            <img src="{{ detalle.url_imagen }}" alt="{{ detalle.producto }}"
-                                                class="w-12 h-12 rounded-lg object-cover border border-gray-200 bg-white">
+                                            <img src="{{ detalle.url_imagen }}"
+                                                class="w-12 h-12 rounded-lg object-cover border border-gray-200 bg-white absolute inset-0"
+                                                onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                            <div
+                                                class="w-12 h-12 rounded-lg border border-gray-200 bg-gray-100 items-center justify-center hidden absolute inset-0">
+                                                <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor"
+                                                    viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        stroke-width="1.5"
+                                                        d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                                </svg>
+                                            </div>
                                             {% else %}
                                             <div
                                                 class="w-12 h-12 rounded-lg border border-gray-200 bg-gray-100 flex items-center justify-center">
-                                                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor"
+                                                <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor"
                                                     viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round"
-                                                        stroke-width="2"
-                                                        d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14" />
+                                                        stroke-width="1.5"
+                                                        d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                                 </svg>
                                             </div>
                                             {% endif %}
@@ -372,9 +466,9 @@
 
                                 <!-- ACCIONES -->
                                 <td class="px-4 py-4">
-                                    <div class="flex items-center justify-end gap-2">
+                                    <div class="flex flex-col items-center justify-center gap-2">
                                         <a href="{{ url_for('admin.orden_detalle_show', id_detalle=detalle.id_detalle) }}"
-                                            class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 transition">
+                                            class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 transition w-full justify-center">
                                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor"
                                                 viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -385,10 +479,10 @@
 
                                         <form method="POST"
                                             action="{{ url_for('admin.orden_delete_detalle', id_detalle=detalle.id_detalle) }}"
-                                            onsubmit="return confirm('¿Eliminar este producto?')">
+                                            onsubmit="return confirm('¿Eliminar este producto?')" class="w-full">
                                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                             <button type="submit"
-                                                class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition">
+                                                class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition w-full justify-center">
                                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor"
                                                     viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round"
@@ -404,7 +498,14 @@
                             {% else %}
                             <tr>
                                 <td colspan="5" class="px-4 py-12 text-center text-gray-500">
-                                    No hay productos registrados en esta orden
+                                    <div class="flex flex-col items-center gap-2">
+                                        <svg class="w-12 h-12 text-gray-300" fill="none" stroke="currentColor"
+                                            viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                                d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                                        </svg>
+                                        <p class="text-sm">No hay productos registrados en esta orden</p>
+                                    </div>
                                 </td>
                             </tr>
                             {% endfor %}
@@ -448,8 +549,55 @@
     </div>
 </div>
 
+<!-- Modal Términos y condiciones -->
+<div id="modal-terminos" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog"
+    aria-modal="true">
+    <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+        <!-- Background overlay -->
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
+
+        <!-- Modal panel -->
+        <div
+            class="inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-3xl sm:w-full">
+            <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-xl font-semibold text-gray-900" id="modal-title">
+                        Términos y condiciones
+                    </h3>
+                    <button type="button" id="btn-cerrar-terminos" class="text-gray-400 hover:text-gray-500 transition">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+                <div class="mt-2">
+                    <p class="text-sm text-gray-500 mb-3">
+                        Edita el contenido de los términos y condiciones que se incluirán en el documento.
+                    </p>
+                    <textarea id="contenido_terminos" name="contenido_terminos" rows="15"
+                        class="w-full px-4 py-3 border border-gray-200 rounded-xl bg-white text-gray-700 text-sm
+                               focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition resize-none"
+                        placeholder="Escribe aquí los términos y condiciones...">{{ orden.terminos_condiciones or '' }}</textarea>
+                </div>
+            </div>
+            <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse gap-3">
+                <button type="button" id="btn-guardar-terminos"
+                    class="w-full inline-flex justify-center rounded-xl px-4 py-2.5 bg-emerald-600 text-base font-medium text-white hover:bg-emerald-700 focus:outline-none transition sm:w-auto sm:text-sm">
+                    Guardar cambios
+                </button>
+                <button type="button" id="btn-cerrar-terminos-footer"
+                    class="mt-3 w-full inline-flex justify-center rounded-xl px-4 py-2.5 bg-white text-base font-medium text-gray-700 border border-gray-300 hover:bg-gray-50 focus:outline-none transition sm:mt-0 sm:w-auto sm:text-sm">
+                    Cancelar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
     (function () {
+        // Toggle panel for adding product
         const toggleButton = document.getElementById('toggle-panel-btn');
         const panel = document.getElementById('panel-agregar-producto');
         const icon = document.getElementById('toggle-icon');
@@ -465,6 +613,97 @@
                 } else {
                     panel.classList.add('hidden');
                     icon.style.transform = 'rotate(0deg)';
+                }
+            });
+        }
+
+        // UNAM fields toggle
+        const tipoCotizacionSelect = document.getElementById('tipo_cotizacion');
+        const campoNoSolicitud = document.getElementById('campo_no_solicitud');
+        const campoProveedorUnam = document.getElementById('campo_proveedor_unam');
+
+        function toggleUnamFields() {
+            if (tipoCotizacionSelect && campoNoSolicitud && campoProveedorUnam) {
+                if (tipoCotizacionSelect.value === 'UNAM') {
+                    campoNoSolicitud.classList.remove('hidden');
+                    campoProveedorUnam.classList.remove('hidden');
+                } else {
+                    campoNoSolicitud.classList.add('hidden');
+                    campoProveedorUnam.classList.add('hidden');
+                }
+            }
+        }
+
+        if (tipoCotizacionSelect) {
+            tipoCotizacionSelect.addEventListener('change', toggleUnamFields);
+            // Initial check on page load
+            toggleUnamFields();
+        }
+
+        // Modal Términos y condiciones
+        const btnTerminos = document.getElementById('btn-terminos');
+        const modalTerminos = document.getElementById('modal-terminos');
+        const btnCerrarTerminos = document.getElementById('btn-cerrar-terminos');
+        const btnCerrarTerminosFooter = document.getElementById('btn-cerrar-terminos-footer');
+        const btnGuardarTerminos = document.getElementById('btn-guardar-terminos');
+
+        function openModal() {
+            if (modalTerminos) {
+                const textarea = document.getElementById("contenido_terminos");
+                const inputHidden = document.getElementById("terminos_condiciones");
+                if (textarea && inputHidden) {
+                    textarea.value = inputHidden.value;
+                }
+
+                modalTerminos.classList.remove('hidden');
+                document.body.classList.add('overflow-hidden');
+            }
+        }
+
+        function closeModal() {
+            if (modalTerminos) {
+                modalTerminos.classList.add('hidden');
+                document.body.classList.remove('overflow-hidden');
+            }
+        }
+
+        if (btnTerminos) {
+            btnTerminos.addEventListener('click', openModal);
+        }
+
+        if (btnCerrarTerminos) {
+            btnCerrarTerminos.addEventListener('click', closeModal);
+        }
+
+        if (btnCerrarTerminosFooter) {
+            btnCerrarTerminosFooter.addEventListener('click', closeModal);
+        }
+
+        // Close modal on background click
+        if (modalTerminos) {
+            modalTerminos.addEventListener('click', function (e) {
+                if (e.target === modalTerminos || e.target.classList.contains('bg-opacity-75')) {
+                    closeModal();
+                }
+            });
+        }
+
+        if (btnGuardarTerminos) {
+            btnGuardarTerminos.addEventListener("click", function () {
+                const textarea = document.getElementById("contenido_terminos");
+                const inputHidden = document.getElementById("terminos_condiciones");
+                const form = document.getElementById("form-orden");
+
+                if (textarea && inputHidden) {
+                    inputHidden.value = textarea.value;
+                }
+
+                if (form) {
+                    if (typeof form.requestSubmit === 'function') {
+                        form.requestSubmit();
+                    } else {
+                        form.submit();
+                    }
                 }
             });
         }

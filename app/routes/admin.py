@@ -337,6 +337,12 @@ def orden_update(id_orden):
         "comprador": request.form.get("comprador", "").strip(),
         "estado": request.form.get("estado", "").strip(),
         "fecha_creacion": request.form.get("fecha_creacion", "").strip(),
+        "vigencia": request.form.get("vigencia", "").strip(),
+        "tipo_cotizacion": request.form.get("tipo_cotizacion", "").strip(),
+        "no_solicitud": request.form.get("no_solicitud", "").strip(),
+        "proveedor_unam": request.form.get("proveedor_unam", "").strip(),
+        "terminos_condiciones": request.form.get("terminos_condiciones", ""),
+        "incluir_firma": request.form.get("incluir_firma") == "on",
     }
 
     orden, error = OrdenService.update(id_orden, data)

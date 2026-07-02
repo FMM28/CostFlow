@@ -18,6 +18,14 @@ from app.models.usuario import Usuario
 logger = logging.getLogger(__name__)
 
 ESTADOS_VALIDOS = frozenset({"pendiente", "aprobada", "completada", "cancelada"})
+TIPOS_COTIZACION = frozenset({"UNAM", "OTROS"})
+TERMINOS_CONDICIONES_DEFAULT = """Condiciones de Pago: [CONDICIONES DE PAGO]
+[LUGAR DE ENTREGA]
+Garantía Directo con Fabricante
+No incluye instalación y/o Configuración
+Tiempo de Entrega: 4-8 Días hábiles o especificado en partida, una vez confirmada la recepción del pedido u orden de compra y existencia del producto
+Precios en Pesos Mexicanos, sujetos a cambios sin previo aviso o por variación del dólar
+Emitida la Orden de Compra no se aceptan cancelaciones ni devoluciones."""
 
 
 class OrdenService:
@@ -156,6 +164,7 @@ class OrdenService:
                 comprador=comprador,
                 estado=estado,
                 total=total,
+                terminos_condiciones=TERMINOS_CONDICIONES_DEFAULT,
             )
 
             db.session.add(orden)
@@ -229,6 +238,43 @@ class OrdenService:
                 )
             orden.estado = estado
 
+        # tipo de cotización
+        if "tipo_cotizacion" in data and str(data["tipo_cotizacion"]) != "":
+            tipo = str(data["tipo_cotizacion"]).strip().upper()
+
+            if tipo not in TIPOS_COTIZACION:
+                return (
+                    None,
+                    f"Tipo de cotización '{tipo}' no válido. Opciones: {sorted(TIPOS_COTIZACION)}",
+                )
+
+            orden.tipo_cotizacion = tipo
+
+        # información adicional
+        if (
+            "tipo_cotizacion" in data
+            or "no_solicitud" in data
+            or "proveedor_unam" in data
+        ):
+            informacion_actual = orden.informacion_adicional or {}
+
+            informacion, error = OrdenService._validate_informacion_adicional(
+                orden.tipo_cotizacion,
+                data.get(
+                    "no_solicitud",
+                    informacion_actual.get("no_solicitud"),
+                ),
+                data.get(
+                    "proveedor_unam",
+                    informacion_actual.get("proveedor_unam"),
+                ),
+            )
+
+            if error:
+                return None, error
+
+            orden.informacion_adicional = informacion
+
         # Actualizar total
         if "total" in data:
             total = OrdenService._to_decimal(data["total"])
@@ -245,6 +291,47 @@ class OrdenService:
                     ).date()
             except ValueError:
                 return None, "Formato de 'fecha_creacion' inválido (use 'YYYY-MM-DD')"
+
+        # vigencia
+        if "vigencia" in data:
+            try:
+                fecha = str(data["vigencia"]).strip()
+
+                vigencia = (
+                    datetime.strptime(fecha, "%Y-%m-%d").date() if fecha else None
+                )
+
+                fecha_creacion = (
+                    orden.fecha_creacion
+                    if "fecha_creacion" not in data
+                    else datetime.strptime(
+                        str(data["fecha_creacion"]).strip(),
+                        "%Y-%m-%d",
+                    ).date()
+                )
+
+                if (
+                    vigencia is not None
+                    and fecha_creacion is not None
+                    and vigencia < fecha_creacion
+                ):
+                    return (
+                        None,
+                        "La vigencia no puede ser anterior a la fecha de creación",
+                    )
+
+                orden.vigencia = vigencia
+
+            except ValueError:
+                return None, "Formato de 'vigencia' inválido (use 'YYYY-MM-DD')"
+
+        # términos y condiciones
+        if "terminos_condiciones" in data:
+            orden.terminos_condiciones = data["terminos_condiciones"]
+
+        # incluir firma
+        if "incluir_firma" in data:
+            orden.incluir_firma = bool(data["incluir_firma"])
 
         try:
             db.session.commit()
@@ -565,3 +652,38 @@ class OrdenService:
                 0,
                 "Error de base de datos al buscar órdenes",
             )
+
+    @staticmethod
+    def _validate_informacion_adicional(
+        tipo_cotizacion: str | None,
+        no_solicitud: str | None = None,
+        proveedor_unam: str | None = None,
+    ) -> tuple[dict, str | None]:
+        """
+        Valida y construye el contenido de informacion_adicional.
+
+        OTROS:
+            {}
+
+        UNAM:
+            {
+                "no_solicitud": "",
+                "proveedor_unam": ""
+            }
+        """
+
+        tipo = (tipo_cotizacion or "OTROS").strip().upper()
+
+        if tipo not in TIPOS_COTIZACION:
+            return {}, (
+                f"Tipo de cotización '{tipo}' no válido. "
+                f"Opciones: {sorted(TIPOS_COTIZACION)}"
+            )
+
+        if tipo == "OTROS":
+            return {}, None
+
+        return {
+            "no_solicitud": str(no_solicitud or "").strip(),
+            "proveedor_unam": str(proveedor_unam or "").strip(),
+        }, None
