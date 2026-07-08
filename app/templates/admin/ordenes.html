@@ -260,7 +260,7 @@
             <div class="flex items-start justify-between mb-4">
                 <div class="space-y-0.5">
                     <p class="text-xs text-gray-400">ID: {{ orden.id_orden }}</p>
-                    <p class="font-mono text-sm font-semibold text-gray-900 tracking-tight">{{ orden.clave_orden }}</p>
+                    <p class="font-mono text-sm font-semibold text-gray-900 tracking-tight">{{ orden.clave_orden if orden.clave_orden else "SIN CLAVE"}}</p>
                 </div>
                 <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border
                     {% if orden.estado == 'pendiente' %}bg-amber-50 text-amber-700 border-amber-200

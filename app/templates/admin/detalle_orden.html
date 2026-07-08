@@ -1,6 +1,6 @@
 {% extends 'admin/base.html' %}
 
-{% block title %}Orden {{ orden.clave_orden }}{% endblock %}
+{% block title %}Orden {{ orden.clave_orden or ('ID ' ~ orden.id_orden) }}{% endblock %}
 
 {% block content %}
 <div class="max-w-[1700px] mx-auto px-4 lg:px-6 py-8 space-y-6">
@@ -10,7 +10,7 @@
         <div class="flex items-center gap-4">
             <div>
                 <h1 class="text-3xl font-bold text-gray-900">
-                    Orden {{ orden.clave_orden }}
+                    Orden {{ orden.clave_orden or ('ID ' ~ orden.id_orden) }}
                 </h1>
                 <p class="text-sm text-gray-500 mt-1">
                     Creada el {{ orden.fecha_creacion.strftime('%d/%m/%Y') if orden.fecha_creacion else '—' }}
@@ -119,7 +119,7 @@
                         <label class="block text-sm font-medium text-gray-700">
                             Clave
                         </label>
-                        <input type="text" name="clave_orden" value="{{ orden.clave_orden }}" class="w-full h-11 px-4 rounded-xl border border-gray-200 bg-white text-gray-700
+                        <input type="text" name="clave_orden" value="{{ orden.clave_orden if orden.clave_orden }}" placeholder="No asignada" class="w-full h-11 px-4 rounded-xl border border-gray-200 bg-white text-gray-700
                        focus:outline-none focus:ring-2 focus:ring-emerald-500/50
                        focus:border-emerald-500 transition">
                     </div>

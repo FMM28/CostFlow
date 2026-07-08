@@ -320,14 +320,9 @@ def nueva_orden_post():
         )
 
     try:
-        clave_orden = request.form.get("clave_orden", "").strip()
         comprador = request.form.get("comprador", "").strip()
         fecha_creacion_str = request.form.get("fecha_creacion", "").strip()
         estado = "pendiente"
-
-        if not clave_orden:
-            flash("La clave de la orden es obligatoria.", "error")
-            return render_formulario()
 
         if not comprador:
             flash("El comprador es obligatorio.", "error")
@@ -383,7 +378,6 @@ def nueva_orden_post():
             det.setdefault("id_proveedor", None)
 
         data_orden = {
-            "clave_orden": clave_orden,
             "id_usuario": current_user.id_usuario,
             "comprador": comprador,
             "estado": estado,
@@ -414,13 +408,7 @@ def nueva_orden_post():
             flash(error_total, "error")
             return render_formulario()
 
-        flash(
-            f"Orden '{orden.clave_orden}' creada exitosamente con "
-            f"{len(detalles_creados)} producto(s).",
-            "success",
-        )
-
-        return redirect(url_for("admin.ordenes"))
+        return redirect(url_for("admin.orden_detalle",id_orden= orden.id_orden))
 
     except Exception as e:
         flash(f"Error inesperado: {str(e)}", "error")

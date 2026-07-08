@@ -98,9 +98,6 @@ class OrdenService:
     @staticmethod
     def _validate_create_data(data: dict) -> Optional[str]:
         """Valida los datos requeridos para crear una orden."""
-        clave = str(data.get("clave_orden", "")).strip()
-        if not clave:
-            return "El campo 'clave_orden' es obligatorio"
 
         if not data.get("id_usuario"):
             return "El campo 'id_usuario' es obligatorio"
@@ -140,26 +137,13 @@ class OrdenService:
         if error:
             return None, error
 
-        clave = str(data["clave_orden"]).strip()
         estado = data.get("estado", "pendiente")
         comprador = str(data["comprador"]).strip()
         total = OrdenService._to_decimal(data.get("total", "0.00"))
 
-        # Verificar unicidad de clave
-        try:
-            duplicado = Orden.query.filter_by(clave_orden=clave).first()
-            if duplicado:
-                return None, f"Ya existe una orden con la clave '{clave}'"
-        except SQLAlchemyError as exc:
-            logger.error(
-                "Error al verificar duplicado de clave_orden='%s': %s", clave, exc
-            )
-            return None, "Error de base de datos al verificar la orden"
-
         # Crear orden
         try:
             orden = Orden(
-                clave_orden=clave,
                 id_usuario=int(data["id_usuario"]),
                 comprador=comprador,
                 estado=estado,
@@ -174,13 +158,9 @@ class OrdenService:
             )
             return orden, None
 
-        except IntegrityError as exc:
-            db.session.rollback()
-            logger.warning("IntegrityError al crear orden clave='%s': %s", clave, exc)
-            return None, f"Ya existe una orden con la clave '{clave}'"
         except SQLAlchemyError as exc:
             db.session.rollback()
-            logger.error("Error al crear orden clave='%s': %s", clave, exc)
+            logger.error("Error al crear orden: %s", exc)
             return None, "Error de base de datos al crear la orden"
 
     @staticmethod

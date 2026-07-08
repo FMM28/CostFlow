@@ -40,16 +40,7 @@
 
         <div class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
             <h2 class="text-lg font-medium text-gray-900 mb-4">Información de la orden</h2>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div>
-                    <label for="clave_orden" class="block text-sm font-medium text-gray-700 mb-1">
-                        Clave de orden <span class="text-red-500">*</span>
-                    </label>
-                    <input type="text" name="clave_orden" id="clave_orden" required
-                        value="{{ form_data.get('clave_orden', '') if form_data else '' }}"
-                        placeholder="Ej. ORD-2025-001"
-                        class="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500">
-                </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                     <label for="comprador" class="block text-sm font-medium text-gray-700 mb-1">
                         Comprador <span class="text-red-500">*</span>
@@ -84,7 +75,8 @@
                                 SKU / Clave</th>
                             <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Cantidad</th>
-                            <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th
+                                class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider w-20">
                             </th>
                         </tr>
                     </thead>
@@ -108,27 +100,27 @@
             </div>
 
             <div class="p-5 border-t border-gray-200 bg-gray-50/50">
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
-                    <div class="md:col-span-2">
+                <div class="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
+                    <div class="md:col-span-5">
                         <label class="block text-xs font-medium text-gray-700 mb-1">Nombre del producto <span
                                 class="text-red-500">*</span></label>
                         <input type="text" id="prod-nombre" placeholder="Ej. Cable USB-C 1m"
                             class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500/50">
                     </div>
-                    <div>
+                    <div class="md:col-span-3">
                         <label class="block text-xs font-medium text-gray-700 mb-1">SKU / Clave</label>
                         <input type="text" id="prod-clave" placeholder="Opcional"
                             class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500/50">
                     </div>
-                    <div class="flex gap-2">
-                        <div class="flex-1">
-                            <label class="block text-xs font-medium text-gray-700 mb-1">Cantidad <span
-                                    class="text-red-500">*</span></label>
-                            <input type="number" id="prod-cantidad" min="1" value="1"
-                                class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500/50">
-                        </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-xs font-medium text-gray-700 mb-1">Cantidad <span
+                                class="text-red-500">*</span></label>
+                        <input type="number" id="prod-cantidad" min="1" value="1"
+                            class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500/50">
+                    </div>
+                    <div class="md:col-span-2">
                         <button type="button" id="btn-agregar-manual"
-                            class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium rounded-lg transition-colors shadow-sm whitespace-nowrap mt-5">
+                            class="w-full px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium rounded-lg transition-colors shadow-sm whitespace-nowrap mt-5">
                             + Agregar
                         </button>
                     </div>
@@ -150,16 +142,16 @@
 </div>
 
 <script>
-(function () {
-    let productos = [];
+    (function () {
+        let productos = [];
 
-    {% if detalles %}
-    {% for det in detalles %}
-    productos.push({
-        tempId: {{ loop.index }},
-        producto: {{ (det.producto or '')|tojson }},
-        clave_producto: {{ (det.clave_producto or '')|tojson }},
-        cantidad: {{ det.cantidad|default(1)|int }}
+        {% if detalles %}
+        {% for det in detalles %}
+        productos.push({
+            tempId: {{ loop.index }},
+        producto: { { (det.producto or '')| tojson } },
+    clave_producto: { { (det.clave_producto or '')| tojson } },
+    cantidad: { { det.cantidad |default (1) | int } }
     });
     {% endfor %}
     {% endif %}
@@ -320,6 +312,6 @@
     }
 
     renderizarTabla();
-})();
+}) ();
 </script>
 {% endblock %}
