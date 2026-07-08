@@ -18,6 +18,7 @@ class Orden(BaseModel):
     total = db.Column(db.Numeric(10, 2), default=0)
     terminos_condiciones = db.Column(db.Text, nullable=True)
     incluir_firma = db.Column(db.Boolean, default=False)
+    incluir_imagenes = db.Column(db.Boolean, default=False)
 
     usuario  = db.relationship("Usuario", back_populates="ordenes")
     detalles = db.relationship("OrdenDetalle", back_populates="orden", cascade="all, delete-orphan")

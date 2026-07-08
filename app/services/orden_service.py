@@ -253,6 +253,7 @@ class OrdenService:
         # información adicional
         if (
             "tipo_cotizacion" in data
+            or "departamento" in data
             or "no_solicitud" in data
             or "proveedor_unam" in data
         ):
@@ -260,6 +261,10 @@ class OrdenService:
 
             informacion, error = OrdenService._validate_informacion_adicional(
                 orden.tipo_cotizacion,
+                data.get(
+                    "departamento",
+                    informacion_actual.get("departamento"),
+                ),
                 data.get(
                     "no_solicitud",
                     informacion_actual.get("no_solicitud"),
@@ -332,6 +337,10 @@ class OrdenService:
         # incluir firma
         if "incluir_firma" in data:
             orden.incluir_firma = bool(data["incluir_firma"])
+            
+        # incluir imagenes
+        if "incluir_imagenes" in data:
+            orden.incluir_imagenes = bool(data["incluir_imagenes"])
 
         try:
             db.session.commit()
@@ -656,6 +665,7 @@ class OrdenService:
     @staticmethod
     def _validate_informacion_adicional(
         tipo_cotizacion: str | None,
+        departamento: str | None = None,
         no_solicitud: str | None = None,
         proveedor_unam: str | None = None,
     ) -> tuple[dict, str | None]:
@@ -667,6 +677,7 @@ class OrdenService:
 
         UNAM:
             {
+                "departamento":"",
                 "no_solicitud": "",
                 "proveedor_unam": ""
             }
@@ -684,6 +695,7 @@ class OrdenService:
             return {}, None
 
         return {
+            "departamento": str(departamento or "").strip(),
             "no_solicitud": str(no_solicitud or "").strip(),
             "proveedor_unam": str(proveedor_unam or "").strip(),
         }, None

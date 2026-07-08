@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Cotización {{ cotizacion.clave }}</title>
+    <style>
+        @font-face {
+            font-family: "Sansation";
+            src: url("{{ font_path }}") format("truetype");
+            font-weight: 700;
+            font-style: normal;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="document">
+        {% for pagina in cotizacion.paginas %}
+
+        <div class="page">
+
+            {% include "pdf/components/header.html" %}
+
+            {% include "pdf/components/buyer.html" %}
+
+            {% include "pdf/components/info.html" %}
+
+            {% include "pdf/components/products.html" %}
+
+            {% if pagina.ultima %}
+            {% include "pdf/components/seller_totals.html" %}
+            {% endif %}
+
+            {% if not loop.last %}
+            <div class="page-break"></div>
+            {% endif %}
+
+            <footer class="page-footer">
+
+                {% include "pdf/components/footer.html" %}
+
+            </footer>
+
+        </div>
+
+
+
+        {% endfor %}
+
+
+
+</body>
+
+</html>

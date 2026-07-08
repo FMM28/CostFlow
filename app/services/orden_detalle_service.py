@@ -381,6 +381,8 @@ class OrdenDetalleService:
             "id_proveedor",
             "producto",
             "clave_producto",
+            "informacion_adicional",
+            "notas_internas",
             "url_producto",
             "url_imagen",
         )

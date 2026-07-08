@@ -1,0 +1,15 @@
+<section class="buyer-box">
+    <div class="buyer-box-content">
+        <div class="buyer-name">
+            {{ cotizacion.comprador }}
+        </div>
+        {% if es_unam %}
+        <div class="buyer-org">
+            {{ cotizacion.departamento }}
+        </div>
+        <div class="buyer-org">
+            Universidad Nacional Autónoma de México
+        </div>
+        {% endif %}
+    </div>
+</section>

@@ -8,6 +8,7 @@ certifi==2026.2.25
 cffi==2.0.0
 charset-normalizer==3.4.7
 click==8.3.2
+cssselect2==0.9.0
 curl_cffi==0.15.0
 dotenv==0.9.9
 et_xmlfile==2.0.0
@@ -17,6 +18,7 @@ Flask-Login==0.6.3
 Flask-Migrate==4.1.0
 Flask-SQLAlchemy==3.1.1
 Flask-WTF==1.2.2
+fonttools==4.63.0
 greenlet==3.4.0
 idna==3.11
 itsdangerous==2.2.0
@@ -28,11 +30,14 @@ mdurl==0.1.2
 numpy==2.4.6
 openpyxl==3.1.5
 pandas==3.0.3
+pillow==12.3.0
 playwright==1.61.0
 pycparser==3.0
+pydyf==0.12.1
 pyee==13.0.1
 Pygments==2.20.0
 PyMySQL==1.1.2
+pyphen==0.17.2
 python-dateutil==2.9.0.post0
 python-dotenv==1.2.2
 redis==8.0.1
@@ -41,7 +46,12 @@ rich==15.0.0
 six==1.17.0
 soupsieve==2.8.4
 SQLAlchemy==2.0.49
+tinycss2==1.5.1
+tinyhtml5==2.1.0
 typing_extensions==4.15.0
 urllib3==2.6.3
+weasyprint==69.0
+webencodings==0.5.1
 Werkzeug==3.1.8
 WTForms==3.2.1
+zopfli==0.4.3

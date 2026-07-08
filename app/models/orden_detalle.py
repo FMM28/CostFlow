@@ -7,11 +7,13 @@ class OrdenDetalle(BaseModel):
     id_detalle = db.Column(db.Integer, primary_key=True)
     id_orden = db.Column(db.Integer, db.ForeignKey("orden.id_orden"), nullable=False)
     id_proveedor = db.Column(db.Integer, db.ForeignKey("proveedor.id_proveedor"), nullable=True)
-    producto = db.Column(db.String(255), nullable=False)
+    producto = db.Column(db.Text, nullable=False)
     clave_producto = db.Column(db.String(100), nullable=True)   # SKU
     url_producto = db.Column(db.String(500), nullable=True)
     url_imagen = db.Column(db.String(500), nullable=True)
     cantidad = db.Column(db.Integer, nullable=False)
+    informacion_adicional = db.Column(db.Text, nullable=True)
+    notas_internas = db.Column(db.Text, nullable=True)
     precio_unitario = db.Column(db.Numeric(10, 2), nullable=False)  # Costo de compra
     costo_envio = db.Column(db.Numeric(10, 2), nullable=False, default=0) # Costo de envío por pieza
     ganancia_unitaria = db.Column(db.Numeric(10, 2), nullable=False, default=0)  # Margen por pieza

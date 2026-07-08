@@ -1,0 +1,50 @@
+<section class="summary">
+    <div class="seller">
+        {% if vendedor.firma %}
+        <div class="signature">
+            <img src="{{ vendedor.firma }}">
+        </div>
+        {% endif %}
+        <div class="name">
+            {{ vendedor.nombre }}
+        </div>
+        <div>
+            {{ vendedor.puesto }} ♦
+            {% if vendedor.telefono %}
+            {{ vendedor.telefono }} ♦
+            {% endif %}
+            {{ vendedor.correo }}
+        </div>
+    </div>
+    <div class="totals">
+        <table>
+            <tr>
+                <td>Subtotal</td>
+                <td>
+                    <div class="total-money">
+                        <div>$</div>
+                        <div>{{ "{:,.2f}".format(cotizacion.subtotal) }}</div>
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td>IVA: 16%</td>
+                <td>
+                    <div class="total-money">
+                        <div>$</div>
+                        <div>{{ "{:,.2f}".format(cotizacion.iva) }}</div>
+                    </div>
+                </td>
+            </tr>
+            <tr class="grand-total">
+                <td>TOTAL</td>
+                <td>
+                    <div class="total-money">
+                        <div>$</div>
+                        <div>{{ "{:,.2f}".format(cotizacion.total) }}</div>
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+</section>

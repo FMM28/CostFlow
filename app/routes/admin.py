@@ -4,11 +4,13 @@ from flask import (
     render_template,
     request,
     redirect,
+    send_file,
     url_for,
     flash,
     current_app,
 )
 from flask_login import login_required, current_user
+from app.services.pdf.cotizacion_pdf_service import CotizacionPDFService
 from app.services.proveedor_service import ProveedorService
 from app.services.proveedores.SiclikService import SiclikService
 from app.services.user_service import UserService
@@ -437,17 +439,14 @@ def orden_detalle(id_orden):
         flash(error or "Orden no encontrada", "error")
         return redirect(url_for("admin.ordenes"))
 
-    proveedores = ProveedorService.get_all()
-
-    return render_template(
-        "admin/detalle_orden.html", orden=orden, proveedores=proveedores
-    )
+    return render_template("admin/detalle_orden.html", orden=orden)
 
 
 @admin_bp.post("/ordenes/<int:id_orden>/update")
 @login_required
 @role_required("admin")
 def orden_update(id_orden):
+    print(request.form.get("incluir_imagenes") == "1")
 
     data = {
         "clave_orden": request.form.get("clave_orden", "").strip(),
@@ -456,10 +455,12 @@ def orden_update(id_orden):
         "fecha_creacion": request.form.get("fecha_creacion", "").strip(),
         "vigencia": request.form.get("vigencia", "").strip(),
         "tipo_cotizacion": request.form.get("tipo_cotizacion", "").strip(),
+        "departamento": request.form.get("departamento", "").strip(),
         "no_solicitud": request.form.get("no_solicitud", "").strip(),
         "proveedor_unam": request.form.get("proveedor_unam", "").strip(),
         "terminos_condiciones": request.form.get("terminos_condiciones", ""),
-        "incluir_firma": request.form.get("incluir_firma") == "on",
+        "incluir_firma": request.form.get("incluir_firma") == "1",
+        "incluir_imagenes": request.form.get("incluir_imagenes") == "1",
     }
 
     orden, error = OrdenService.update(id_orden, data)
@@ -562,6 +563,8 @@ def orden_detalle_update(id_detalle):
         "margen_ganancia": request.form.get("margen_ganancia", type=float),
         "url_producto": request.form.get("url_producto") or None,
         "url_imagen": request.form.get("url_imagen") or None,
+        "informacion_adicional": request.form.get("informacion_adicional") or None,
+        "notas_internas": request.form.get("notas_internas") or None,
     }
 
     detalle, error = OrdenDetalleService.update_detalle(
@@ -767,6 +770,14 @@ def orden_detalle_seleccionar_proveedor(id_detalle):
     success, error = OrdenDetalleService.update_detalle(
         id_detalle=id_detalle, data=data
     )
+
+    # Recalcular totales de la orden
+    nuevo_total, error_total = OrdenService.recalculate_total(detalle.id_orden)
+
+    if error_total:
+        if detalle and detalle.get("id_detalle"):
+            OrdenDetalleService.delete(detalle["id_detalle"])
+        flash(f"Error al actualizar los totales: {error_total}", "error")
 
     if not success:
         flash(error or "No se pudo asignar el proveedor", "error")
@@ -995,3 +1006,37 @@ def arroba_computer_excel():
             os.remove(ruta_temporal)
 
     return redirect(redireccion)
+
+
+@admin_bp.get("/ordenes/<int:id_orden>/pdf")
+@login_required
+@role_required("admin")
+def preview_pdf(id_orden):
+
+    orden = OrdenService.get_by_id(id_orden)
+
+    return render_template(
+        "admin/pdf_preview.html",
+        orden=orden,
+        pdf_url=url_for(
+            ".pdf_file",
+            id_orden=id_orden,
+        ),
+    )
+
+
+@admin_bp.get("/ordenes/<int:id_orden>/pdf/file")
+@login_required
+@role_required("admin")
+def pdf_file(id_orden):
+
+    orden = OrdenService.get_by_id(id_orden)
+
+    pdf = CotizacionPDFService.generar(orden)
+
+    return send_file(
+        pdf,
+        mimetype="application/pdf",
+        download_name=f"{orden.clave_orden}.pdf",
+        as_attachment=False,
+    )

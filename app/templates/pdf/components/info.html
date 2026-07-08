@@ -1,0 +1,49 @@
+<section class="info-grid">
+
+    <div class="left">
+
+        <div>
+            No. Cotización:
+            <strong>{{ cotizacion.clave }}</strong>
+        </div>
+
+        <div>
+            Fecha de Cotización:
+            <strong>{{ cotizacion.fecha }}</strong>
+        </div>
+
+        {% if cotizacion.vigencia %}
+        <div>
+            Vigencia de Cotización:
+            <strong>{{ cotizacion.vigencia }} o agotar existencias.</strong>
+        </div>
+        {% endif %}
+
+    </div>
+
+    <div class="right">
+
+        <div>
+            Página:
+            <strong>
+                <span class="page-info"></span>
+            </strong>
+        </div>
+
+        {% if cotizacion.solicitud_unam %}
+        <div>
+            No. Solicitud:
+            <strong>{{ cotizacion.solicitud_unam }}</strong>
+        </div>
+        {% endif %}
+
+        {% if cotizacion.proveedor_unam %}
+        <div>
+            Proveedor UNAM:
+            <strong>{{ cotizacion.proveedor_unam }}</strong>
+        </div>
+        {% endif %}
+
+    </div>
+
+</section>

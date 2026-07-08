@@ -31,8 +31,13 @@ class Config:
     LOG_FILE = "app.log"
     LOG_MAX_BYTES = 10 * 1024 * 1024  # 10 MB
     LOG_BACKUP_COUNT = 5
-    
+
     UPLOAD_FOLDER = os.getenv("UPLOAD_FOLDER", "app/static/uploads/firmas")
+
+    ARP_NAME = os.getenv("ARP_NAME")
+    URL_LOGO_ARP = os.getenv("URL_LOGO_ARP")
+    RFC_ARP = os.getenv("RFC_ARP")
+    DIRECCION_ARP = os.getenv("DIRECCION_ARP")
 
     MARGEN_CONVERSION = float(os.getenv("MARGEN_CONVERSION", 0))
 

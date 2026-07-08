@@ -28,25 +28,38 @@
                 Volver
             </a>
 
-            <!-- Términos y condiciones -->
-            <button type="button" id="btn-terminos"
+            <!-- Configurar PDF -->
+            <button type="button" id="btn-config-pdf"
                 class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-xl hover:bg-gray-100 transition">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                 </svg>
-                Términos
+                Configurar PDF
+            </button>
+
+            <!-- Configuración UNAM -->
+            <button type="button" id="btn-config-unam" disabled
+                class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-400 bg-gray-100 border border-gray-200 rounded-xl cursor-not-allowed transition"
+                title="Disponible solo para tipo de cotización UNAM">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                </svg>
+                Configuración UNAM
             </button>
 
             <!-- Exportar PDF -->
-            <button type="button" id="btn-exportar-pdf"
+            <a href="{{ url_for('admin.preview_pdf', id_orden=orden.id_orden) }}"
                 class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-violet-600 rounded-xl hover:bg-violet-700 transition shadow-sm">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                 </svg>
                 Exportar PDF
-            </button>
+            </a>
 
             <!-- Eliminar -->
             <form method="POST" action="{{ url_for('admin.orden_delete', id_orden=orden.id_orden) }}"
@@ -141,6 +154,17 @@
                        focus:border-emerald-500 transition">
                     </div>
 
+                    <!-- Fecha de vigencia -->
+                    <div class="space-y-1">
+                        <label class="block text-sm font-medium text-gray-700">
+                            Fecha de vigencia
+                        </label>
+                        <input type="date" name="vigencia"
+                            value="{{ orden.vigencia.strftime('%Y-%m-%d') if orden.vigencia else '' }}" class="w-full h-11 px-4 rounded-xl border border-gray-200 bg-white text-gray-700
+                       focus:outline-none focus:ring-2 focus:ring-emerald-500/50
+                       focus:border-emerald-500 transition">
+                    </div>
+
                     <div class="space-y-1">
                         <label class="block text-sm font-medium text-gray-700">
                             Tipo de cotización
@@ -173,49 +197,6 @@
                                 </svg>
                             </div>
                         </div>
-                    </div>
-
-                    {% set info = orden.informacion_adicional or {} %}
-
-                    <!-- No. de solicitud (UNAM) -->
-                    <div id="campo_no_solicitud" class="space-y-1 hidden">
-                        <label class="block text-sm font-medium text-gray-700">
-                            No. de solicitud
-                        </label>
-                        <input type="text" name="no_solicitud" value="{{ info.get('no_solicitud', '') }}" class="w-full h-11 px-4 rounded-xl border border-gray-200 bg-white text-gray-700
-               focus:outline-none focus:ring-2 focus:ring-emerald-500/50
-               focus:border-emerald-500 transition">
-                    </div>
-
-                    <!-- Proveedor UNAM (UNAM) -->
-                    <div id="campo_proveedor_unam" class="space-y-1 hidden">
-                        <label class="block text-sm font-medium text-gray-700">
-                            Proveedor UNAM
-                        </label>
-                        <input type="text" name="proveedor_unam" value="{{ info.get('proveedor_unam', '') }}" class="w-full h-11 px-4 rounded-xl border border-gray-200 bg-white text-gray-700
-               focus:outline-none focus:ring-2 focus:ring-emerald-500/50
-               focus:border-emerald-500 transition">
-                    </div>
-
-                    <!-- Fecha de vigencia -->
-                    <div class="space-y-1">
-                        <label class="block text-sm font-medium text-gray-700">
-                            Fecha de vigencia
-                        </label>
-                        <input type="date" name="vigencia"
-                            value="{{ orden.vigencia.strftime('%Y-%m-%d') if orden.vigencia else '' }}" class="w-full h-11 px-4 rounded-xl border border-gray-200 bg-white text-gray-700
-                       focus:outline-none focus:ring-2 focus:ring-emerald-500/50
-                       focus:border-emerald-500 transition">
-                    </div>
-
-                    <!-- Incluir firma -->
-                    <div class="flex items-center gap-3 pt-2">
-                        <input type="checkbox" name="incluir_firma" id="incluir_firma" value="1" {% if
-                            orden.incluir_firma %}checked{% endif %}
-                            class="w-5 h-5 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500/50 cursor-pointer">
-                        <label for="incluir_firma" class="text-sm font-medium text-gray-700 cursor-pointer select-none">
-                            Incluir firma al generar documento
-                        </label>
                     </div>
 
                     <!-- Estado -->
@@ -257,8 +238,20 @@
                         </div>
                     </div>
 
+                    <!-- Hidden fields: términos, firma, imágenes, UNAM -->
+                    {% set info = orden.informacion_adicional or {} %}
                     <input type="hidden" name="terminos_condiciones" id="terminos_condiciones"
                         value="{{ orden.terminos_condiciones|e }}">
+                    <input type="hidden" name="incluir_firma" id="incluir_firma"
+                        value="{{ '1' if orden.incluir_firma else '0' }}">
+                    <input type="hidden" name="incluir_imagenes" id="incluir_imagenes"
+                        value="{{ '1' if orden.incluir_imagenes else '0' }}">
+                    <input type="hidden" name="no_solicitud" id="no_solicitud"
+                        value="{{ info.get('no_solicitud', '') }}">
+                    <input type="hidden" name="proveedor_unam" id="proveedor_unam"
+                        value="{{ info.get('proveedor_unam', '') }}">
+                    <input type="hidden" name="departamento" id="departamento"
+                        value="{{ info.get('departamento', '') }}">
 
                     <button type="submit" class="w-full px-4 py-2.5 bg-emerald-600 text-white rounded-xl
                    hover:bg-emerald-700 transition font-medium">
@@ -549,45 +542,164 @@
     </div>
 </div>
 
-<!-- Modal Términos y condiciones -->
-<div id="modal-terminos" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog"
-    aria-modal="true">
+<!-- ======================= MODAL: Configurar PDF ======================= -->
+<div id="modal-config-pdf" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-pdf-title"
+    role="dialog" aria-modal="true">
     <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
-        <!-- Background overlay -->
         <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
 
-        <!-- Modal panel -->
         <div
-            class="inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-3xl sm:w-full">
+            class="inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full">
             <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                <div class="flex items-center justify-between mb-4">
-                    <h3 class="text-xl font-semibold text-gray-900" id="modal-title">
-                        Términos y condiciones
-                    </h3>
-                    <button type="button" id="btn-cerrar-terminos" class="text-gray-400 hover:text-gray-500 transition">
+                <div class="flex items-center justify-between mb-5">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-violet-100 flex items-center justify-center">
+                            <svg class="w-5 h-5 text-violet-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            </svg>
+                        </div>
+                        <h3 class="text-xl font-semibold text-gray-900" id="modal-pdf-title">
+                            Configurar PDF
+                        </h3>
+                    </div>
+                    <button type="button" class="btn-cerrar-pdf text-gray-400 hover:text-gray-500 transition">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M6 18L18 6M6 6l12 12" />
                         </svg>
                     </button>
                 </div>
-                <div class="mt-2">
-                    <p class="text-sm text-gray-500 mb-3">
-                        Edita el contenido de los términos y condiciones que se incluirán en el documento.
+
+                <!-- Opciones de generación -->
+                <div class="space-y-4">
+                    <p class="text-sm text-gray-500">
+                        Personaliza el contenido que se incluirá al generar el documento PDF.
                     </p>
-                    <textarea id="contenido_terminos" name="contenido_terminos" rows="15"
-                        class="w-full px-4 py-3 border border-gray-200 rounded-xl bg-white text-gray-700 text-sm
+
+                    <!-- Incluir firma -->
+                    <label
+                        class="flex items-start gap-3 p-4 rounded-xl border border-gray-200 hover:border-emerald-300 hover:bg-emerald-50/30 transition cursor-pointer group">
+                        <input type="checkbox" id="chk-incluir-firma"
+                            class="mt-0.5 w-5 h-5 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500/50 cursor-pointer">
+                        <div>
+                            <span class="text-sm font-semibold text-gray-800 block">Incluir firma</span>
+                            <span class="text-xs text-gray-500">Agrega la firma del vendedor al final del
+                                documento.</span>
+                        </div>
+                    </label>
+
+                    <!-- Incluir imágenes -->
+                    <label
+                        class="flex items-start gap-3 p-4 rounded-xl border border-gray-200 hover:border-emerald-300 hover:bg-emerald-50/30 transition cursor-pointer group">
+                        <input type="checkbox" id="chk-incluir-imagenes"
+                            class="mt-0.5 w-5 h-5 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500/50 cursor-pointer">
+                        <div>
+                            <span class="text-sm font-semibold text-gray-800 block">Incluir imágenes de productos</span>
+                            <span class="text-xs text-gray-500">Muestra las imágenes de cada producto en la tabla del
+                                PDF.</span>
+                        </div>
+                    </label>
+
+                    <!-- Términos y condiciones -->
+                    <div class="pt-2">
+                        <label class="block text-sm font-semibold text-gray-800 mb-2">
+                            Términos y condiciones
+                        </label>
+                        <p class="text-xs text-gray-500 mb-2">
+                            Texto que se incluirá al pie del documento generado.
+                        </p>
+                        <textarea id="contenido_terminos" rows="8"
+                            class="w-full px-4 py-3 border border-gray-200 rounded-xl bg-white text-gray-700 text-sm
                                focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition resize-none"
-                        placeholder="Escribe aquí los términos y condiciones...">{{ orden.terminos_condiciones or '' }}</textarea>
+                            placeholder="Escribe aquí los términos y condiciones..."></textarea>
+                    </div>
                 </div>
             </div>
+
             <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse gap-3">
-                <button type="button" id="btn-guardar-terminos"
+                <button type="button" id="btn-guardar-pdf"
                     class="w-full inline-flex justify-center rounded-xl px-4 py-2.5 bg-emerald-600 text-base font-medium text-white hover:bg-emerald-700 focus:outline-none transition sm:w-auto sm:text-sm">
                     Guardar cambios
                 </button>
-                <button type="button" id="btn-cerrar-terminos-footer"
-                    class="mt-3 w-full inline-flex justify-center rounded-xl px-4 py-2.5 bg-white text-base font-medium text-gray-700 border border-gray-300 hover:bg-gray-50 focus:outline-none transition sm:mt-0 sm:w-auto sm:text-sm">
+                <button type="button"
+                    class="btn-cerrar-pdf w-full inline-flex justify-center rounded-xl px-4 py-2.5 bg-white text-base font-medium text-gray-700 border border-gray-300 hover:bg-gray-50 focus:outline-none transition sm:mt-0 sm:w-auto sm:text-sm">
+                    Cancelar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ======================= MODAL: Configuración UNAM ======================= -->
+<div id="modal-config-unam" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-unam-title"
+    role="dialog" aria-modal="true">
+    <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
+
+        <div
+            class="inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-xl sm:w-full">
+            <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                <div class="flex items-center justify-between mb-5">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center">
+                            <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                            </svg>
+                        </div>
+                        <h3 class="text-xl font-semibold text-gray-900" id="modal-unam-title">
+                            Configuración UNAM
+                        </h3>
+                    </div>
+                    <button type="button" class="btn-cerrar-unam text-gray-400 hover:text-gray-500 transition">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+
+                <div class="space-y-4">
+                    <p class="text-sm text-gray-500">
+                        Completa los datos adicionales requeridos para cotizaciones tipo UNAM.
+                    </p>
+
+                    <div class="space-y-1">
+                        <label class="block text-sm font-medium text-gray-700">
+                            No. de solicitud
+                        </label>
+                        <input type="text" id="input-no-solicitud" class="w-full h-11 px-4 rounded-xl border border-gray-200 bg-white text-gray-700
+                       focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition">
+                    </div>
+
+                    <div class="space-y-1">
+                        <label class="block text-sm font-medium text-gray-700">
+                            Proveedor UNAM
+                        </label>
+                        <input type="text" id="input-proveedor-unam" class="w-full h-11 px-4 rounded-xl border border-gray-200 bg-white text-gray-700
+                       focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition">
+                    </div>
+
+                    <div class="space-y-1">
+                        <label class="block text-sm font-medium text-gray-700">
+                            Departamento UNAM
+                        </label>
+                        <input type="text" id="input-departamento" class="w-full h-11 px-4 rounded-xl border border-gray-200 bg-white text-gray-700
+                       focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition">
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse gap-3">
+                <button type="button" id="btn-guardar-unam"
+                    class="w-full inline-flex justify-center rounded-xl px-4 py-2.5 bg-emerald-600 text-base font-medium text-white hover:bg-emerald-700 focus:outline-none transition sm:w-auto sm:text-sm">
+                    Guardar cambios
+                </button>
+                <button type="button"
+                    class="btn-cerrar-unam w-full inline-flex justify-center rounded-xl px-4 py-2.5 bg-white text-base font-medium text-gray-700 border border-gray-300 hover:bg-gray-50 focus:outline-none transition sm:mt-0 sm:w-auto sm:text-sm">
                     Cancelar
                 </button>
             </div>
@@ -597,7 +709,7 @@
 
 <script>
     (function () {
-        // Toggle panel for adding product
+        /* ---------- Toggle panel agregar producto ---------- */
         const toggleButton = document.getElementById('toggle-panel-btn');
         const panel = document.getElementById('panel-agregar-producto');
         const icon = document.getElementById('toggle-icon');
@@ -605,8 +717,6 @@
         if (toggleButton && panel && icon) {
             toggleButton.addEventListener('click', function (e) {
                 e.preventDefault();
-
-                // Toggle del panel
                 if (panel.classList.contains('hidden')) {
                     panel.classList.remove('hidden');
                     icon.style.transform = 'rotate(180deg)';
@@ -617,94 +727,140 @@
             });
         }
 
-        // UNAM fields toggle
+        /* ---------- Botón UNAM: habilitar/deshabilitar según tipo cotización ---------- */
         const tipoCotizacionSelect = document.getElementById('tipo_cotizacion');
-        const campoNoSolicitud = document.getElementById('campo_no_solicitud');
-        const campoProveedorUnam = document.getElementById('campo_proveedor_unam');
+        const btnConfigUnam = document.getElementById('btn-config-unam');
 
-        function toggleUnamFields() {
-            if (tipoCotizacionSelect && campoNoSolicitud && campoProveedorUnam) {
-                if (tipoCotizacionSelect.value === 'UNAM') {
-                    campoNoSolicitud.classList.remove('hidden');
-                    campoProveedorUnam.classList.remove('hidden');
-                } else {
-                    campoNoSolicitud.classList.add('hidden');
-                    campoProveedorUnam.classList.add('hidden');
-                }
+        function toggleUnamButton() {
+            if (!tipoCotizacionSelect || !btnConfigUnam) return;
+            if (tipoCotizacionSelect.value === 'UNAM') {
+                btnConfigUnam.disabled = false;
+                btnConfigUnam.classList.remove('text-gray-400', 'bg-gray-100', 'border-gray-200', 'cursor-not-allowed');
+                btnConfigUnam.classList.add('text-gray-700', 'bg-white', 'border-gray-300', 'hover:bg-gray-100', 'cursor-pointer');
+                btnConfigUnam.title = '';
+            } else {
+                btnConfigUnam.disabled = true;
+                btnConfigUnam.classList.add('text-gray-400', 'bg-gray-100', 'border-gray-200', 'cursor-not-allowed');
+                btnConfigUnam.classList.remove('text-gray-700', 'bg-white', 'border-gray-300', 'hover:bg-gray-100', 'cursor-pointer');
+                btnConfigUnam.title = 'Disponible solo para tipo de cotización UNAM';
             }
         }
 
         if (tipoCotizacionSelect) {
-            tipoCotizacionSelect.addEventListener('change', toggleUnamFields);
-            // Initial check on page load
-            toggleUnamFields();
+            tipoCotizacionSelect.addEventListener('change', toggleUnamButton);
+            toggleUnamButton();
         }
 
-        // Modal Términos y condiciones
-        const btnTerminos = document.getElementById('btn-terminos');
-        const modalTerminos = document.getElementById('modal-terminos');
-        const btnCerrarTerminos = document.getElementById('btn-cerrar-terminos');
-        const btnCerrarTerminosFooter = document.getElementById('btn-cerrar-terminos-footer');
-        const btnGuardarTerminos = document.getElementById('btn-guardar-terminos');
-
-        function openModal() {
-            if (modalTerminos) {
-                const textarea = document.getElementById("contenido_terminos");
-                const inputHidden = document.getElementById("terminos_condiciones");
-                if (textarea && inputHidden) {
-                    textarea.value = inputHidden.value;
-                }
-
-                modalTerminos.classList.remove('hidden');
-                document.body.classList.add('overflow-hidden');
-            }
+        /* ---------- Helper: modal genérico ---------- */
+        function openModal(modal) {
+            if (!modal) return;
+            modal.classList.remove('hidden');
+            document.body.classList.add('overflow-hidden');
+        }
+        function closeModal(modal) {
+            if (!modal) return;
+            modal.classList.add('hidden');
+            document.body.classList.remove('overflow-hidden');
         }
 
-        function closeModal() {
-            if (modalTerminos) {
-                modalTerminos.classList.add('hidden');
-                document.body.classList.remove('overflow-hidden');
-            }
+        /* ---------- Modal Configurar PDF ---------- */
+        const modalPdf = document.getElementById('modal-config-pdf');
+        const btnConfigPdf = document.getElementById('btn-config-pdf');
+        const chkFirma = document.getElementById('chk-incluir-firma');
+        const chkImagenes = document.getElementById('chk-incluir-imagenes');
+        const textareaTerminos = document.getElementById('contenido_terminos');
+
+        // Hidden inputs del form
+        const hiddenFirma = document.getElementById('incluir_firma');
+        const hiddenImagenes = document.getElementById('incluir_imagenes');
+        const hiddenTerminos = document.getElementById('terminos_condiciones');
+
+        if (btnConfigPdf && modalPdf) {
+            btnConfigPdf.addEventListener('click', function () {
+                // Cargar valores actuales en los controles del modal
+                if (chkFirma && hiddenFirma) chkFirma.checked = hiddenFirma.value === '1';
+                if (chkImagenes && hiddenImagenes) chkImagenes.checked = hiddenImagenes.value === '1';
+                if (textareaTerminos && hiddenTerminos) textareaTerminos.value = hiddenTerminos.value;
+                openModal(modalPdf);
+            });
         }
 
-        if (btnTerminos) {
-            btnTerminos.addEventListener('click', openModal);
-        }
-
-        if (btnCerrarTerminos) {
-            btnCerrarTerminos.addEventListener('click', closeModal);
-        }
-
-        if (btnCerrarTerminosFooter) {
-            btnCerrarTerminosFooter.addEventListener('click', closeModal);
-        }
-
-        // Close modal on background click
-        if (modalTerminos) {
-            modalTerminos.addEventListener('click', function (e) {
-                if (e.target === modalTerminos || e.target.classList.contains('bg-opacity-75')) {
-                    closeModal();
+        // Cerrar modal PDF
+        document.querySelectorAll('.btn-cerrar-pdf').forEach(btn => {
+            btn.addEventListener('click', () => closeModal(modalPdf));
+        });
+        if (modalPdf) {
+            modalPdf.addEventListener('click', function (e) {
+                if (e.target === modalPdf || e.target.classList.contains('bg-opacity-75')) {
+                    closeModal(modalPdf);
                 }
             });
         }
 
-        if (btnGuardarTerminos) {
-            btnGuardarTerminos.addEventListener("click", function () {
-                const textarea = document.getElementById("contenido_terminos");
-                const inputHidden = document.getElementById("terminos_condiciones");
-                const form = document.getElementById("form-orden");
+        // Guardar PDF
+        const btnGuardarPdf = document.getElementById('btn-guardar-pdf');
+        if (btnGuardarPdf) {
+            btnGuardarPdf.addEventListener('click', function () {
+                if (hiddenFirma && chkFirma) hiddenFirma.value = chkFirma.checked ? '1' : '0';
+                if (hiddenImagenes && chkImagenes) hiddenImagenes.value = chkImagenes.checked ? '1' : '0';
+                if (hiddenTerminos && textareaTerminos) hiddenTerminos.value = textareaTerminos.value;
 
-                if (textarea && inputHidden) {
-                    inputHidden.value = textarea.value;
-                }
-
+                const form = document.getElementById('form-orden');
                 if (form) {
-                    if (typeof form.requestSubmit === 'function') {
-                        form.requestSubmit();
-                    } else {
-                        form.submit();
-                    }
+                    if (typeof form.requestSubmit === 'function') form.requestSubmit();
+                    else form.submit();
                 }
+                closeModal(modalPdf);
+            });
+        }
+
+        /* ---------- Modal Configuración UNAM ---------- */
+        const modalUnam = document.getElementById('modal-config-unam');
+        const inputNoSolicitud = document.getElementById('input-no-solicitud');
+        const inputProveedorUnam = document.getElementById('input-proveedor-unam');
+        const inputDepartamento = document.getElementById('input-departamento');
+
+        const hiddenNoSolicitud = document.getElementById('no_solicitud');
+        const hiddenProveedorUnam = document.getElementById('proveedor_unam');
+        const hiddenDepartamento = document.getElementById('departamento');
+
+        if (btnConfigUnam && modalUnam) {
+            btnConfigUnam.addEventListener('click', function () {
+                if (btnConfigUnam.disabled) return;
+                // Cargar valores actuales
+                if (inputNoSolicitud && hiddenNoSolicitud) inputNoSolicitud.value = hiddenNoSolicitud.value;
+                if (inputProveedorUnam && hiddenProveedorUnam) inputProveedorUnam.value = hiddenProveedorUnam.value;
+                if (inputDepartamento && hiddenDepartamento) inputDepartamento.value = hiddenDepartamento.value;
+                openModal(modalUnam);
+            });
+        }
+
+        // Cerrar modal UNAM
+        document.querySelectorAll('.btn-cerrar-unam').forEach(btn => {
+            btn.addEventListener('click', () => closeModal(modalUnam));
+        });
+        if (modalUnam) {
+            modalUnam.addEventListener('click', function (e) {
+                if (e.target === modalUnam || e.target.classList.contains('bg-opacity-75')) {
+                    closeModal(modalUnam);
+                }
+            });
+        }
+
+        // Guardar UNAM
+        const btnGuardarUnam = document.getElementById('btn-guardar-unam');
+        if (btnGuardarUnam) {
+            btnGuardarUnam.addEventListener('click', function () {
+                if (hiddenNoSolicitud && inputNoSolicitud) hiddenNoSolicitud.value = inputNoSolicitud.value;
+                if (hiddenProveedorUnam && inputProveedorUnam) hiddenProveedorUnam.value = inputProveedorUnam.value;
+                if (hiddenDepartamento && inputDepartamento) hiddenDepartamento.value = inputDepartamento.value;
+
+                const form = document.getElementById('form-orden');
+                if (form) {
+                    if (typeof form.requestSubmit === 'function') form.requestSubmit();
+                    else form.submit();
+                }
+                closeModal(modalUnam);
             });
         }
     })();

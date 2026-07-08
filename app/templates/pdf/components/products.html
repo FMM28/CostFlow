@@ -1,0 +1,44 @@
+<section class="products">
+    <table>
+        <thead>
+            <tr>
+                <th>Partida</th>
+                <th>Cant.</th>
+                <th>Equipo y Descripción</th>
+                <th>P. Unitario</th>
+                <th>P. Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in pagina.detalles %}
+            <tr>
+                <td>{{ item.partida }}</td>
+                <td>{{ item.cantidad }}</td>
+                <td class="description-cell">
+                    <div>
+                        <div class="description-text">{{ item.descripcion }}</div>
+                        {% if item.informacion_adicional %}
+                        <div class="additional-info">{{ item.informacion_adicional }}</div>
+                        {% endif %}
+                        {% if cotizacion.incluir_imagenes %}
+                        {% if item.imagen %}
+                        <div class="description-image">
+                            <img src="{{ item.imagen }}" alt="Producto">
+                        </div>
+                        {% endif %}
+                        {% endif %}
+                    </div>
+                </td>
+                <td>
+                    <div>$</div>
+                    <div>{{ "{:,.2f}".format(item.precio_unitario) }}</div>
+                </td>
+                <td>
+                    <div>$</div>
+                    <div>{{ "{:,.2f}".format(item.total) }}</div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</section>
