@@ -89,7 +89,7 @@ class BuscadorProducto:
         app = current_app._get_current_object()
         cache = ProductosCacheService()
 
-        resultados: dict[str, ProductoProveedor] = {}
+        resultados: list[ProductoProveedor] = []
         errores: list[str] = []
 
         provider_map = {cls._nombre_proveedor(p): p for p in cls.PROVEEDORES_EXTERNOS}
@@ -103,10 +103,10 @@ class BuscadorProducto:
 
         if cached:
             for proveedor_nombre, producto in cached.items():
-                key = proveedor_nombre.upper()
-                resultados[key] = producto
-                proveedores_cacheados.add(key)
-            print("Resultados cacheados: %s", list(cached.keys()))
+                resultados.append(producto)
+                proveedores_cacheados.add(proveedor_nombre.upper())
+
+            logger.debug("Resultados cacheados: %s", list(cached.keys()))
 
         # -------------------------
         # 2. WORKERS
@@ -136,8 +136,7 @@ class BuscadorProducto:
                         resultado, error = future.result()
 
                         if resultado:
-                            key = resultado.proveedor.upper()
-                            resultados[key] = resultado
+                            resultados.append(resultado)
                             nuevos_externos.append(resultado)
 
                         if error:
@@ -154,8 +153,7 @@ class BuscadorProducto:
             sku=sku,
         )
 
-        for p in bd_resultados:
-            resultados[p.proveedor] = p
+        resultados.extend(bd_resultados)
 
         # -------------------------
         # 4. CACHE UPDATE
@@ -166,7 +164,7 @@ class BuscadorProducto:
         # -------------------------
         # 5. FILTER + SORT
         # -------------------------
-        final = [p for p in resultados.values() if p.existencia and p.existencia > 0]
+        final = [p for p in resultados if p.existencia and p.existencia > 0]
 
         final.sort(
             key=lambda p: (

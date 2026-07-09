@@ -21,6 +21,7 @@ from app.services.proveedores import (
     ImportacionDigitalService,
     ArrobaComputerService,
     BuscadorProducto,
+    PYPRService,
 )
 from app.services.CurrencyService import CurrencyService
 from app.auth.decorators import role_required
@@ -987,6 +988,61 @@ def arroba_computer_excel():
             ruta_temporal = temp.name
 
         cantidad = ArrobaComputerService.subir_excel(ruta_temporal)
+
+        flash(f"{cantidad} productos importados.", "success")
+
+    except Exception as e:
+        flash(str(e), "error")
+
+    finally:
+        if ruta_temporal and os.path.exists(ruta_temporal):
+            os.remove(ruta_temporal)
+
+    return redirect(redireccion)
+
+
+@admin_bp.get("/proveedores/pypr")
+@login_required
+@role_required("admin")
+def pypr():
+    return render_template(
+        "admin/carga_excel.html",
+        proveedor="Procesadores y Partes en retail PYPR",
+        direccion_subida=url_for("admin.pypr_excel"),
+        mensaje="",
+    )
+
+
+@admin_bp.post("/proveedores/pypr/subir")
+@login_required
+@role_required("admin")
+def pypr_excel():
+
+    redireccion = url_for("admin.pypr")
+
+    archivo = request.files.get("excel")
+
+    if not archivo or archivo.filename == "":
+        flash("Selecciona un archivo.", "error")
+
+        return redirect(redireccion)
+
+    if not archivo.filename.lower().endswith((".xlsx", ".xls")):
+        flash("Archivo no válido.", "error")
+
+        return redirect(redireccion)
+
+    ruta_temporal = None
+
+    try:
+        extension = os.path.splitext(secure_filename(archivo.filename))[1]
+
+        with tempfile.NamedTemporaryFile(suffix=extension, delete=False) as temp:
+            archivo.save(temp.name)
+
+            ruta_temporal = temp.name
+
+        cantidad = PYPRService.subir_excel(ruta_temporal)
 
         flash(f"{cantidad} productos importados.", "success")
 
