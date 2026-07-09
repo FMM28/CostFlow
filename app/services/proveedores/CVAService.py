@@ -89,15 +89,24 @@ class CVAService(ProveedorProductos):
     def _parse_item(item: ET.Element) -> ProductoProveedor:
         existencia_total, existencias_sucursal = CVAService._parse_existencias(item)
 
-        descuento = item.findtext("PrecioDescuento")
+        descuento = item.findtext("PrecioDescuento").strip()
+        precio = Decimal(item.findtext("precio") or "0")
+
+        if descuento == "Sin Descuento":
+            descuento = 0.0
+
+        descuento = Decimal(descuento)
+
+        if precio == descuento:
+            descuento = Decimal(0.0)
 
         return ProductoProveedor(
             proveedor="CVA",
             nombre=item.findtext("descripcion") or "",
-            precio=Decimal(item.findtext("precio") or "0"),
+            precio=precio,
             moneda=CVAService._parse_moneda(item),
             existencia=existencia_total,
-            descuento=(Decimal(descuento) if descuento and descuento.strip() else None),
+            descuento=descuento,
             existencias_sucursal=existencias_sucursal,
             url=None,
             url_imagen=item.findtext("imagen"),
