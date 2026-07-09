@@ -6,7 +6,7 @@
 {% block table_subtitle %}Gestión de usuarios del sistema{% endblock %}
 
 {% block table_actions %}
-<a href="{{ url_for('admin.create_user') }}"
+<a href="{{ url_for('admin.users.create') }}"
     class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-xl hover:bg-emerald-700 transition-colors">
 
     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -67,7 +67,7 @@
     <td class="px-4 py-4 text-right">
         <div class="inline-flex items-center gap-2">
 
-            <a href="{{ url_for('admin.edit_user', user_id=u.id_usuario) }}"
+            <a href="{{ url_for('admin.users.edit', user_id=u.id_usuario) }}"
                 class="inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-amber-500 rounded-lg hover:bg-amber-600 transition-colors">
 
                 <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -78,7 +78,7 @@
                 Editar
             </a>
 
-            <form action="{{ url_for('admin.delete_user', user_id=u.id_usuario) }}" method="POST" class="inline-block"
+            <form action="{{ url_for('admin.users.delete', user_id=u.id_usuario) }}" method="POST" class="inline-block"
                 onsubmit="return confirm('¿Eliminar usuario?')">
 
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">

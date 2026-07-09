@@ -253,7 +253,7 @@
             <div
                 class="flex-shrink-0 p-5 lg:p-6 lg:border-l border-gray-200 bg-gray-50 lg:bg-transparent flex items-center">
                 <form method="post"
-                    action="{{ url_for('admin.orden_detalle_seleccionar_proveedor', id_detalle=id_detalle) }}"
+                    action="{{ url_for('admin.ordenes.detail_select_proveedor', id_detalle=id_detalle) }}"
                     class="w-full">
 
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -329,7 +329,7 @@
             </div>
 
             <form method="POST"
-                action="{{ url_for('admin.orden_detalle_asignar_proveedor_manual', id_detalle=id_detalle) }}"
+                action="{{ url_for('admin.ordenes.detail_assign_proveedor_manual', id_detalle=id_detalle) }}"
                 class="p-6 space-y-5">
 
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">

@@ -28,7 +28,7 @@
     <nav class="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
 
         <!-- Item: Dashboard -->
-        <a href="{{ url_for('admin.dashboard') }}"
+        <a href="{{ url_for('admin.dashboard.dashboard') }}"
             class="group flex items-center px-3 py-2.5 rounded-lg text-gray-300 hover:bg-gray-800 hover:text-white transition-all duration-200">
             <div class="p-1.5 rounded-md group-hover:bg-gray-700/50 transition-colors">
                 <img src="{{ url_for('static', filename='icons/home.svg') }}"
@@ -38,7 +38,7 @@
         </a>
 
         <!-- Item: Usuarios -->
-        <a href="{{ url_for('admin.users') }}"
+        <a href="{{ url_for('admin.users.index') }}"
             class="group flex items-center px-3 py-2.5 rounded-lg text-gray-300 hover:bg-gray-800 hover:text-white transition-all duration-200">
             <div class="p-1.5 rounded-md group-hover:bg-gray-700/50 transition-colors">
                 <img src="{{ url_for('static', filename='icons/usuario.svg') }}"
@@ -48,7 +48,7 @@
         </a>
 
         <!-- Item: Órdenes -->
-        <a href="{{ url_for('admin.ordenes') }}"
+        <a href="{{ url_for('admin.ordenes.index') }}"
             class="group flex items-center px-3 py-2.5 rounded-lg text-gray-300 hover:bg-gray-800 hover:text-white transition-all duration-200">
             <div class="p-1.5 rounded-md group-hover:bg-gray-700/50 transition-colors">
                 <img src="{{ url_for('static', filename='icons/ordenes.svg') }}"
@@ -58,7 +58,7 @@
         </a>
 
         <!-- Item: Proveedores -->
-        <a href="{{ url_for('admin.proveedores') }}"
+        <a href="{{ url_for('admin.proveedores.index') }}"
             class="group flex items-center px-3 py-2.5 rounded-lg text-gray-300 hover:bg-gray-800 hover:text-white transition-all duration-200">
             <div class="p-1.5 rounded-md group-hover:bg-gray-700/50 transition-colors">
                 <img src="{{ url_for('static', filename='icons/proveedores.svg') }}"
@@ -68,7 +68,7 @@
         </a>
 
         <!-- Item: Departamentos -->
-        <a href="{{ url_for('admin.departamentos_unam') }}"
+        <a href="{{ url_for('admin.unam.departamentos') }}"
             class="group flex items-center px-3 py-2.5 rounded-lg text-gray-300 hover:bg-gray-800 hover:text-white transition-all duration-200">
             <div class="p-1.5 rounded-md group-hover:bg-gray-700/50 transition-colors">
                 <img src="{{ url_for('static', filename='icons/departamento.svg') }}"
@@ -76,7 +76,6 @@
             </div>
             <span class="ml-3 text-sm font-medium">Departamentos</span>
         </a>
-
 
     </nav>
 

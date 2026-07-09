@@ -1,7 +1,7 @@
 from .login import auth_bp
 from .root import main_bp
-from .admin import admin_bp
 from .ventas import ventas_bp
+from app.routes.admin import admin_bp
 
 def register_blueprints(app):
     app.register_blueprint(auth_bp)

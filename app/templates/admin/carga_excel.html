@@ -20,7 +20,7 @@ Catálogo · {{ proveedor }}
             </div>
             <div class="flex-1">
                 <nav class="text-xs font-medium text-slate-500 mb-2 tracking-wide uppercase">
-                    <a href="{{ url_for('admin.proveedores') }}"
+                    <a href="{{ url_for('admin.proveedores.index') }}"
                         class="hover:text-emerald-600 transition">Proveedores</a>
                     <span class="mx-1.5 text-slate-300">/</span>
                     <span class="text-slate-700">{{ proveedor }}</span>
@@ -160,7 +160,7 @@ Catálogo · {{ proveedor }}
 
                 {# ---------- Acciones ---------- #}
                 <div class="flex items-center justify-between pt-2 border-t border-slate-100">
-                    <a href="{{ url_for('admin.proveedores') }}"
+                    <a href="{{ url_for('admin.proveedores.index') }}"
                         class="inline-flex items-center gap-1.5 text-sm font-medium text-slate-600 hover:text-slate-900 transition">
                         <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round"
