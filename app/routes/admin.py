@@ -439,8 +439,6 @@ def orden_detalle(id_orden):
 @login_required
 @role_required("admin")
 def orden_update(id_orden):
-    print(request.form.get("incluir_imagenes") == "1")
-
     data = {
         "clave_orden": request.form.get("clave_orden", "").strip(),
         "comprador": request.form.get("comprador", "").strip(),

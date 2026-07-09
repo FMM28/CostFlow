@@ -19,7 +19,7 @@ from app.models.usuario import Usuario
 logger = logging.getLogger(__name__)
 
 ESTADOS_VALIDOS = frozenset({"pendiente", "aprobada", "completada", "cancelada"})
-TIPOS_COTIZACION = frozenset({"UNAM", "OTROS"})
+TIPOS_COTIZACION = frozenset({"UNAM", "OTROS", "PERSONA FISICA"})
 TERMINOS_CONDICIONES_DEFAULT = """Condiciones de Pago: [CONDICIONES DE PAGO]
 [LUGAR DE ENTREGA]
 Garantía Directo con Fabricante
@@ -342,6 +342,10 @@ class OrdenService:
                     info_departamento.prefijo,
                     orden.clave_orden,
                 )
+        elif orden.tipo_cotizacion == "PERSONA FISICA":
+            orden.clave_orden = OrdenService._generar_clave_pf(orden.clave_orden)
+        else:
+            orden.clave_orden = OrdenService._generar_clave_ot(orden.clave_orden)
 
         # incluir firma
         if "incluir_firma" in data:
@@ -714,6 +718,46 @@ class OrdenService:
     @staticmethod
     def _generar_clave_unam(prefijo: str, clave_actual: str | None = None) -> str:
         base = f"UM{prefijo}{datetime.now().strftime('%y')}"
+
+        if clave_actual and clave_actual.startswith(base):
+            return clave_actual
+
+        ultima = (
+            Orden.query.filter(Orden.clave_orden.like(f"{base}%"))
+            .order_by(Orden.clave_orden.desc())
+            .first()
+        )
+
+        if ultima:
+            consecutivo = int(ultima.clave_orden[len(base) :]) + 1
+        else:
+            consecutivo = 1
+
+        return f"{base}{consecutivo:03d}"
+
+    @staticmethod
+    def _generar_clave_pf(clave_actual: str | None = None) -> str:
+        base = f"PF{datetime.now().strftime('%y')}"
+
+        if clave_actual and clave_actual.startswith(base):
+            return clave_actual
+
+        ultima = (
+            Orden.query.filter(Orden.clave_orden.like(f"{base}%"))
+            .order_by(Orden.clave_orden.desc())
+            .first()
+        )
+
+        if ultima:
+            consecutivo = int(ultima.clave_orden[len(base) :]) + 1
+        else:
+            consecutivo = 1
+
+        return f"{base}{consecutivo:03d}"
+
+    @staticmethod
+    def _generar_clave_ot(clave_actual: str | None = None) -> str:
+        base = f"OT{datetime.now().strftime('%y')}"
 
         if clave_actual and clave_actual.startswith(base):
             return clave_actual
