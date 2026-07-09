@@ -252,6 +252,8 @@
                         value="{{ info.get('proveedor_unam', '') }}">
                     <input type="hidden" name="departamento" id="departamento"
                         value="{{ info.get('departamento', '') }}">
+                    <input type="hidden" name="punto_entrega" id="punto_entrega"
+                        value="{{ info.get('punto_entrega', '') }}">
 
                     <button type="submit" class="w-full px-4 py-2.5 bg-emerald-600 text-white rounded-xl
                    hover:bg-emerald-700 transition font-medium">
@@ -683,12 +685,43 @@
                        focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition">
                     </div>
 
+                    <!-- DEPARTAMENTO: ahora es un <select> que lista los departamentos -->
                     <div class="space-y-1">
                         <label class="block text-sm font-medium text-gray-700">
                             Departamento UNAM
                         </label>
-                        <input type="text" id="input-departamento" class="w-full h-11 px-4 rounded-xl border border-gray-200 bg-white text-gray-700
-                       focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition">
+                        <div class="relative">
+                            <select id="input-departamento"
+                                class="w-full h-11 px-4 pr-10 rounded-xl border border-gray-200 bg-white text-gray-700 appearance-none cursor-pointer
+                                   focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition">
+                                <option value="" disabled selected>Seleccione un departamento...</option>
+                                {% for dep in departamentos|default([]) %}
+                                <option value="{{ dep.nombre }}">{{ dep.nombre }}</option>
+                                {% endfor %}
+                            </select>
+                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
+                                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- PUNTO DE ENTREGA: input + datalist (editable manualmente) -->
+                    <div class="space-y-1">
+                        <label class="block text-sm font-medium text-gray-700">
+                            Punto de entrega
+                        </label>
+                        <input type="text" id="input-punto-entrega" list="datalist-puntos-entrega"
+                            placeholder="Seleccione o escriba un punto de entrega..."
+                            class="w-full h-11 px-4 rounded-xl border border-gray-200 bg-white text-gray-700
+                               focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition">
+                        <datalist id="datalist-puntos-entrega">
+                            <!-- Opciones generadas dinámicamente según el departamento seleccionado -->
+                        </datalist>
+                        <p class="text-xs text-gray-400 mt-1">
+                            Puede seleccionar uno de la lista o escribir manualmente uno nuevo.
+                        </p>
                     </div>
                 </div>
             </div>
@@ -709,6 +742,16 @@
 
 <script>
     (function () {
+
+        const departamentosData = [
+            {% for dep in departamentos|default([]) %}
+            {
+                nombre: {{ dep.nombre|tojson }},
+                puntos_entrega: {{ (dep.puntos_entrega or [])|tojson }}
+            }{% if not loop.last %},{% endif %}
+            {% endfor %}
+        ];
+
         /* ---------- Toggle panel agregar producto ---------- */
         const toggleButton = document.getElementById('toggle-panel-btn');
         const panel = document.getElementById('panel-agregar-producto');
@@ -819,10 +862,38 @@
         const inputNoSolicitud = document.getElementById('input-no-solicitud');
         const inputProveedorUnam = document.getElementById('input-proveedor-unam');
         const inputDepartamento = document.getElementById('input-departamento');
+        const inputPuntoEntrega = document.getElementById('input-punto-entrega');
+        const datalistPuntos = document.getElementById('datalist-puntos-entrega');
 
         const hiddenNoSolicitud = document.getElementById('no_solicitud');
         const hiddenProveedorUnam = document.getElementById('proveedor_unam');
         const hiddenDepartamento = document.getElementById('departamento');
+        const hiddenPuntoEntrega = document.getElementById('punto_entrega');
+
+        function actualizarPuntosEntrega(limpiarPunto = true) {
+            if (!datalistPuntos) return;
+            const depNombre = inputDepartamento ? inputDepartamento.value : '';
+            const dep = departamentosData.find(d => d.nombre === depNombre);
+
+            datalistPuntos.innerHTML = '';
+
+            if (dep && Array.isArray(dep.puntos_entrega)) {
+                dep.puntos_entrega.forEach(punto => {
+                    const option = document.createElement('option');
+                    option.value = punto;
+                    datalistPuntos.appendChild(option);
+                });
+            }
+
+            if (limpiarPunto && inputPuntoEntrega) {
+                inputPuntoEntrega.value = '';
+                if (hiddenPuntoEntrega) hiddenPuntoEntrega.value = '';
+            }
+        }
+
+        if (inputDepartamento) {
+            inputDepartamento.addEventListener('change', () => actualizarPuntosEntrega(true));
+        }
 
         if (btnConfigUnam && modalUnam) {
             btnConfigUnam.addEventListener('click', function () {
@@ -830,7 +901,12 @@
                 // Cargar valores actuales
                 if (inputNoSolicitud && hiddenNoSolicitud) inputNoSolicitud.value = hiddenNoSolicitud.value;
                 if (inputProveedorUnam && hiddenProveedorUnam) inputProveedorUnam.value = hiddenProveedorUnam.value;
+
                 if (inputDepartamento && hiddenDepartamento) inputDepartamento.value = hiddenDepartamento.value;
+                actualizarPuntosEntrega(false);
+
+                if (inputPuntoEntrega && hiddenPuntoEntrega) inputPuntoEntrega.value = hiddenPuntoEntrega.value;
+
                 openModal(modalUnam);
             });
         }
@@ -847,13 +923,13 @@
             });
         }
 
-        // Guardar UNAM
         const btnGuardarUnam = document.getElementById('btn-guardar-unam');
         if (btnGuardarUnam) {
             btnGuardarUnam.addEventListener('click', function () {
                 if (hiddenNoSolicitud && inputNoSolicitud) hiddenNoSolicitud.value = inputNoSolicitud.value;
                 if (hiddenProveedorUnam && inputProveedorUnam) hiddenProveedorUnam.value = inputProveedorUnam.value;
                 if (hiddenDepartamento && inputDepartamento) hiddenDepartamento.value = inputDepartamento.value;
+                if (hiddenPuntoEntrega && inputPuntoEntrega) hiddenPuntoEntrega.value = inputPuntoEntrega.value;
 
                 const form = document.getElementById('form-orden');
                 if (form) {

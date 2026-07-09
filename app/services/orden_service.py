@@ -10,6 +10,7 @@ from sqlalchemy.orm import joinedload
 from app.extensions import db
 from app.models.orden import Orden
 from app.models.orden_detalle import OrdenDetalle
+from app.services.departamento_unam_service import DepartamentoUNAMService
 
 from datetime import datetime
 
@@ -183,8 +184,6 @@ class OrdenService:
         # Actualizar clave_orden
         if "clave_orden" in data:
             nueva_clave = str(data["clave_orden"]).strip()
-            if not nueva_clave:
-                return None, "La 'clave_orden' no puede estar vacía"
 
             if nueva_clave != orden.clave_orden:
                 try:
@@ -236,6 +235,7 @@ class OrdenService:
             or "departamento" in data
             or "no_solicitud" in data
             or "proveedor_unam" in data
+            or "punto_entrega" in data
         ):
             informacion_actual = orden.informacion_adicional or {}
 
@@ -252,6 +252,10 @@ class OrdenService:
                 data.get(
                     "proveedor_unam",
                     informacion_actual.get("proveedor_unam"),
+                ),
+                data.get(
+                    "punto_entrega",
+                    informacion_actual.get("punto_entrega"),
                 ),
             )
 
@@ -314,10 +318,35 @@ class OrdenService:
         if "terminos_condiciones" in data:
             orden.terminos_condiciones = data["terminos_condiciones"]
 
+        if orden.tipo_cotizacion == "UNAM":
+            if orden.terminos_condiciones:
+                informacion = orden.informacion_adicional or {}
+                punto_entrega = informacion.get("punto_entrega", "").strip()
+
+                lineas = orden.terminos_condiciones.splitlines()
+
+                while len(lineas) < 2:
+                    lineas.append("")
+
+                lineas[0] = "Condiciones de Pago: Crédito UNAM"
+                lineas[1] = punto_entrega
+
+                orden.terminos_condiciones = "\n".join(lineas)
+
+            if "departamento" in data:
+                info_departamento = DepartamentoUNAMService.get_by_nombre(
+                    data["departamento"]
+                )
+
+                orden.clave_orden = OrdenService._generar_clave_unam(
+                    info_departamento.prefijo,
+                    orden.clave_orden,
+                )
+
         # incluir firma
         if "incluir_firma" in data:
             orden.incluir_firma = bool(data["incluir_firma"])
-            
+
         # incluir imagenes
         if "incluir_imagenes" in data:
             orden.incluir_imagenes = bool(data["incluir_imagenes"])
@@ -648,6 +677,7 @@ class OrdenService:
         departamento: str | None = None,
         no_solicitud: str | None = None,
         proveedor_unam: str | None = None,
+        punto_entrega: str | None = None,
     ) -> tuple[dict, str | None]:
         """
         Valida y construye el contenido de informacion_adicional.
@@ -678,4 +708,25 @@ class OrdenService:
             "departamento": str(departamento or "").strip(),
             "no_solicitud": str(no_solicitud or "").strip(),
             "proveedor_unam": str(proveedor_unam or "").strip(),
+            "punto_entrega": str(punto_entrega or "").strip(),
         }, None
+
+    @staticmethod
+    def _generar_clave_unam(prefijo: str, clave_actual: str | None = None) -> str:
+        base = f"UM{prefijo}{datetime.now().strftime('%y')}"
+
+        if clave_actual and clave_actual.startswith(base):
+            return clave_actual
+
+        ultima = (
+            Orden.query.filter(Orden.clave_orden.like(f"{base}%"))
+            .order_by(Orden.clave_orden.desc())
+            .first()
+        )
+
+        if ultima:
+            consecutivo = int(ultima.clave_orden[len(base) :]) + 1
+        else:
+            consecutivo = 1
+
+        return f"{base}{consecutivo:03d}"

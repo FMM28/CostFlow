@@ -10,6 +10,7 @@ from flask import (
     current_app,
 )
 from flask_login import login_required, current_user
+from app.services.departamento_unam_service import DepartamentoUNAMService
 from app.services.pdf.cotizacion_pdf_service import CotizacionPDFService
 from app.services.proveedor_service import ProveedorService
 from app.services.proveedores.SiclikService import SiclikService
@@ -408,7 +409,7 @@ def nueva_orden_post():
             flash(error_total, "error")
             return render_formulario()
 
-        return redirect(url_for("admin.orden_detalle",id_orden= orden.id_orden))
+        return redirect(url_for("admin.orden_detalle", id_orden=orden.id_orden))
 
     except Exception as e:
         flash(f"Error inesperado: {str(e)}", "error")
@@ -427,7 +428,11 @@ def orden_detalle(id_orden):
         flash(error or "Orden no encontrada", "error")
         return redirect(url_for("admin.ordenes"))
 
-    return render_template("admin/detalle_orden.html", orden=orden)
+    departamentos = DepartamentoUNAMService.get_all()
+
+    return render_template(
+        "admin/detalle_orden.html", orden=orden, departamentos=departamentos
+    )
 
 
 @admin_bp.post("/ordenes/<int:id_orden>/update")
@@ -444,6 +449,7 @@ def orden_update(id_orden):
         "vigencia": request.form.get("vigencia", "").strip(),
         "tipo_cotizacion": request.form.get("tipo_cotizacion", "").strip(),
         "departamento": request.form.get("departamento", "").strip(),
+        "punto_entrega": request.form.get("punto_entrega", "").strip(),
         "no_solicitud": request.form.get("no_solicitud", "").strip(),
         "proveedor_unam": request.form.get("proveedor_unam", "").strip(),
         "terminos_condiciones": request.form.get("terminos_condiciones", ""),
@@ -1028,3 +1034,103 @@ def pdf_file(id_orden):
         download_name=f"{orden.clave_orden}.pdf",
         as_attachment=False,
     )
+
+
+@admin_bp.get("/unam/departamentos")
+@login_required
+@role_required("admin")
+def departamentos_unam():
+    departamentos = DepartamentoUNAMService.get_all()
+    return render_template(
+        "admin/departamentos.html",
+        departamentos=departamentos,
+    )
+
+
+@admin_bp.get("/unam/departamentos/create")
+@login_required
+@role_required("admin")
+def create_departamento():
+    return render_template(
+        "admin/departamentos_form.html",
+        departamento=None,
+    )
+
+
+@admin_bp.post("/unam/departamentos/create")
+@login_required
+@role_required("admin")
+def create_departamento_post():
+    nombre = request.form.get("nombre", "").strip()
+    prefijo = request.form.get("prefijo", "").strip()
+
+    puntos_entrega = [
+        punto.strip()
+        for punto in request.form.getlist("puntos_entrega")
+        if punto.strip()
+    ]
+
+    DepartamentoUNAMService.create(
+        nombre=nombre,
+        prefijo=prefijo,
+        puntos_entrega=puntos_entrega,
+    )
+
+    flash("Departamento creado correctamente.", "success")
+    return redirect(url_for("admin.departamentos_unam"))
+
+
+@admin_bp.get("/unam/departamentos/<int:id_departamento>/edit")
+@login_required
+@role_required("admin")
+def edit_departamento(id_departamento):
+    departamento = DepartamentoUNAMService.get_by_id(id_departamento)
+
+    if departamento is None:
+        flash("Departamento no encontrado.", "danger")
+        return redirect(url_for("admin.departamentos_unam"))
+
+    return render_template(
+        "admin/departamentos_form.html",
+        departamento=departamento,
+    )
+
+
+@admin_bp.post("/unam/departamentos/<int:id_departamento>/update")
+@login_required
+@role_required("admin")
+def update_departamento(id_departamento):
+    nombre = request.form.get("nombre", "").strip()
+    prefijo = request.form.get("prefijo", "").strip()
+
+    puntos_entrega = [
+        punto.strip()
+        for punto in request.form.getlist("puntos_entrega")
+        if punto.strip()
+    ]
+
+    departamento = DepartamentoUNAMService.update(
+        id_departamento=id_departamento,
+        nombre=nombre,
+        prefijo=prefijo,
+        puntos_entrega=puntos_entrega,
+    )
+
+    if departamento is None:
+        flash("Departamento no encontrado.", "danger")
+    else:
+        flash("Departamento actualizado correctamente.", "success")
+
+    return redirect(url_for("admin.departamentos_unam"))
+
+
+@admin_bp.post("/unam/departamentos/<int:id_departamento>/delete")
+@login_required
+@role_required("admin")
+def delete_departamento(id_departamento):
+    if DepartamentoUNAMService.delete(id_departamento):
+        flash("Departamento eliminado correctamente.", "success")
+    else:
+        flash("Departamento no encontrado.", "danger")
+
+    return redirect(url_for("admin.departamentos_unam"))
