@@ -6,3 +6,5 @@ from .producto_proveedor import ProductoProveedor
 from .sesion_proveedor import SesionProveedor
 from .producto import Producto
 from .existencia_producto import ExistenciaProducto
+from .agrupacion import Agrupacion
+from .agrupacion_detalle import AgrupacionDetalle

@@ -51,6 +51,16 @@
                 Configuración UNAM
             </button>
 
+            <!-- Agrupaciones -->
+            <a href="{{ url_for('admin.ordenes.agrupaciones', id_orden=orden.id_orden) }}"
+                class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-xl hover:bg-blue-700 transition shadow-sm">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                </svg>
+                Agrupaciones
+            </a>
+
             <!-- Exportar PDF -->
             <a href="{{ url_for('admin.ordenes.preview_pdf', id_orden=orden.id_orden) }}"
                 class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-violet-600 rounded-xl hover:bg-violet-700 transition shadow-sm">
@@ -119,7 +129,8 @@
                         <label class="block text-sm font-medium text-gray-700">
                             Clave
                         </label>
-                        <input type="text" name="clave_orden" value="{{ orden.clave_orden if orden.clave_orden }}" placeholder="No asignada" class="w-full h-11 px-4 rounded-xl border border-gray-200 bg-white text-gray-700
+                        <input type="text" name="clave_orden" value="{{ orden.clave_orden if orden.clave_orden }}"
+                            placeholder="No asignada" class="w-full h-11 px-4 rounded-xl border border-gray-200 bg-white text-gray-700
                        focus:outline-none focus:ring-2 focus:ring-emerald-500/50
                        focus:border-emerald-500 transition">
                     </div>
@@ -188,7 +199,8 @@
                                     OTROS
                                 </option>
 
-                                <option value="PERSONA FISICA" {% if orden.tipo_cotizacion=='PERSONA FISICA' %}selected{% endif %}>
+                                <option value="PERSONA FISICA" {% if orden.tipo_cotizacion=='PERSONA FISICA'
+                                    %}selected{% endif %}>
                                     PERSONA FISICA
                                 </option>
                             </select>
@@ -299,8 +311,7 @@
 
                 <div id="panel-agregar-producto" class="hidden border-t border-gray-200 bg-gray-50/50">
                     <div class="p-5">
-                        <form method="POST"
-                            action="{{ url_for('admin.ordenes.add_detail', id_orden=orden.id_orden) }}"
+                        <form method="POST" action="{{ url_for('admin.ordenes.add_detail', id_orden=orden.id_orden) }}"
                             class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
@@ -704,8 +715,10 @@
                                 {% endfor %}
                             </select>
                             <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
-                                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M19 9l-7 7-7-7" />
                                 </svg>
                             </div>
                         </div>
@@ -748,201 +761,201 @@
     (function () {
 
         const departamentosData = [
-            {% for dep in departamentos|default([]) %}
+            {% for dep in departamentos |default ([]) %}
             {
-                nombre: {{ dep.nombre|tojson }},
-                puntos_entrega: {{ (dep.puntos_entrega or [])|tojson }}
-            }{% if not loop.last %},{% endif %}
-            {% endfor %}
+        nombre: { { dep.nombre | tojson } },
+        puntos_entrega: { { (dep.puntos_entrega or[])| tojson } }
+    } {% if not loop.last %}, {% endif %}
+    {% endfor %}
         ];
 
-        /* ---------- Toggle panel agregar producto ---------- */
-        const toggleButton = document.getElementById('toggle-panel-btn');
-        const panel = document.getElementById('panel-agregar-producto');
-        const icon = document.getElementById('toggle-icon');
+    /* ---------- Toggle panel agregar producto ---------- */
+    const toggleButton = document.getElementById('toggle-panel-btn');
+    const panel = document.getElementById('panel-agregar-producto');
+    const icon = document.getElementById('toggle-icon');
 
-        if (toggleButton && panel && icon) {
-            toggleButton.addEventListener('click', function (e) {
-                e.preventDefault();
-                if (panel.classList.contains('hidden')) {
-                    panel.classList.remove('hidden');
-                    icon.style.transform = 'rotate(180deg)';
-                } else {
-                    panel.classList.add('hidden');
-                    icon.style.transform = 'rotate(0deg)';
-                }
-            });
-        }
-
-        /* ---------- Botón UNAM: habilitar/deshabilitar según tipo cotización ---------- */
-        const tipoCotizacionSelect = document.getElementById('tipo_cotizacion');
-        const btnConfigUnam = document.getElementById('btn-config-unam');
-
-        function toggleUnamButton() {
-            if (!tipoCotizacionSelect || !btnConfigUnam) return;
-            if (tipoCotizacionSelect.value === 'UNAM') {
-                btnConfigUnam.disabled = false;
-                btnConfigUnam.classList.remove('text-gray-400', 'bg-gray-100', 'border-gray-200', 'cursor-not-allowed');
-                btnConfigUnam.classList.add('text-gray-700', 'bg-white', 'border-gray-300', 'hover:bg-gray-100', 'cursor-pointer');
-                btnConfigUnam.title = '';
+    if (toggleButton && panel && icon) {
+        toggleButton.addEventListener('click', function (e) {
+            e.preventDefault();
+            if (panel.classList.contains('hidden')) {
+                panel.classList.remove('hidden');
+                icon.style.transform = 'rotate(180deg)';
             } else {
-                btnConfigUnam.disabled = true;
-                btnConfigUnam.classList.add('text-gray-400', 'bg-gray-100', 'border-gray-200', 'cursor-not-allowed');
-                btnConfigUnam.classList.remove('text-gray-700', 'bg-white', 'border-gray-300', 'hover:bg-gray-100', 'cursor-pointer');
-                btnConfigUnam.title = 'Disponible solo para tipo de cotización UNAM';
+                panel.classList.add('hidden');
+                icon.style.transform = 'rotate(0deg)';
             }
-        }
-
-        if (tipoCotizacionSelect) {
-            tipoCotizacionSelect.addEventListener('change', toggleUnamButton);
-            toggleUnamButton();
-        }
-
-        /* ---------- Helper: modal genérico ---------- */
-        function openModal(modal) {
-            if (!modal) return;
-            modal.classList.remove('hidden');
-            document.body.classList.add('overflow-hidden');
-        }
-        function closeModal(modal) {
-            if (!modal) return;
-            modal.classList.add('hidden');
-            document.body.classList.remove('overflow-hidden');
-        }
-
-        /* ---------- Modal Configurar PDF ---------- */
-        const modalPdf = document.getElementById('modal-config-pdf');
-        const btnConfigPdf = document.getElementById('btn-config-pdf');
-        const chkFirma = document.getElementById('chk-incluir-firma');
-        const chkImagenes = document.getElementById('chk-incluir-imagenes');
-        const textareaTerminos = document.getElementById('contenido_terminos');
-
-        // Hidden inputs del form
-        const hiddenFirma = document.getElementById('incluir_firma');
-        const hiddenImagenes = document.getElementById('incluir_imagenes');
-        const hiddenTerminos = document.getElementById('terminos_condiciones');
-
-        if (btnConfigPdf && modalPdf) {
-            btnConfigPdf.addEventListener('click', function () {
-                // Cargar valores actuales en los controles del modal
-                if (chkFirma && hiddenFirma) chkFirma.checked = hiddenFirma.value === '1';
-                if (chkImagenes && hiddenImagenes) chkImagenes.checked = hiddenImagenes.value === '1';
-                if (textareaTerminos && hiddenTerminos) textareaTerminos.value = hiddenTerminos.value;
-                openModal(modalPdf);
-            });
-        }
-
-        // Cerrar modal PDF
-        document.querySelectorAll('.btn-cerrar-pdf').forEach(btn => {
-            btn.addEventListener('click', () => closeModal(modalPdf));
         });
-        if (modalPdf) {
-            modalPdf.addEventListener('click', function (e) {
-                if (e.target === modalPdf || e.target.classList.contains('bg-opacity-75')) {
-                    closeModal(modalPdf);
-                }
-            });
+    }
+
+    /* ---------- Botón UNAM: habilitar/deshabilitar según tipo cotización ---------- */
+    const tipoCotizacionSelect = document.getElementById('tipo_cotizacion');
+    const btnConfigUnam = document.getElementById('btn-config-unam');
+
+    function toggleUnamButton() {
+        if (!tipoCotizacionSelect || !btnConfigUnam) return;
+        if (tipoCotizacionSelect.value === 'UNAM') {
+            btnConfigUnam.disabled = false;
+            btnConfigUnam.classList.remove('text-gray-400', 'bg-gray-100', 'border-gray-200', 'cursor-not-allowed');
+            btnConfigUnam.classList.add('text-gray-700', 'bg-white', 'border-gray-300', 'hover:bg-gray-100', 'cursor-pointer');
+            btnConfigUnam.title = '';
+        } else {
+            btnConfigUnam.disabled = true;
+            btnConfigUnam.classList.add('text-gray-400', 'bg-gray-100', 'border-gray-200', 'cursor-not-allowed');
+            btnConfigUnam.classList.remove('text-gray-700', 'bg-white', 'border-gray-300', 'hover:bg-gray-100', 'cursor-pointer');
+            btnConfigUnam.title = 'Disponible solo para tipo de cotización UNAM';
         }
+    }
 
-        // Guardar PDF
-        const btnGuardarPdf = document.getElementById('btn-guardar-pdf');
-        if (btnGuardarPdf) {
-            btnGuardarPdf.addEventListener('click', function () {
-                if (hiddenFirma && chkFirma) hiddenFirma.value = chkFirma.checked ? '1' : '0';
-                if (hiddenImagenes && chkImagenes) hiddenImagenes.value = chkImagenes.checked ? '1' : '0';
-                if (hiddenTerminos && textareaTerminos) hiddenTerminos.value = textareaTerminos.value;
+    if (tipoCotizacionSelect) {
+        tipoCotizacionSelect.addEventListener('change', toggleUnamButton);
+        toggleUnamButton();
+    }
 
-                const form = document.getElementById('form-orden');
-                if (form) {
-                    if (typeof form.requestSubmit === 'function') form.requestSubmit();
-                    else form.submit();
-                }
+    /* ---------- Helper: modal genérico ---------- */
+    function openModal(modal) {
+        if (!modal) return;
+        modal.classList.remove('hidden');
+        document.body.classList.add('overflow-hidden');
+    }
+    function closeModal(modal) {
+        if (!modal) return;
+        modal.classList.add('hidden');
+        document.body.classList.remove('overflow-hidden');
+    }
+
+    /* ---------- Modal Configurar PDF ---------- */
+    const modalPdf = document.getElementById('modal-config-pdf');
+    const btnConfigPdf = document.getElementById('btn-config-pdf');
+    const chkFirma = document.getElementById('chk-incluir-firma');
+    const chkImagenes = document.getElementById('chk-incluir-imagenes');
+    const textareaTerminos = document.getElementById('contenido_terminos');
+
+    // Hidden inputs del form
+    const hiddenFirma = document.getElementById('incluir_firma');
+    const hiddenImagenes = document.getElementById('incluir_imagenes');
+    const hiddenTerminos = document.getElementById('terminos_condiciones');
+
+    if (btnConfigPdf && modalPdf) {
+        btnConfigPdf.addEventListener('click', function () {
+            // Cargar valores actuales en los controles del modal
+            if (chkFirma && hiddenFirma) chkFirma.checked = hiddenFirma.value === '1';
+            if (chkImagenes && hiddenImagenes) chkImagenes.checked = hiddenImagenes.value === '1';
+            if (textareaTerminos && hiddenTerminos) textareaTerminos.value = hiddenTerminos.value;
+            openModal(modalPdf);
+        });
+    }
+
+    // Cerrar modal PDF
+    document.querySelectorAll('.btn-cerrar-pdf').forEach(btn => {
+        btn.addEventListener('click', () => closeModal(modalPdf));
+    });
+    if (modalPdf) {
+        modalPdf.addEventListener('click', function (e) {
+            if (e.target === modalPdf || e.target.classList.contains('bg-opacity-75')) {
                 closeModal(modalPdf);
-            });
-        }
-
-        /* ---------- Modal Configuración UNAM ---------- */
-        const modalUnam = document.getElementById('modal-config-unam');
-        const inputNoSolicitud = document.getElementById('input-no-solicitud');
-        const inputProveedorUnam = document.getElementById('input-proveedor-unam');
-        const inputDepartamento = document.getElementById('input-departamento');
-        const inputPuntoEntrega = document.getElementById('input-punto-entrega');
-        const datalistPuntos = document.getElementById('datalist-puntos-entrega');
-
-        const hiddenNoSolicitud = document.getElementById('no_solicitud');
-        const hiddenProveedorUnam = document.getElementById('proveedor_unam');
-        const hiddenDepartamento = document.getElementById('departamento');
-        const hiddenPuntoEntrega = document.getElementById('punto_entrega');
-
-        function actualizarPuntosEntrega(limpiarPunto = true) {
-            if (!datalistPuntos) return;
-            const depNombre = inputDepartamento ? inputDepartamento.value : '';
-            const dep = departamentosData.find(d => d.nombre === depNombre);
-
-            datalistPuntos.innerHTML = '';
-
-            if (dep && Array.isArray(dep.puntos_entrega)) {
-                dep.puntos_entrega.forEach(punto => {
-                    const option = document.createElement('option');
-                    option.value = punto;
-                    datalistPuntos.appendChild(option);
-                });
             }
-
-            if (limpiarPunto && inputPuntoEntrega) {
-                inputPuntoEntrega.value = '';
-                if (hiddenPuntoEntrega) hiddenPuntoEntrega.value = '';
-            }
-        }
-
-        if (inputDepartamento) {
-            inputDepartamento.addEventListener('change', () => actualizarPuntosEntrega(true));
-        }
-
-        if (btnConfigUnam && modalUnam) {
-            btnConfigUnam.addEventListener('click', function () {
-                if (btnConfigUnam.disabled) return;
-                // Cargar valores actuales
-                if (inputNoSolicitud && hiddenNoSolicitud) inputNoSolicitud.value = hiddenNoSolicitud.value;
-                if (inputProveedorUnam && hiddenProveedorUnam) inputProveedorUnam.value = hiddenProveedorUnam.value;
-
-                if (inputDepartamento && hiddenDepartamento) inputDepartamento.value = hiddenDepartamento.value;
-                actualizarPuntosEntrega(false);
-
-                if (inputPuntoEntrega && hiddenPuntoEntrega) inputPuntoEntrega.value = hiddenPuntoEntrega.value;
-
-                openModal(modalUnam);
-            });
-        }
-
-        // Cerrar modal UNAM
-        document.querySelectorAll('.btn-cerrar-unam').forEach(btn => {
-            btn.addEventListener('click', () => closeModal(modalUnam));
         });
-        if (modalUnam) {
-            modalUnam.addEventListener('click', function (e) {
-                if (e.target === modalUnam || e.target.classList.contains('bg-opacity-75')) {
-                    closeModal(modalUnam);
-                }
+    }
+
+    // Guardar PDF
+    const btnGuardarPdf = document.getElementById('btn-guardar-pdf');
+    if (btnGuardarPdf) {
+        btnGuardarPdf.addEventListener('click', function () {
+            if (hiddenFirma && chkFirma) hiddenFirma.value = chkFirma.checked ? '1' : '0';
+            if (hiddenImagenes && chkImagenes) hiddenImagenes.value = chkImagenes.checked ? '1' : '0';
+            if (hiddenTerminos && textareaTerminos) hiddenTerminos.value = textareaTerminos.value;
+
+            const form = document.getElementById('form-orden');
+            if (form) {
+                if (typeof form.requestSubmit === 'function') form.requestSubmit();
+                else form.submit();
+            }
+            closeModal(modalPdf);
+        });
+    }
+
+    /* ---------- Modal Configuración UNAM ---------- */
+    const modalUnam = document.getElementById('modal-config-unam');
+    const inputNoSolicitud = document.getElementById('input-no-solicitud');
+    const inputProveedorUnam = document.getElementById('input-proveedor-unam');
+    const inputDepartamento = document.getElementById('input-departamento');
+    const inputPuntoEntrega = document.getElementById('input-punto-entrega');
+    const datalistPuntos = document.getElementById('datalist-puntos-entrega');
+
+    const hiddenNoSolicitud = document.getElementById('no_solicitud');
+    const hiddenProveedorUnam = document.getElementById('proveedor_unam');
+    const hiddenDepartamento = document.getElementById('departamento');
+    const hiddenPuntoEntrega = document.getElementById('punto_entrega');
+
+    function actualizarPuntosEntrega(limpiarPunto = true) {
+        if (!datalistPuntos) return;
+        const depNombre = inputDepartamento ? inputDepartamento.value : '';
+        const dep = departamentosData.find(d => d.nombre === depNombre);
+
+        datalistPuntos.innerHTML = '';
+
+        if (dep && Array.isArray(dep.puntos_entrega)) {
+            dep.puntos_entrega.forEach(punto => {
+                const option = document.createElement('option');
+                option.value = punto;
+                datalistPuntos.appendChild(option);
             });
         }
 
-        const btnGuardarUnam = document.getElementById('btn-guardar-unam');
-        if (btnGuardarUnam) {
-            btnGuardarUnam.addEventListener('click', function () {
-                if (hiddenNoSolicitud && inputNoSolicitud) hiddenNoSolicitud.value = inputNoSolicitud.value;
-                if (hiddenProveedorUnam && inputProveedorUnam) hiddenProveedorUnam.value = inputProveedorUnam.value;
-                if (hiddenDepartamento && inputDepartamento) hiddenDepartamento.value = inputDepartamento.value;
-                if (hiddenPuntoEntrega && inputPuntoEntrega) hiddenPuntoEntrega.value = inputPuntoEntrega.value;
+        if (limpiarPunto && inputPuntoEntrega) {
+            inputPuntoEntrega.value = '';
+            if (hiddenPuntoEntrega) hiddenPuntoEntrega.value = '';
+        }
+    }
 
-                const form = document.getElementById('form-orden');
-                if (form) {
-                    if (typeof form.requestSubmit === 'function') form.requestSubmit();
-                    else form.submit();
-                }
+    if (inputDepartamento) {
+        inputDepartamento.addEventListener('change', () => actualizarPuntosEntrega(true));
+    }
+
+    if (btnConfigUnam && modalUnam) {
+        btnConfigUnam.addEventListener('click', function () {
+            if (btnConfigUnam.disabled) return;
+            // Cargar valores actuales
+            if (inputNoSolicitud && hiddenNoSolicitud) inputNoSolicitud.value = hiddenNoSolicitud.value;
+            if (inputProveedorUnam && hiddenProveedorUnam) inputProveedorUnam.value = hiddenProveedorUnam.value;
+
+            if (inputDepartamento && hiddenDepartamento) inputDepartamento.value = hiddenDepartamento.value;
+            actualizarPuntosEntrega(false);
+
+            if (inputPuntoEntrega && hiddenPuntoEntrega) inputPuntoEntrega.value = hiddenPuntoEntrega.value;
+
+            openModal(modalUnam);
+        });
+    }
+
+    // Cerrar modal UNAM
+    document.querySelectorAll('.btn-cerrar-unam').forEach(btn => {
+        btn.addEventListener('click', () => closeModal(modalUnam));
+    });
+    if (modalUnam) {
+        modalUnam.addEventListener('click', function (e) {
+            if (e.target === modalUnam || e.target.classList.contains('bg-opacity-75')) {
                 closeModal(modalUnam);
-            });
-        }
-    })();
+            }
+        });
+    }
+
+    const btnGuardarUnam = document.getElementById('btn-guardar-unam');
+    if (btnGuardarUnam) {
+        btnGuardarUnam.addEventListener('click', function () {
+            if (hiddenNoSolicitud && inputNoSolicitud) hiddenNoSolicitud.value = inputNoSolicitud.value;
+            if (hiddenProveedorUnam && inputProveedorUnam) hiddenProveedorUnam.value = inputProveedorUnam.value;
+            if (hiddenDepartamento && inputDepartamento) hiddenDepartamento.value = inputDepartamento.value;
+            if (hiddenPuntoEntrega && inputPuntoEntrega) hiddenPuntoEntrega.value = inputPuntoEntrega.value;
+
+            const form = document.getElementById('form-orden');
+            if (form) {
+                if (typeof form.requestSubmit === 'function') form.requestSubmit();
+                else form.submit();
+            }
+            closeModal(modalUnam);
+        });
+    }
+    }) ();
 </script>
 {% endblock %}

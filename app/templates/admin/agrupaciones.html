@@ -1,0 +1,500 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Agrupaciones · Orden {{ orden.clave_orden }}{% endblock %}
+
+{% block content %}
+<div class="mx-auto max-w-5xl space-y-8">
+
+    {% if not agrupaciones_info %}
+    <div class="rounded-xl border border-rose-200 bg-rose-50 p-6 text-rose-800 shadow-sm">
+        <p class="font-medium">No se pudo cargar la información de la orden.</p>
+    </div>
+    {% else %}
+
+    <!-- Encabezado y Explicación -->
+    <div class="space-y-4">
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900">
+                    Orden {{ orden.clave_orden or ('ID ' ~ orden.id_orden) }}
+                </h1>
+                <p class="text-sm text-gray-500 mt-1">
+                    Agrupación de detalles
+                </p>
+            </div>
+
+            <a href="{{ url_for('admin.ordenes.detail',id_orden=orden.id_orden) }}"
+                class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-xl hover:bg-gray-100 transition">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                </svg>
+                Volver
+            </a>
+        </div>
+
+        <div class="rounded-xl border border-slate-200 bg-white p-3">
+            Arrastra dos detalles sueltos entre sí
+            para crear una nueva agrupación. Arrastra un detalle hacia una agrupación existente para añadirlo, o
+            arrastra un detalle fuera de la agrupación hacia la zona de detalles sueltos para quitarlo.
+        </div>
+    </div>
+
+    <!-- Flash messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <div class="space-y-3">
+        {% for category, message in messages %}
+        <div
+            class="rounded-xl border px-4 py-3 text-sm font-medium shadow-sm
+            {{ 'border-rose-200 bg-rose-50 text-rose-700' if category == 'error' else 'border-emerald-200 bg-emerald-50 text-emerald-700' }}">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    {% endwith %}
+
+    <!-- Detalles sueltos (2 columnas) -->
+    <section class="space-y-4">
+        <h2 class="flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-slate-500">
+            Detalles sueltos
+            <span
+                class="flex h-6 w-6 items-center justify-center rounded-full bg-slate-200 text-[11px] font-bold text-slate-600">
+                {{ agrupaciones_info.detalles_sueltos|length }}
+            </span>
+        </h2>
+
+        <div id="sueltos-zone"
+            class="drop-zone grid grid-cols-1 gap-3 rounded-xl border-2 border-dashed border-slate-200 bg-slate-50/50 p-4 transition-colors sm:grid-cols-2">
+            {% for d in agrupaciones_info.detalles_sueltos %}
+            <div class="suelto-card group col-span-1 flex w-full cursor-grab select-none items-center justify-between gap-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition-all active:cursor-grabbing hover:border-violet-300 hover:shadow-md"
+                draggable="true" data-id-detalle="{{ d.id_detalle }}">
+                <div class="min-w-0 flex-1">
+                    <p class="text-base font-medium text-slate-800">{{ d.descripcion }}</p>
+                </div>
+                <div class="flex shrink-0 items-center gap-4 text-sm">
+                    <span class="rounded-md bg-slate-100 px-2.5 py-1 font-semibold text-slate-600">Cant. {{ d.cantidad
+                        }}</span>
+                    <span class="font-bold tabular-nums text-slate-800">${{ "%.2f"|format(d.subtotal or 0) }}</span>
+                </div>
+            </div>
+            {% else %}
+            <div class="col-span-full flex flex-col items-center justify-center py-8 text-slate-400 sm:col-span-2">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                    stroke="currentColor" class="mb-2 h-8 w-8 text-slate-300">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                </svg>
+                <p class="text-sm font-medium">No hay detalles sueltos. Todos están agrupados.</p>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <!-- Agrupaciones -->
+    <section class="space-y-4">
+        <h2 class="flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-slate-500">
+            Agrupaciones y Paquetes
+            <span
+                class="flex h-6 w-6 items-center justify-center rounded-full bg-slate-200 text-[11px] font-bold text-slate-600">
+                {{ agrupaciones_info.agrupaciones|length }}
+            </span>
+        </h2>
+
+        <div id="agrupaciones-grid" class="flex flex-col gap-4">
+            {% for ag in agrupaciones_info.agrupaciones %}
+            <!-- overflow-hidden asegura que el border-l-4 no se salga del rounded-xl -->
+            <div class="agrupacion-card drop-zone group relative flex w-full flex-col gap-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition-all overflow-hidden
+                {{ 'border-l-4 border-l-violet-500' if ag.tipo == 'AGRUPACION' else 'border-l-4 border-l-amber-500' }}"
+                data-id-agrupacion="{{ ag.id_agrupacion }}" data-count="{{ ag.detalles|length }}">
+
+                <!-- Header -->
+                <div class="flex items-start justify-between gap-4">
+                    <div class="min-w-0 flex-1 space-y-1">
+                        <div class="flex items-center gap-2">
+                            <span
+                                class="inline-flex items-center rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide
+                                {{ 'bg-violet-100 text-violet-700' if ag.tipo == 'AGRUPACION' else 'bg-amber-100 text-amber-700' }}">
+                                {{ ag.tipo }}
+                            </span>
+                        </div>
+                        <p class="text-lg font-semibold text-slate-800 view-descripcion">
+                            {{ ag.descripcion or "Sin descripción" }}
+                        </p>
+                        <p class="text-sm text-slate-500 view-info-adicional">
+                            {{ ag.informacion_adicional or "Sin información adicional" }}
+                        </p>
+                    </div>
+                    <div class="flex shrink-0 items-center gap-1">
+                        <button type="button"
+                            class="btn-edit rounded-lg p-2 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
+                            title="Editar descripción">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"
+                                class="h-4 w-4">
+                                <path
+                                    d="M13.586 3.586a2 2 0 1 1 2.828 2.828l-9.5 9.5-3.914 1.086 1.086-3.914 9.5-9.5Z" />
+                            </svg>
+                        </button>
+                        <button type="button"
+                            class="btn-delete-agrupacion rounded-lg p-2 text-slate-400 transition-colors hover:bg-rose-50 hover:text-rose-600"
+                            title="Eliminar agrupación">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"
+                                class="h-4 w-4">
+                                <path fill-rule="evenodd"
+                                    d="M8.75 1A2.75 2.75 0 0 0 6 3.75v.25H3a.75.75 0 0 0 0 1.5h.55l.7 10.5A2.75 2.75 0 0 0 7 18.25h6a2.75 2.75 0 0 0 2.75-2.75l.7-10.5H17a.75.75 0 0 0 0-1.5h-3v-.25A2.75 2.75 0 0 0 11.25 1h-2.5ZM10 6.25a.75.75 0 0 1 .75.75v6a.75.75 0 0 1-1.5 0v-6a.75.75 0 0 1 .75-.75Z"
+                                    clip-rule="evenodd" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Formulario edición (oculto) -->
+                <div class="edit-form hidden space-y-3 rounded-xl bg-slate-50 p-4 ring-1 ring-slate-200">
+                    <div>
+                        <label class="text-xs font-semibold text-slate-500">Descripción</label>
+                        <input type="text"
+                            class="input-descripcion mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm transition-colors focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-500/20"
+                            value="{{ ag.descripcion or '' }}" placeholder="Descripción de la agrupación">
+                    </div>
+                    <div>
+                        <label class="text-xs font-semibold text-slate-500">Información adicional</label>
+                        <input type="text"
+                            class="input-info-adicional mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm transition-colors focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-500/20"
+                            value="{{ ag.informacion_adicional or '' }}" placeholder="Información adicional">
+                    </div>
+                    <div class="flex justify-end gap-2 pt-1">
+                        <button type="button"
+                            class="btn-cancel-edit rounded-lg px-3 py-1.5 text-xs font-semibold text-slate-600 transition-colors hover:bg-slate-200">Cancelar</button>
+                        <button type="button"
+                            class="btn-save-edit rounded-lg bg-slate-800 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-slate-700">Guardar
+                            cambios</button>
+                    </div>
+                </div>
+
+                <!-- Detalles de la agrupación (Zona de Drop) -->
+                <div
+                    class="chips-zone flex flex-col min-h-[4.5rem] gap-2 rounded-xl border-2 border-dashed border-slate-200 bg-slate-50/50 p-3 transition-colors group-hover:border-violet-200">
+                    {% for d in ag.detalles %}
+                    <div class="detalle-chip flex w-full cursor-grab items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white px-4 py-2.5 shadow-sm transition-all active:cursor-grabbing hover:border-violet-300 hover:shadow-md"
+                        draggable="true" data-id-detalle="{{ d.id_detalle }}"
+                        data-id-agrupacion="{{ ag.id_agrupacion }}">
+                        <div class="min-w-0 flex-1">
+                            <p class="truncate text-sm font-medium text-slate-800">{{ d.descripcion }}</p>
+                            <p class="text-[11px] font-medium text-slate-400">Cant. {{ d.cantidad }} · ${{
+                                "%.2f"|format(d.subtotal or
+                                0) }}</p>
+                        </div>
+                        <button type="button"
+                            class="btn-remove-detalle shrink-0 rounded-md p-1.5 text-slate-300 transition-colors hover:bg-rose-50 hover:text-rose-500"
+                            title="Quitar detalle">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"
+                                class="h-4 w-4">
+                                <path
+                                    d="M6.28 5.22a.75.75 0 0 0-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 1 0 1.06 1.06L10 11.06l3.72 3.72a.75.75 0 1 0 1.06-1.06L11.06 10l3.72-3.72a.75.75 0 0 0-1.06-1.06L10 8.94 6.28 5.22Z" />
+                            </svg>
+                        </button>
+                    </div>
+                    {% else %}
+                    <div
+                        class="flex w-full flex-1 items-center justify-center py-4 text-xs font-medium text-slate-400 pointer-events-none">
+                        Arrastra detalles aquí
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <!-- Footer de la tarjeta -->
+                <div class="flex items-center justify-between border-t border-slate-100 pt-3">
+                    <span class="text-xs italic text-slate-500">Arrastra un detalle fuera de esta zona para eliminarlo
+                        de la
+                        agrupación.</span>
+                    <div class="text-right">
+                        <span class="block text-[10px] font-bold uppercase tracking-wider text-slate-400">Total de
+                            agrupación</span>
+                        <span class="text-xl font-bold tabular-nums text-slate-800">${{
+                            "%.2f"|format(ag.total_agrupacion or 0)
+                            }}</span>
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <div
+                class="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-slate-200 bg-slate-50/50 py-12 text-slate-400">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                    stroke="currentColor" class="mb-3 h-10 w-10 text-slate-300">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M21 7.5l-9-5.25L3 7.5m18 0l-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9" />
+                </svg>
+                <p class="text-base font-medium text-slate-500">No hay agrupaciones aún.</p>
+                <p class="text-sm">Arrastra dos detalles sueltos entre sí para crear una.</p>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <!-- Modal: elegir tipo de agrupación -->
+    <div id="modal-tipo"
+        class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/40 px-4 backdrop-blur-sm">
+        <div class="w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl ring-1 ring-slate-900/5">
+            <h3 class="text-lg font-bold text-slate-800">Nueva agrupación</h3>
+            <p class="mt-1 text-sm text-slate-500">Elige cómo quieres agrupar estos dos detalles.</p>
+
+            <div class="mt-5 space-y-3">
+                <label
+                    class="flex cursor-pointer items-center gap-3 rounded-xl border border-slate-200 p-4 transition-all hover:border-violet-300 has-[:checked]:border-violet-500 has-[:checked]:bg-violet-50">
+                    <input type="radio" name="modal-tipo-radio" value="AGRUPACION"
+                        class="h-4 w-4 text-violet-600 focus:ring-violet-500" checked>
+                    <div>
+                        <span class="block text-sm font-bold text-slate-700">Agrupación</span>
+                    </div>
+                </label>
+                <label
+                    class="flex cursor-pointer items-center gap-3 rounded-xl border border-slate-200 p-4 transition-all hover:border-amber-300 has-[:checked]:border-amber-500 has-[:checked]:bg-amber-50">
+                    <input type="radio" name="modal-tipo-radio" value="PAQUETE"
+                        class="h-4 w-4 text-amber-600 focus:ring-amber-500">
+                    <div>
+                        <span class="block text-sm font-bold text-slate-700">Paquete</span>
+                    </div>
+                </label>
+            </div>
+
+            <div class="mt-6 flex justify-end gap-3">
+                <button type="button" id="modal-cancel"
+                    class="rounded-xl px-4 py-2 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-100">Cancelar</button>
+                <button type="button" id="modal-confirm"
+                    class="rounded-xl bg-slate-800 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-slate-700">Crear
+                    agrupación</button>
+            </div>
+        </div>
+    </div>
+
+    {% endif %}
+</div>
+
+<script>
+    (function () {
+        if (!document.getElementById('sueltos-zone')) return;
+
+        const ORDEN_ID = {{ orden.id_orden| tojson
+    }};
+    const URLS = {
+        create: "{{ url_for('admin.ordenes.agrupaciones_create', id_orden=orden.id_orden) }}",
+        delete: "{{ url_for('admin.ordenes.agrupaciones_delete', id_orden=orden.id_orden) }}",
+        update: "{{ url_for('admin.ordenes.agrupaciones_update', id_orden=orden.id_orden) }}",
+        addDetail: "{{ url_for('admin.ordenes.agrupaciones_add_detail', id_orden=orden.id_orden) }}",
+        deleteDetail: "{{ url_for('admin.ordenes.agrupaciones_delete_detail', id_orden=orden.id_orden) }}",
+    };
+
+    const CSRF_TOKEN = "{{ csrf_token() }}";
+
+    let dragSource = null;
+    let pendingPair = null;
+
+    function buildFormData(dataObj) {
+        const formData = new FormData();
+        if (CSRF_TOKEN) formData.append('csrf_token', CSRF_TOKEN);
+        Object.entries(dataObj).forEach(([key, value]) => {
+            if (Array.isArray(value)) {
+                value.forEach((v) => formData.append(key, v));
+            } else {
+                formData.append(key, value);
+            }
+        });
+        return formData;
+    }
+
+    function csrfHeaders() {
+        return CSRF_TOKEN ? { 'X-CSRFToken': CSRF_TOKEN } : {};
+    }
+
+    async function postForm(url, dataObj) {
+        const formData = buildFormData(dataObj);
+        try {
+            await fetch(url, { method: 'POST', body: formData, headers: csrfHeaders(), credentials: 'same-origin' });
+        } finally {
+            window.location.reload();
+        }
+    }
+
+    function highlight(el, on) {
+        el.classList.toggle('bg-violet-50', on);
+        el.classList.toggle('border-violet-400', on);
+    }
+
+    const modal = document.getElementById('modal-tipo');
+
+    function openModal(idA, idB) {
+        pendingPair = [idA, idB];
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+    }
+
+    function closeModal() {
+        pendingPair = null;
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+    }
+
+    document.getElementById('modal-cancel').addEventListener('click', closeModal);
+    document.getElementById('modal-confirm').addEventListener('click', () => {
+        if (!pendingPair) return;
+        const tipo = document.querySelector('input[name="modal-tipo-radio"]:checked').value;
+        const [a, b] = pendingPair;
+        closeModal();
+        postForm(URLS.create, { tipo, detalles: [a, b] });
+    });
+
+    function removeFromAgrupacion(idAgrupacion, idDetalle) {
+        const card = document.querySelector(`.agrupacion-card[data-id-agrupacion="${idAgrupacion}"]`);
+        const count = card ? parseInt(card.dataset.count, 10) : 0;
+        if (count <= 2) {
+            postForm(URLS.delete, { id_agrupacion: idAgrupacion });
+        } else {
+            postForm(URLS.deleteDetail, { id_agrupacion: idAgrupacion, id_detalle: idDetalle });
+        }
+    }
+
+    function addToAgrupacion(idAgrupacion, idDetalle) {
+        postForm(URLS.addDetail, { id_agrupacion: idAgrupacion, id_detalle: idDetalle });
+    }
+
+    async function moveBetweenAgrupaciones(idOrigen, idDestino, idDetalle) {
+        const headers = csrfHeaders();
+        try {
+            const formData1 = buildFormData({ id_agrupacion: idDestino, id_detalle: idDetalle });
+            await fetch(URLS.addDetail, { method: 'POST', body: formData1, headers, credentials: 'same-origin' });
+
+            const card = document.querySelector(`.agrupacion-card[data-id-agrupacion="${idOrigen}"]`);
+            const count = card ? parseInt(card.dataset.count, 10) : 0;
+
+            if (count <= 2) {
+                const formData2 = buildFormData({ id_agrupacion: idOrigen });
+                await fetch(URLS.delete, { method: 'POST', body: formData2, headers, credentials: 'same-origin' });
+            } else {
+                const formData2 = buildFormData({ id_agrupacion: idOrigen, id_detalle: idDetalle });
+                await fetch(URLS.deleteDetail, { method: 'POST', body: formData2, headers, credentials: 'same-origin' });
+            }
+        } finally {
+            window.location.reload();
+        }
+    }
+
+    // Drag & Drop: Sueltos
+    document.querySelectorAll('.suelto-card').forEach((card) => {
+        card.addEventListener('dragstart', (e) => {
+            dragSource = { origin: 'suelto', idDetalle: card.dataset.idDetalle };
+            e.dataTransfer.effectAllowed = 'move';
+            card.classList.add('opacity-40');
+        });
+        card.addEventListener('dragend', () => card.classList.remove('opacity-40'));
+
+        card.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            highlight(card, true);
+        });
+        card.addEventListener('dragleave', () => highlight(card, false));
+        card.addEventListener('drop', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            highlight(card, false);
+            if (!dragSource) return;
+            const targetId = card.dataset.idDetalle;
+
+            if (dragSource.origin === 'suelto' && dragSource.idDetalle !== targetId) {
+                openModal(dragSource.idDetalle, targetId);
+            } else if (dragSource.origin === 'agrupacion') {
+                removeFromAgrupacion(dragSource.idAgrupacion, dragSource.idDetalle);
+            }
+            dragSource = null;
+        });
+    });
+
+    const sueltosZone = document.getElementById('sueltos-zone');
+    sueltosZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        highlight(sueltosZone, true);
+    });
+    sueltosZone.addEventListener('dragleave', () => highlight(sueltosZone, false));
+    sueltosZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        highlight(sueltosZone, false);
+        if (!dragSource) return;
+        if (dragSource.origin === 'agrupacion') {
+            removeFromAgrupacion(dragSource.idAgrupacion, dragSource.idDetalle);
+        }
+        dragSource = null;
+    });
+
+    // Drag & Drop: Agrupaciones
+    document.querySelectorAll('.agrupacion-card').forEach((card) => {
+        const idAgrupacion = card.dataset.idAgrupacion;
+
+        card.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            highlight(card, true);
+        });
+        card.addEventListener('dragleave', () => highlight(card, false));
+        card.addEventListener('drop', (e) => {
+            e.preventDefault();
+            highlight(card, false);
+            if (!dragSource) return;
+
+            if (dragSource.origin === 'suelto') {
+                addToAgrupacion(idAgrupacion, dragSource.idDetalle);
+            } else if (dragSource.origin === 'agrupacion' && dragSource.idAgrupacion !== idAgrupacion) {
+                moveBetweenAgrupaciones(dragSource.idAgrupacion, idAgrupacion, dragSource.idDetalle);
+            }
+            dragSource = null;
+        });
+
+        card.querySelectorAll('.detalle-chip').forEach((chip) => {
+            chip.addEventListener('dragstart', (e) => {
+                dragSource = {
+                    origin: 'agrupacion',
+                    idDetalle: chip.dataset.idDetalle,
+                    idAgrupacion: chip.dataset.idAgrupacion,
+                };
+                e.dataTransfer.effectAllowed = 'move';
+                chip.classList.add('opacity-40');
+            });
+            chip.addEventListener('dragend', () => chip.classList.remove('opacity-40'));
+        });
+
+        card.querySelectorAll('.btn-remove-detalle').forEach((btn) => {
+            btn.addEventListener('click', () => {
+                const chip = btn.closest('.detalle-chip');
+                removeFromAgrupacion(chip.dataset.idAgrupacion, chip.dataset.idDetalle);
+            });
+        });
+
+        card.querySelector('.btn-delete-agrupacion').addEventListener('click', () => {
+            if (confirm('¿Eliminar esta agrupación? Los detalles volverán a quedar sueltos.')) {
+                postForm(URLS.delete, { id_agrupacion: idAgrupacion });
+            }
+        });
+
+        const editForm = card.querySelector('.edit-form');
+        const viewDescripcion = card.querySelector('.view-descripcion');
+        const viewInfo = card.querySelector('.view-info-adicional');
+        const inputDescripcion = card.querySelector('.input-descripcion');
+        const inputInfo = card.querySelector('.input-info-adicional');
+
+        card.querySelector('.btn-edit').addEventListener('click', () => {
+            editForm.classList.remove('hidden');
+        });
+        card.querySelector('.btn-cancel-edit').addEventListener('click', () => {
+            editForm.classList.add('hidden');
+            inputDescripcion.value = viewDescripcion.textContent.trim();
+            inputInfo.value = viewInfo.textContent.trim();
+        });
+        card.querySelector('.btn-save-edit').addEventListener('click', () => {
+            postForm(URLS.update, {
+                id_agrupacion: idAgrupacion,
+                descripcion: inputDescripcion.value.trim(),
+                informacion_adicional: inputInfo.value.trim(),
+            });
+        });
+    });
+    }) ();
+</script>
+{% endblock %}

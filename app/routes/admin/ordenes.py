@@ -12,6 +12,7 @@ from app.auth.decorators import role_required
 from app.services.orden_service import OrdenService
 from app.services.orden_detalle_service import OrdenDetalleService
 from app.services.proveedor_service import ProveedorService
+from app.services.agrupacion_service import AgrupacionService
 from app.services.departamento_unam_service import DepartamentoUNAMService
 from app.services.pdf.cotizacion_pdf_service import CotizacionPDFService
 from app.services.proveedores import BuscadorProducto
@@ -617,3 +618,103 @@ def pdf_file(id_orden):
         download_name=f"{orden.clave_orden}.pdf",
         as_attachment=False,
     )
+
+
+@ordenes_bp.get("/<int:id_orden>/agrupaciones")
+@login_required
+@role_required("admin")
+def agrupaciones(id_orden):
+    orden = OrdenService.get_by_id(id_orden)
+
+    agrupaciones_info, error = AgrupacionService.get_orden_complete_details(
+        id_orden=id_orden
+    )
+
+    return render_template(
+        "admin/agrupaciones.html",
+        agrupaciones_info=agrupaciones_info,
+        orden=orden,
+    )
+
+
+@ordenes_bp.post("/<int:id_orden>/agrupaciones/create")
+@login_required
+@role_required("admin")
+def agrupaciones_create(id_orden):
+    tipo = request.form.get("tipo", "").strip()
+    detalles = request.form.getlist("detalles")
+
+    data = {"id_orden": id_orden, "tipo": tipo, "detalles": detalles}
+
+    agrupacion, error = AgrupacionService.create(data)
+
+    if error:
+        flash(error or "No se pudo crear la agrupacion", "error")
+
+    return redirect(url_for("admin.ordenes.agrupaciones", id_orden=id_orden))
+
+
+@ordenes_bp.post("/<int:id_orden>/agrupaciones/delete")
+@login_required
+@role_required("admin")
+def agrupaciones_delete(id_orden):
+    id_agrupacion = request.form.get("id_agrupacion", "").strip()
+
+    _, error = AgrupacionService.delete(id_agrupacion=id_agrupacion)
+
+    if error:
+        flash(error or "No se pudo eliminar la agrupacion", "error")
+
+    return redirect(url_for("admin.ordenes.agrupaciones", id_orden=id_orden))
+
+
+@ordenes_bp.post("/<int:id_orden>/agrupaciones/update")
+@login_required
+@role_required("admin")
+def agrupaciones_update(id_orden):
+    id_agrupacion = request.form.get("id_agrupacion", "").strip()
+    descripcion = request.form.get("descripcion", "").strip()
+    informacion_adicional = request.form.get("informacion_adicional", "").strip()
+
+    data = {"descripcion": descripcion, "informacion_adicional": informacion_adicional}
+
+    agrupacion, error = AgrupacionService.update(id_agrupacion=id_agrupacion, data=data)
+
+    if error:
+        flash(error or "No se pudo actualizar la agrupacion", "error")
+
+    return redirect(url_for("admin.ordenes.agrupaciones", id_orden=id_orden))
+
+
+@ordenes_bp.post("/<int:id_orden>/agrupaciones/add_detail")
+@login_required
+@role_required("admin")
+def agrupaciones_add_detail(id_orden):
+    id_agrupacion = request.form.get("id_agrupacion", "").strip()
+    id_detalle = request.form.get("id_detalle", "").strip()
+
+    _, error = AgrupacionService.add_detalle(
+        id_agrupacion=id_agrupacion, id_detalle=id_detalle
+    )
+
+    if error:
+        flash(error or "No se pudo agregar el detalle", "error")
+
+    return redirect(url_for("admin.ordenes.agrupaciones", id_orden=id_orden))
+
+
+@ordenes_bp.post("/<int:id_orden>/agrupaciones/delete_detail")
+@login_required
+@role_required("admin")
+def agrupaciones_delete_detail(id_orden):
+    id_agrupacion = request.form.get("id_agrupacion", "").strip()
+    id_detalle = request.form.get("id_detalle", "").strip()
+
+    _, error = AgrupacionService.delete_detalle(
+        id_agrupacion=id_agrupacion, id_detalle=id_detalle
+    )
+
+    if error:
+        flash(error or "No se pudo eliminar el detalle", "error")
+
+    return redirect(url_for("admin.ordenes.agrupaciones", id_orden=id_orden))
