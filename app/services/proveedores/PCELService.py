@@ -4,6 +4,7 @@ from decimal import Decimal
 from urllib.parse import urljoin
 
 from curl_cffi import requests
+from curl_cffi.requests.exceptions import RequestException
 from bs4 import BeautifulSoup
 
 from app.models.producto_proveedor import ProductoProveedor, ExistenciaSucursal
@@ -94,7 +95,7 @@ class PCELService(ProveedorProductos):
             html = response.text
             return cls._parse_producto(html, response.url)
 
-        except requests.RequestException:
+        except RequestException:
             logger.exception("Error consultando PCEL para '%s'.", termino)
             raise
         except Exception:
