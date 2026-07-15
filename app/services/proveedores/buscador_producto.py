@@ -7,7 +7,6 @@ from app.models.producto_proveedor import ProductoProveedor
 from app.cache.productos_cache_service import ProductosCacheService
 from app.services.proveedores import (
     CVAService,
-    # IngramService,
     SyscomService,
     SiclikService,
     TechSmartService,
@@ -24,7 +23,6 @@ logger = logging.getLogger(__name__)
 class BuscadorProducto:
     PROVEEDORES_EXTERNOS = [
         CVAService,
-        # IngramService,
         SyscomService,
         SiclikService,
         TechSmartService,
