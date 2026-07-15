@@ -35,7 +35,7 @@
     {% endif %}
     {% endwith %}
 
-    <form method="post" action="{{ url_for('admin.ordenes.nueva_orden_post') }}" class="space-y-8">
+    <form method="post" action="{{ url_for('admin.ordenes.create_post') }}" class="space-y-8">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
         <div class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">

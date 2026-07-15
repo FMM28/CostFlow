@@ -158,9 +158,9 @@
                     </div>
                     <div>
                         <label class="text-xs font-semibold text-slate-500">Información adicional</label>
-                        <input type="text"
+                        <textarea
                             class="input-info-adicional mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm transition-colors focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-500/20"
-                            value="{{ ag.informacion_adicional or '' }}" placeholder="Información adicional">
+                            placeholder="Información adicional" rows="3">{{ ag.informacion_adicional or '' }}</textarea>
                     </div>
                     <div class="flex justify-end gap-2 pt-1">
                         <button type="button"
