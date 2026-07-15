@@ -255,15 +255,10 @@ def delete(id_orden):
     return redirect(url_for("admin.ordenes.index"))
 
 
-@ordenes_bp.post("/detalles")
+@ordenes_bp.post("/<int:id_orden>/detalles")
 @login_required
 @role_required("admin")
-def add_detail():
-    id_orden = request.form.get("id_orden", type=int)
-    if not id_orden:
-        flash("ID de orden no proporcionado", "error")
-        return redirect(url_for("admin.ordenes.index"))
-
+def add_detail(id_orden):
     try:
         orden = OrdenService.get_by_id(id_orden)
         if not orden:
