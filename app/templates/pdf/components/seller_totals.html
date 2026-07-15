@@ -16,35 +16,39 @@
             {{ vendedor.correo }}
         </div>
     </div>
+
     <div class="totals">
-        <table>
-            <tr>
-                <td>Subtotal</td>
-                <td>
+        <div class="totals-container">
+            {% if not cotizacion.es_persona_fisica %}
+            <div class="total-row">
+                <div class="total-label">Subtotal</div>
+                <div class="total-value">
                     <div class="total-money">
                         <div>$</div>
                         <div>{{ "{:,.2f}".format(cotizacion.subtotal) }}</div>
                     </div>
-                </td>
-            </tr>
-            <tr>
-                <td>IVA: 16%</td>
-                <td>
+                </div>
+            </div>
+            <div class="total-row">
+                <div class="total-label">IVA: 16%</div>
+                <div class="total-value">
                     <div class="total-money">
                         <div>$</div>
                         <div>{{ "{:,.2f}".format(cotizacion.iva) }}</div>
                     </div>
-                </td>
-            </tr>
-            <tr class="grand-total">
-                <td>TOTAL</td>
-                <td>
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="total-row grand-total">
+                <div class="total-label">TOTAL</div>
+                <div class="total-value">
                     <div class="total-money">
                         <div>$</div>
                         <div>{{ "{:,.2f}".format(cotizacion.total) }}</div>
                     </div>
-                </td>
-            </tr>
-        </table>
+                </div>
+            </div>
+        </div>
     </div>
 </section>

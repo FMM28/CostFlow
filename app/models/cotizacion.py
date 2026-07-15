@@ -42,6 +42,7 @@ class Cotizacion:
     iva: Decimal
     total: Decimal
     es_unam: bool
+    es_persona_fisica: bool
     departamento: str | None
     solicitud_unam: str | None
     proveedor_unam: str | None

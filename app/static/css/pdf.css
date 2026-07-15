@@ -317,49 +317,61 @@ body {
 .totals {
     width: 26%;
     border: 1px solid #000;
+    border-collapse: collapse;
     box-sizing: border-box;
-    display: flex;
-    flex-direction: column;
+    display: table;
+    table-layout: fixed;
 }
 
-.totals table {
+.totals-container {
     width: 100%;
     height: 100%;
+    display: table;
     border-collapse: collapse;
     table-layout: fixed;
-    font-weight: bold;
 }
 
-.totals tr {
-    height: 33.33%;
+.total-row {
+    display: table-row;
 }
 
-.totals td {
-    padding: 3px 5px;
-    font-size: 10pt;
+.total-row:not(:last-child) .total-label,
+.total-row:not(:last-child) .total-value {
     border-bottom: 1px solid #000;
+}
+
+.total-label {
+    display: table-cell;
+    width: 50%;
+    text-align: center;
+    padding: 8px 5px;
+    font-weight: bold;
+    font-size: 10pt;
+    border-right: 1px solid #000;
+    box-sizing: border-box;
     vertical-align: middle;
 }
 
-.totals td:first-child {
-    text-align: center;
+.total-value {
+    display: table-cell;
     width: 50%;
-}
-
-.totals td:last-child {
     text-align: right;
-    width: 50%;
-    border-left: 1px solid #000;
-}
-
-.totals tr:last-child td {
-    border-bottom: none;
+    padding: 8px 5px;
+    font-weight: bold;
+    font-size: 10pt;
+    box-sizing: border-box;
+    vertical-align: middle;
 }
 
 .total-money {
     display: flex;
-    justify-content: space-between;
+    justify-content: flex-end;
     align-items: center;
+    gap: 2px;
+}
+
+.total-money div:first-child {
+    margin-right: 2px;
 }
 
 /* ===========================

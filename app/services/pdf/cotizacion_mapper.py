@@ -1,3 +1,4 @@
+from decimal import Decimal, ROUND_HALF_UP
 import io
 import logging
 import tempfile
@@ -276,7 +277,7 @@ class CotizacionMapper:
         return detalle.producto
 
     @classmethod
-    def _detalle_desde_agrupacion(cls, agrupacion, partida):
+    def _detalle_desde_agrupacion(cls, agrupacion, partida, es_persona_fisica=False):
 
         separador = (
             cls.SEPARADOR_PAQUETE
@@ -294,10 +295,28 @@ class CotizacionMapper:
         if agrupacion.descripcion:
             descripcion = f"{agrupacion.descripcion} {descripcion}"
 
-        total = sum(
-            (agrupacion_detalle.detalle.subtotal or 0)
-            for agrupacion_detalle in agrupacion.detalles
-        )
+        if es_persona_fisica:
+            total = Decimal("0.00")
+
+            for agrupacion_detalle in agrupacion.detalles:
+                detalle = agrupacion_detalle.detalle
+
+                precio_unitario = (detalle.precio_venta * Decimal("1.16")).quantize(
+                    Decimal("0.01"),
+                    rounding=ROUND_HALF_UP,
+                )
+
+                total += precio_unitario * detalle.cantidad
+
+            total = total.quantize(
+                Decimal("0.01"),
+                rounding=ROUND_HALF_UP,
+            )
+        else:
+            total = sum(
+                (agrupacion_detalle.detalle.subtotal or Decimal("0.00"))
+                for agrupacion_detalle in agrupacion.detalles
+            )
 
         urls_imagenes = [
             agrupacion_detalle.detalle.url_imagen
@@ -318,7 +337,7 @@ class CotizacionMapper:
         )
 
     @classmethod
-    def _construir_detalles(cls, orden):
+    def _construir_detalles(cls, orden, es_persona_fisica=False):
 
         detalles_agrupados = {
             agrupacion_detalle.id_detalle
@@ -333,6 +352,15 @@ class CotizacionMapper:
             if detalle.id_detalle in detalles_agrupados:
                 continue
 
+            if es_persona_fisica:
+                precio_unitario = (detalle.precio_venta * Decimal("1.16")).quantize(
+                    Decimal("0.01"), rounding=ROUND_HALF_UP
+                )
+                total = precio_unitario * detalle.cantidad
+            else:
+                precio_unitario = detalle.precio_venta
+                total = detalle.subtotal
+
             detalles.append(
                 DetalleCotizacion(
                     partida=partida,
@@ -340,8 +368,8 @@ class CotizacionMapper:
                     descripcion=detalle.producto,
                     imagen=detalle.url_imagen,
                     informacion_adicional=detalle.informacion_adicional,
-                    precio_unitario=detalle.precio_venta,
-                    total=detalle.subtotal,
+                    precio_unitario=precio_unitario,
+                    total=total,
                 )
             )
             partida += 1
@@ -351,6 +379,7 @@ class CotizacionMapper:
                 cls._detalle_desde_agrupacion(
                     agrupacion,
                     partida,
+                    es_persona_fisica,
                 )
             )
             partida += 1
@@ -383,7 +412,11 @@ class CotizacionMapper:
             ),
         )
 
-        detalles = cls._construir_detalles(orden)
+        es_persona_fisica = orden.tipo_cotizacion == "PERSONA FISICA"
+
+        detalles = cls._construir_detalles(
+            orden=orden, es_persona_fisica=es_persona_fisica
+        )
 
         terminos = ""
 
@@ -407,6 +440,7 @@ class CotizacionMapper:
             iva=orden.iva,
             total=orden.total,
             es_unam=orden.tipo_cotizacion == "UNAM",
+            es_persona_fisica=es_persona_fisica,
             departamento=info.get("departamento"),
             solicitud_unam=info.get("no_solicitud"),
             proveedor_unam=info.get("proveedor_unam"),
