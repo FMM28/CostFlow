@@ -40,6 +40,9 @@ class Config:
     DIRECCION_ARP = os.getenv("DIRECCION_ARP")
 
     MARGEN_CONVERSION = float(os.getenv("MARGEN_CONVERSION", 0))
+    
+    GMAIL_EMAIL = os.getenv("GMAIL_EMAIL")
+    GMAIL_PASSWORD = os.getenv("GMAIL_PASSWORD")
 
     CVA_URL = os.getenv("CVA_URL")
     CVA_CLIENTE = os.getenv("CVA_CLIENTE")
