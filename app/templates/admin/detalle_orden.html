@@ -277,6 +277,117 @@
                     </button>
                 </form>
             </div>
+
+            <!-- Seguimiento -->
+            <div class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
+                <h2 class="text-lg font-semibold text-gray-900 mb-5 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    </svg>
+                    Seguimiento
+                </h2>
+
+                {% set is_active = orden.seguimiento and orden.seguimiento.activo %}
+
+                <form method="POST" action="{{ url_for('admin.ordenes.cambiar_estado', id_orden=orden.id_orden) }}"
+                    class="mb-6">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                    <div class="flex items-center justify-between p-3 rounded-xl border border-gray-200 bg-gray-50">
+                        <label class="flex items-center gap-3 cursor-pointer w-full">
+                            <input type="checkbox" name="activo" value="1" class="sr-only peer" {% if is_active
+                                %}checked{% endif %} onchange="this.form.submit()">
+
+                            <div
+                                class="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-emerald-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600">
+                            </div>
+
+                            <div>
+                                <span class="text-sm font-semibold text-gray-800 block">Activar seguimiento</span>
+                                <span class="text-xs text-gray-500">Habilitar el monitoreo automático de esta
+                                    orden.</span>
+                            </div>
+                        </label>
+                    </div>
+                </form>
+
+                <form method="POST"
+                    action="{{ url_for('admin.ordenes.actualizar_seguimiento', id_orden=orden.id_orden) }}"
+                    class="space-y-5 {% if not is_active %}opacity-50 pointer-events-none{% endif %}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="activo" value="1">
+
+                    <div class="space-y-4 pt-2">
+                        <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Configuración de alertas
+                        </p>
+
+                        <div class="space-y-3">
+                            <label class="flex items-start gap-3 cursor-pointer group">
+                                <input type="checkbox" name="cambio_precio" value="1"
+                                    class="mt-0.5 w-4 h-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500/50"
+                                    {% if is_active and orden.seguimiento.cambio_precio %}checked{% endif %} {% if not
+                                    is_active %}disabled{% endif %}>
+                                <span class="text-sm text-gray-700 group-hover:text-gray-900">Notificar cambio de
+                                    precio</span>
+                            </label>
+
+                            <label class="flex items-start gap-3 cursor-pointer group">
+                                <input type="checkbox" name="sin_stock" value="1"
+                                    class="mt-0.5 w-4 h-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500/50"
+                                    {% if is_active and orden.seguimiento.sin_stock %}checked{% endif %} {% if not
+                                    is_active %}disabled{% endif %}>
+                                <span class="text-sm text-gray-700 group-hover:text-gray-900">Notificar cuando esté sin
+                                    stock</span>
+                            </label>
+
+                            <label class="flex items-start gap-3 cursor-pointer group">
+                                <input type="checkbox" name="mejor_oferta" value="1"
+                                    class="mt-0.5 w-4 h-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500/50"
+                                    {% if is_active and orden.seguimiento.mejor_oferta %}checked{% endif %} {% if not
+                                    is_active %}disabled{% endif %}>
+                                <span class="text-sm text-gray-700 group-hover:text-gray-900">Notificar si hay mejor
+                                    oferta</span>
+                            </label>
+                        </div>
+
+                        <div class="space-y-3 pt-2">
+                            <div class="space-y-1">
+                                <label class="block text-sm font-medium text-gray-700">
+                                    Frecuencia de revisión (horas)
+                                </label>
+                                <input type="number" name="frecuencia_horas" min="1"
+                                    value="{{ orden.seguimiento.frecuencia_horas if is_active else 24 }}" {% if not
+                                    is_active %}disabled{% endif %} class="w-full h-11 px-4 rounded-xl border border-gray-200 bg-white text-gray-700
+                                   focus:outline-none focus:ring-2 focus:ring-emerald-500/50
+                                   focus:border-emerald-500 transition disabled:bg-gray-50 disabled:text-gray-400">
+                            </div>
+
+                            <div class="space-y-1">
+                                <label class="block text-sm font-medium text-gray-700">
+                                    Diferencia mínima ($)
+                                </label>
+                                <input type="number" name="diferencia_minima" step="0.01" min="0"
+                                    value="{{ orden.seguimiento.diferencia_minima if is_active else 0 }}" {% if not
+                                    is_active %}disabled{% endif %} placeholder="0.00" class="w-full h-11 px-4 rounded-xl border border-gray-200 bg-white text-gray-700
+       focus:outline-none focus:ring-2 focus:ring-emerald-500/50
+       focus:border-emerald-500 transition disabled:bg-gray-50 disabled:text-gray-400">
+                                <p class="text-xs text-gray-400">Monto mínimo en pesos de variación para disparar la
+                                    alerta de Mejor Oferta.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="submit" {% if not is_active %}disabled{% endif %} class="w-full px-4 py-2.5 bg-emerald-600 text-white rounded-xl
+                       hover:bg-emerald-700 transition font-medium flex items-center justify-center gap-2
+                       disabled:bg-gray-300 disabled:cursor-not-allowed disabled:hover:bg-gray-300">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                        </svg>
+                        Guardar configuración
+                    </button>
+                </form>
+            </div>
         </div>
 
         <!-- Contenido principal -->

@@ -38,7 +38,7 @@ class CurrencyService:
                     "Tipo de cambio %s obtenido desde Redis.",
                     from_currency,
                 )
-                return float(cached.valor)
+                return cached.valor
 
         url = (
             f"{CurrencyService.BASE_URL}@latest/v1/currencies/"
@@ -73,7 +73,7 @@ class CurrencyService:
                 margen,
             )
 
-            return float(rate)
+            return rate
 
         except Exception:
             CurrencyService.logger.exception(
@@ -85,11 +85,13 @@ class CurrencyService:
 
     @staticmethod
     def calcular_conversion_MXN(
-        precio: float,
+        precio: Decimal,
         from_currency: str,
-    ) -> tuple[float, str | None]:
+    ) -> tuple[Decimal, str | None]:
 
         currency = from_currency.strip().lower()
+        
+        precio = Decimal(precio)
 
         if currency == "mxn":
             return precio, None

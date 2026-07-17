@@ -17,6 +17,7 @@ from app.services.departamento_unam_service import DepartamentoUNAMService
 from app.services.pdf.cotizacion_pdf_service import CotizacionPDFService
 from app.services.proveedores import BuscadorProducto
 from app.services.CurrencyService import CurrencyService
+from app.services.seguimiento_service import SeguimientoService
 from datetime import datetime
 import re
 
@@ -713,3 +714,55 @@ def agrupaciones_delete_detail(id_orden):
         flash(error or "No se pudo eliminar el detalle", "error")
 
     return redirect(url_for("admin.ordenes.agrupaciones", id_orden=id_orden))
+
+
+@ordenes_bp.post("/<int:id_orden>/seguimiento/estado")
+@login_required
+@role_required("admin")
+def cambiar_estado(id_orden):
+
+    seguimiento = SeguimientoService.obtener_por_orden(id_orden)
+
+    if seguimiento is None:
+        SeguimientoService.crear(id_orden=id_orden)
+    else:
+        activo = request.form.get("activo") == "1"
+
+        if activo:
+            SeguimientoService.activar(seguimiento)
+        else:
+            SeguimientoService.desactivar(seguimiento)
+
+    return redirect(url_for("admin.ordenes.detail", id_orden=id_orden))
+
+
+@ordenes_bp.post("/<int:id_orden>/seguimiento/update")
+@login_required
+@role_required("admin")
+def actualizar_seguimiento(id_orden):
+
+    seguimiento = SeguimientoService.obtener_por_orden(id_orden)
+
+    if seguimiento is None:
+        flash("No se encontró el seguimiento.", "error")
+        return redirect(url_for("admin.ordenes.detail", id_orden=id_orden))
+
+    frecuencia_horas = int(request.form["frecuencia_horas"])
+    cambio_precio = request.form.get("cambio_precio") == "1"
+    sin_stock = request.form.get("sin_stock") == "1"
+    mejor_oferta = request.form.get("mejor_oferta") == "1"
+    diferencia_minima = request.form.get("diferencia_minima", 0)
+    activo = request.form.get("activo") == "1"
+
+    SeguimientoService.actualizar(
+        seguimiento=seguimiento,
+        frecuencia_horas=frecuencia_horas,
+        cambio_precio=cambio_precio,
+        sin_stock=sin_stock,
+        mejor_oferta=mejor_oferta,
+        diferencia_minima=diferencia_minima,
+        activo=activo,
+    )
+
+    flash("Seguimiento actualizado con éxito.", "success")
+    return redirect(url_for("admin.ordenes.detail", id_orden=id_orden))

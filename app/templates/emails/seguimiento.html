@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Seguimiento de cotización</title>
+</head>
+
+<body
+    style="margin:0;padding:0;background:#f8fafc;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;">
+
+    <table width="100%" cellpadding="0" cellspacing="0" style="background:#f8fafc;padding:40px 20px;">
+        <tr>
+            <td align="center">
+
+                <table width="700" cellpadding="0" cellspacing="0"
+                    style="background:#ffffff;border-radius:12px;box-shadow:0 4px 6px rgba(0,0,0,0.05);max-width:700px;">
+
+                    <!-- Header -->
+                    <tr>
+                        <td
+                            style="background:linear-gradient(135deg, #334155 0%, #475569 100%);padding:30px;border-radius:12px 12px 0 0;">
+                            <table width="100%" cellpadding="0" cellspacing="0">
+                                <tr>
+                                    <td>
+                                        <h1
+                                            style="margin:0;color:#ffffff;font-size:28px;font-weight:700;letter-spacing:-0.5px;">
+                                            CostFlow
+                                        </h1>
+                                        <p
+                                            style="margin:8px 0 0 0;color:rgba(255,255,255,0.85);font-size:14px;font-weight:500;">
+                                            Seguimiento de cotización
+                                        </p>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+
+                    <!-- Título principal -->
+                    <tr>
+                        <td style="padding:35px 35px 20px 35px;">
+                            <h2 style="margin:0;color:#1e293b;font-size:24px;font-weight:700;">
+                                Cambios detectados en la cotización
+                            </h2>
+                            <p style="margin:12px 0 0 0;color:#475569;font-size:16px;">
+                                Orden: <strong style="color:#166534;">{{ orden.clave_orden }}</strong>
+                            </p>
+                        </td>
+                    </tr>
+
+                    <!-- Resumen de cambios -->
+                    <tr>
+                        <td style="padding:0 35px 25px 35px;">
+                            <table width="100%" cellpadding="0" cellspacing="0"
+                                style="background:#f0fdf4;border-radius:8px;border-left:4px solid #166534;">
+                                <tr>
+                                    <td style="padding:20px;">
+                                        <p style="margin:0;color:#14532d;font-size:15px;line-height:1.5;">
+                                            Se detectaron <strong style="color:#166534;font-size:18px;">{{
+                                                cambios|length }}</strong>
+                                            {% if cambios|length == 1 %}cambio{% else %}cambios{% endif %}
+                                            desde la última revisión.
+                                        </p>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+
+                    <!-- Lista de cambios -->
+                    <tr>
+                        <td style="padding:0 35px 35px 35px;">
+
+                            {% for cambio in cambios %}
+
+                            <!-- Card de cambio -->
+                            <table width="100%" cellpadding="0" cellspacing="0"
+                                style="border:1px solid #e2e8f0;border-radius:10px;margin-bottom:20px;overflow:hidden;box-shadow:0 2px 4px rgba(0,0,0,0.03);">
+
+                                <!-- Header del cambio -->
+                                <tr>
+                                    <td style="padding:16px 20px;
+                                        {% if cambio.tipo == 'precio' %}background:#fffbeb;border-bottom:3px solid #d97706;
+                                        {% elif cambio.tipo == 'stock' %}background:#fef2f2;border-bottom:3px solid #dc2626;
+                                        {% elif cambio.tipo == 'oferta' %}background:#f0fdf4;border-bottom:3px solid #16a34a;
+                                        {% endif %}">
+
+                                        <span style="font-size:11px; text-transform:uppercase; letter-spacing:1.5px; font-weight:700; 
+                                            {% if cambio.tipo == 'precio' %}color:#b45309;
+                                            {% elif cambio.tipo == 'stock' %}color:#991b1b;
+                                            {% elif cambio.tipo == 'oferta' %}color:#166534;
+                                            {% endif %}">
+                                            {% if cambio.tipo == 'precio' %}Cambio de Precio
+                                            {% elif cambio.tipo == 'stock' %}Sin Existencias
+                                            {% elif cambio.tipo == 'oferta' %}Mejor Oferta
+                                            {% endif %}
+                                        </span>
+                                        <br>
+                                        <strong
+                                            style="color:#1e293b;font-size:16px;display:inline-block;margin-top:6px;font-weight:600;">
+                                            {{ cambio.producto }}
+                                        </strong>
+                                    </td>
+                                </tr>
+
+                                <!-- Contenido del cambio -->
+                                <tr>
+                                    <td style="padding:20px;background:#ffffff;">
+
+                                        {% if cambio.tipo == "precio" %}
+
+                                        <p style="margin:0 0 15px 0;color:#475569;font-size:14px;">
+                                            El precio cambió en <strong style="color:#1e293b;">{{ cambio.proveedor
+                                                }}</strong>
+                                        </p>
+
+                                        <table width="100%" cellpadding="0" cellspacing="0"
+                                            style="background:#f8fafc;border-radius:6px;border:1px solid #e2e8f0;">
+                                            <tr>
+                                                <td style="padding:14px 16px;border-right:1px solid #e2e8f0;width:45%;">
+                                                    <span
+                                                        style="color:#64748b;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;font-weight:600;">Precio
+                                                        anterior</span>
+                                                    <br>
+                                                    <strong style="color:#475569;font-size:16px;">${{
+                                                        "%.2f"|format(cambio.precio_anterior) }}</strong>
+                                                </td>
+                                                <td
+                                                    style="padding:14px 16px;width:10%;text-align:center;vertical-align:middle;color:#94a3b8;font-size:18px;font-weight:bold;">
+                                                    &rarr;
+                                                </td>
+                                                <td style="padding:14px 16px;width:45%;">
+                                                    <span
+                                                        style="color:#64748b;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;font-weight:600;">Precio
+                                                        actual</span>
+                                                    <br>
+                                                    <strong style="color:#d97706;font-size:16px;">${{
+                                                        "%.2f"|format(cambio.precio_actual) }}</strong>
+                                                </td>
+                                            </tr>
+                                        </table>
+
+                                        {% elif cambio.tipo == "stock" %}
+
+                                        <table width="100%" cellpadding="0" cellspacing="0"
+                                            style="background:#fef2f2;border-radius:6px;border:1px solid #fecaca;">
+                                            <tr>
+                                                <td style="padding:16px;">
+                                                    <p style="margin:0;color:#7f1d1d;font-size:14px;line-height:1.5;">
+                                                        <strong
+                                                            style="text-transform:uppercase;font-size:11px;letter-spacing:0.5px;color:#991b1b;font-weight:700;">Alerta
+                                                            de Inventario</strong><br>
+                                                        <span
+                                                            style="margin-top:6px;display:inline-block;color:#991b1b;">El
+                                                            proveedor <strong>{{ cambio.proveedor }}</strong> ya no
+                                                            cuenta con stock disponible para este producto.</span>
+                                                    </p>
+                                                </td>
+                                            </tr>
+                                        </table>
+
+                                        {% elif cambio.tipo == "oferta" %}
+
+                                        <p
+                                            style="margin:0 0 15px 0;color:#166534;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;">
+                                            Mejor oferta encontrada
+                                        </p>
+
+                                        <table width="100%" cellpadding="0" cellspacing="0"
+                                            style="background:#f8fafc;border-radius:6px;border:1px solid #e2e8f0;">
+                                            <tr>
+                                                <td
+                                                    style="padding:14px 16px;border-bottom:1px solid #e2e8f0;width:50%;">
+                                                    <span
+                                                        style="color:#64748b;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;font-weight:600;">Proveedor
+                                                        actual</span>
+                                                    <br>
+                                                    <strong style="color:#1e293b;font-size:14px;">{{
+                                                        cambio.proveedor_actual }}</strong>
+                                                </td>
+                                                <td
+                                                    style="padding:14px 16px;border-bottom:1px solid #e2e8f0;width:50%;">
+                                                    <span
+                                                        style="color:#64748b;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;font-weight:600;">Precio
+                                                        actual</span>
+                                                    <br>
+                                                    <strong style="color:#1e293b;font-size:14px;">${{
+                                                        "%.2f"|format(cambio.precio_actual) }}</strong>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td style="padding:14px 16px;border-bottom:1px solid #e2e8f0;">
+                                                    <span
+                                                        style="color:#64748b;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;font-weight:600;">Nuevo
+                                                        proveedor</span>
+                                                    <br>
+                                                    <strong style="color:#16a34a;font-size:14px;">{{
+                                                        cambio.proveedor_nuevo }}</strong>
+                                                </td>
+                                                <td style="padding:14px 16px;border-bottom:1px solid #e2e8f0;">
+                                                    <span
+                                                        style="color:#64748b;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;font-weight:600;">Nuevo
+                                                        precio</span>
+                                                    <br>
+                                                    <strong style="color:#16a34a;font-size:14px;">${{
+                                                        "%.2f"|format(cambio.precio_nuevo) }}</strong>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td colspan="2"
+                                                    style="padding:18px;background:#f0fdf4;text-align:center;border-top:1px solid #bbf7d0;">
+                                                    <span
+                                                        style="color:#166534;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;">Ahorro
+                                                        total estimado</span>
+                                                    <br>
+                                                    <strong style="color:#15803d;font-size:24px;">${{
+                                                        "%.2f"|format(cambio.ahorro) }}</strong>
+                                                </td>
+                                            </tr>
+                                        </table>
+
+                                        {% endif %}
+
+                                    </td>
+                                </tr>
+
+                            </table>
+
+                            {% endfor %}
+
+                        </td>
+                    </tr>
+
+                    <!-- Footer -->
+                    <tr>
+                        <td
+                            style="background:#f1f5f9;padding:30px 35px;border-top:1px solid #e2e8f0;border-radius:0 0 12px 12px;">
+                            <table width="100%" cellpadding="0" cellspacing="0">
+                                <tr>
+                                    <td style="text-align:center;">
+                                        <p style="margin:0 0 10px 0;color:#475569;font-size:13px;line-height:1.6;">
+                                            Este correo fue generado automáticamente por <strong
+                                                style="color:#166534;">CostFlow</strong>
+                                        </p>
+                                        <p style="margin:0;color:#94a3b8;font-size:12px;">
+                                            No es necesario responder a este mensaje.
+                                        </p>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+
+                </table>
+
+            </td>
+        </tr>
+    </table>
+
+</body>
+
+</html>

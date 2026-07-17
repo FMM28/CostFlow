@@ -30,3 +30,9 @@ class Orden(BaseModel):
     agrupaciones = db.relationship(
         "Agrupacion", back_populates="orden", cascade="all, delete-orphan"
     )
+    seguimiento = db.relationship(
+        "Seguimiento",
+        back_populates="orden",
+        uselist=False,
+        cascade="all, delete-orphan",
+    )
