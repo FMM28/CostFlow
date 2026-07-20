@@ -25,6 +25,7 @@ class Config:
     TIPO_CAMBIO_CACHE_TTL = int(os.getenv("TIPO_CAMBIO_CACHE_TTL", 3600))
 
     SECRET_KEY = os.environ.get("SECRET_KEY")
+    SESSION_ENCRYPTION_KEY = os.environ.get("SESSION_ENCRYPTION_KEY")
     WTF_CSRF_ENABLED = True
 
     LOG_LEVEL = "INFO"

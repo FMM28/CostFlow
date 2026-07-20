@@ -1,21 +1,18 @@
 import logging
 import re
 import threading
-from datetime import datetime, timezone
 from decimal import Decimal
 from urllib.parse import urljoin
 
 from bs4 import BeautifulSoup
 from flask import current_app
-from sqlalchemy.exc import SQLAlchemyError
 
-from app.extensions import db
 from app.models.producto_proveedor import (
     ExistenciaSucursal,
     ProductoProveedor,
 )
-from app.models.sesion_proveedor import SesionProveedor
 from app.services.proveedores.proveedor_productos import ProveedorProductos
+from app.services.sesion_proveedor_service import SesionProveedorService
 
 logger = logging.getLogger(__name__)
 
@@ -30,50 +27,22 @@ class ExelService(ProveedorProductos):
 
     @classmethod
     def _guardar_cookies(cls, cookies):
-        try:
-            if not cookies:
-                return
+        if not cookies:
+            return
 
-            registro = SesionProveedor.query.filter_by(proveedor=cls.PROVEEDOR).first()
-            if registro is None:
-                registro = SesionProveedor(
-                    proveedor=cls.PROVEEDOR,
-                    cookies={"items": cookies},
-                    updated_at=datetime.now(timezone.utc),
-                )
-                db.session.add(registro)
-            else:
-                registro.cookies = {"items": cookies}
-                registro.updated_at = datetime.now(timezone.utc)
-
-            db.session.commit()
-        except SQLAlchemyError:
-            db.session.rollback()
-            logger.error(f"Error guardando cookies de {cls.PROVEEDOR}")
-        except Exception as e:
-            db.session.rollback()
-            logger.error(f"Error inesperado guardando cookies: {e}")
+        SesionProveedorService.guardar(
+            proveedor=cls.PROVEEDOR,
+            cookies=cookies,
+        )
 
     @classmethod
     def _cargar_cookies(cls):
-        try:
-            registro = SesionProveedor.query.filter_by(proveedor=cls.PROVEEDOR).first()
-            if not registro or not registro.cookies:
-                return []
+        cookies = SesionProveedorService.obtener(cls.PROVEEDOR)
 
-            items = (
-                registro.cookies.get("items")
-                if isinstance(registro.cookies, dict)
-                else None
-            )
-            return items if items else []
+        if cookies is None:
+            return []
 
-        except SQLAlchemyError as e:
-            logger.error(f"Error cargando cookies de {cls.PROVEEDOR}: {e}")
-            return []
-        except Exception as e:
-            logger.error(f"Error inesperado cargando cookies: {e}")
-            return []
+        return cookies
 
     @classmethod
     def _hacer_login(cls, context, page):
@@ -136,6 +105,7 @@ class ExelService(ProveedorProductos):
         page = context.new_page()
 
         if not cls._sesion_valida_en(page):
+            SesionProveedorService.eliminar(cls.PROVEEDOR)
             cls._hacer_login(context, page)
             if not cls._sesion_valida_en(page):
                 browser.close()

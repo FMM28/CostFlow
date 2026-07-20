@@ -1,25 +1,23 @@
 import logging
 import re
-from datetime import datetime
 from decimal import Decimal
 
 import requests
 from bs4 import BeautifulSoup
 from flask import current_app
 
-from app.extensions import db
 from app.services.proveedores.proveedor_productos import ProveedorProductos
 from app.models.producto_proveedor import (
     ExistenciaSucursal,
     ProductoProveedor,
 )
-from app.models.sesion_proveedor import SesionProveedor
+from app.services.sesion_proveedor_service import SesionProveedorService
 
 logger = logging.getLogger(__name__)
 
 
 class TechSmartService(ProveedorProductos):
-    PROVEEDOR = "techsmart"
+    PROVEEDOR = "TECHSMART"
 
     def __init__(self):
         base_url = self._get_base_url()
@@ -97,16 +95,13 @@ class TechSmartService(ProveedorProductos):
     @classmethod
     def _obtener_cookies_validas(cls) -> dict:
 
-        sesion = db.session.get(
-            SesionProveedor,
-            cls.PROVEEDOR,
-        )
+        cookies = SesionProveedorService.obtener(cls.PROVEEDOR)
 
-        if sesion:
-            cookies = sesion.cookies or {}
-
+        if cookies:
             if cls._sesion_activa(cookies):
                 return cookies
+
+            SesionProveedorService.eliminar(cls.PROVEEDOR)
 
         return cls._renovar_sesion()
 
@@ -182,27 +177,10 @@ class TechSmartService(ProveedorProductos):
         cookies: dict,
     ):
 
-        sesion = db.session.get(
-            SesionProveedor,
-            cls.PROVEEDOR,
+        SesionProveedorService.guardar(
+            proveedor=cls.PROVEEDOR,
+            cookies=cookies,
         )
-
-        ahora = datetime.now()
-
-        if not sesion:
-            sesion = SesionProveedor(
-                proveedor=cls.PROVEEDOR,
-                cookies=cookies,
-                updated_at=ahora,
-            )
-
-            db.session.add(sesion)
-
-        else:
-            sesion.cookies = cookies
-            sesion.updated_at = ahora
-
-        db.session.commit()
 
     @classmethod
     def _parsear_catalogo(

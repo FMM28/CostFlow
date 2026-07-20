@@ -1,6 +1,5 @@
 import logging
 
-from datetime import datetime
 from decimal import Decimal
 
 import requests
@@ -8,11 +7,9 @@ import requests
 from flask import current_app
 
 from app.models.producto_proveedor import ProductoProveedor, ExistenciaSucursal
-from app.models.sesion_proveedor import SesionProveedor
 
 from app.services.proveedores.proveedor_productos import ProveedorProductos
-
-from app.extensions import db
+from app.services.sesion_proveedor_service import SesionProveedorService
 
 
 logger = logging.getLogger(__name__)
@@ -74,34 +71,24 @@ class SiclikService(ProveedorProductos):
                 }
             )
 
-        sesion = SesionProveedor.query.get("siclik")
+        SesionProveedorService.guardar(
+            proveedor="SICLIK",
+            cookies=cookies,
+        )
 
-        if not sesion:
-            sesion = SesionProveedor(
-                proveedor="siclik", cookies=[], updated_at=datetime.now()
-            )
-
-            db.session.add(sesion)
-
-        sesion.cookies = cookies
-
-        sesion.updated_at = datetime.now()
-
-        db.session.commit()
-
-        logger.info("Sesión Siclik almacenada en BD")
+        logger.info("Sesión Siclik almacenada")
 
     @classmethod
     def _cargar_sesion_bd(cls):
 
-        sesion = SesionProveedor.query.get("siclik")
+        cookies = SesionProveedorService.obtener("SICLIK")
 
-        if not sesion:
+        if not cookies:
             return False
 
         session = cls._new_session()
 
-        for cookie in sesion.cookies:
+        for cookie in cookies:
             session.cookies.set(
                 cookie["name"],
                 cookie["value"],
@@ -146,6 +133,9 @@ class SiclikService(ProveedorProductos):
         if cls._cargar_sesion_bd():
             if cls._validar_sesion():
                 return cls._session
+
+            SesionProveedorService.eliminar("SICLIK")
+            cls._session = None
 
         raise Exception("Sesión Siclik expirada")
 
@@ -244,16 +234,11 @@ class SiclikService(ProveedorProductos):
 
     @classmethod
     def _eliminar_sesion_bd(cls):
-        """Elimina las cookies de la base de datos para forzar una nueva autenticación"""
         try:
-            sesion = SesionProveedor.query.get("siclik")
-            if sesion:
-                db.session.delete(sesion)
-                db.session.commit()
-                logger.info("Sesión Siclik eliminada de la base de datos")
+            SesionProveedorService.eliminar("SICLIK")
+            logger.info("Sesión Siclik eliminada")
         except Exception as e:
-            logger.error(f"Error al eliminar sesión de BD: {e}")
-            db.session.rollback()
+            logger.error(f"Error al eliminar sesión: {e}")
 
     @classmethod
     def _obtener_detalle(cls, sku):
@@ -272,10 +257,14 @@ class SiclikService(ProveedorProductos):
                 return None
 
             if response.status_code == 401:
-                logger.warning(f"Error 401 al obtener detalle de {sku}, eliminando cookies")
+                logger.warning(
+                    f"Error 401 al obtener detalle de {sku}, eliminando cookies"
+                )
                 cls._eliminar_sesion_bd()
                 cls._session = None
-                raise requests.exceptions.HTTPError("La sesion de Siclik Compusoluciones ha vencido.")
+                raise requests.exceptions.HTTPError(
+                    "La sesion de Siclik Compusoluciones ha vencido."
+                )
 
             response.raise_for_status()
             return response.json()
