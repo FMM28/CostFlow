@@ -29,17 +29,20 @@
 
                 <!-- IMAGEN -->
                 <div class="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
-                    {% if detalle.url_imagen %}
-                    <img src="{{ detalle.url_imagen }}" alt="{{ detalle.producto or '' }}"
-                        class="w-full aspect-square object-cover">
-                    {% else %}
-                    <div class="aspect-square flex items-center justify-center bg-gray-100 text-gray-400">
+                    {% set url_img = detalle.url_imagen if detalle.url_imagen and detalle.url_imagen|string|lower not in
+                    ('none', 'null', 'undefined') else '' %}
+
+                    <img src="{{ url_img }}" alt="{{ detalle.producto or '' }}"
+                        class="w-full aspect-square object-cover" {% if not url_img %}style="display:none;" {% endif %}
+                        onerror="this.style.display='none'; if(this.nextElementSibling) this.nextElementSibling.style.display='flex';">
+
+                    <div class="aspect-square flex items-center justify-center bg-gray-100 text-gray-400"
+                        style="{% if url_img %}display:none;{% else %}display:flex;{% endif %}">
                         <svg class="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
                                 d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14" />
                         </svg>
                     </div>
-                    {% endif %}
                 </div>
 
                 <!-- RESUMEN -->
@@ -421,14 +424,16 @@
                         <h2 class="text-lg font-semibold text-gray-900">URLs</h2>
                     </div>
                     <div class="p-6 grid grid-cols-1 gap-5">
+                        {% set url_prod = detalle.url_producto if detalle.url_producto and
+                        detalle.url_producto|string|lower not in ('none', 'null', 'undefined') else '' %}
+
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">
                                 URL del producto
                             </label>
 
                             <div class="flex gap-2">
-                                <input type="url" id="url_producto" name="url_producto"
-                                    value="{{ detalle.url_producto or '' }}"
+                                <input type="url" id="url_producto" name="url_producto" value="{{ url_prod }}"
                                     class="flex-1 px-4 py-2 border border-gray-300 rounded-xl">
 
                                 <button type="button" id="btn-copy-url"
@@ -440,9 +445,9 @@
                                     </svg>
                                 </button>
 
-                                <a id="btn-open-url" href="{{ detalle.url_producto or '#' }}" target="_blank"
-                                    rel="noopener noreferrer"
-                                    class="inline-flex items-center justify-center px-3 border border-gray-300 rounded-xl hover:bg-gray-50 transition">
+                                <a id="btn-open-url" href="{{ url_prod or '#' }}" target="_blank"
+                                    rel="noopener noreferrer" class="inline-flex items-center justify-center px-3 border border-gray-300 rounded-xl hover:bg-gray-50 transition 
+                                    {% if not url_prod %}pointer-events-none opacity-50{% endif %}">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                             d="M14 3h7m0 0v7m0-7L10 14" />
@@ -454,7 +459,7 @@
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">URL de imagen</label>
-                            <input type="url" name="url_imagen" value="{{ detalle.url_imagen or '' }}"
+                            <input type="url" name="url_imagen" value="{{ url_img }}"
                                 class="w-full px-4 py-2 border border-gray-300 rounded-xl">
                         </div>
                     </div>
