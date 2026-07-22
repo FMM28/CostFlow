@@ -13,3 +13,9 @@ class Proveedor(BaseModel):
     productos = db.relationship(
         "Producto", back_populates="proveedor", cascade="all, delete-orphan", lazy=True
     )
+    credenciales = db.relationship(
+        "ProveedorCredenciales",
+        back_populates="proveedor",
+        uselist=False,
+        cascade="all, delete-orphan",
+    )

@@ -9,3 +9,4 @@ from .existencia_producto import ExistenciaProducto
 from .agrupacion import Agrupacion
 from .agrupacion_detalle import AgrupacionDetalle
 from .seguimiento import Seguimiento
+from .proveedor_credenciales import ProveedorCredenciales

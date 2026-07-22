@@ -6,6 +6,7 @@ import requests
 from bs4 import BeautifulSoup
 from flask import current_app
 
+from app.services.proveedor_credenciales_service import ProveedorCredencialesService
 from app.services.proveedores.proveedor_productos import ProveedorProductos
 from app.models.producto_proveedor import (
     ExistenciaSucursal,
@@ -140,12 +141,28 @@ class TechSmartService(ProveedorProductos):
     def _renovar_sesion(cls) -> dict:
 
         try:
+            credenciales = ProveedorCredencialesService.obtener(cls.PROVEEDOR)
+
+            if credenciales is None:
+                raise RuntimeError(
+                    f"No existen credenciales configuradas para {cls.PROVEEDOR}"
+                )
+
+            rfc = credenciales.get("rfc")
+            usuario = credenciales.get("usuario")
+            password = credenciales.get("password")
+
+            if not rfc or not usuario or not password:
+                raise RuntimeError(
+                    f"Las credenciales de {cls.PROVEEDOR} están incompletas"
+                )
+
             instance = cls._get_instance()
 
             payload = {
-                "rfc": current_app.config["TECHSMART_RFC"],
-                "usuario": current_app.config["TECHSMART_USUARIO"],
-                "txtPass": current_app.config["TECHSMART_PASSWORD"],
+                "rfc": rfc,
+                "usuario": usuario,
+                "txtPass": password,
             }
 
             response = requests.post(
@@ -159,7 +176,7 @@ class TechSmartService(ProveedorProductos):
             cookies = response.cookies.get_dict()
 
             if not cookies:
-                raise Exception("No se recibieron cookies.")
+                raise RuntimeError("No se recibieron cookies.")
 
             cls._guardar_sesion(cookies)
 

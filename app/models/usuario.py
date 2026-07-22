@@ -2,7 +2,8 @@ from app.extensions import db, bcrypt
 from .base import BaseModel
 from flask_login import UserMixin
 
-class Usuario(UserMixin,BaseModel):
+
+class Usuario(UserMixin, BaseModel):
     __tablename__ = "usuario"
 
     id_usuario = db.Column(db.Integer, primary_key=True)
@@ -19,21 +20,20 @@ class Usuario(UserMixin,BaseModel):
     deleted_at = db.Column(db.DateTime, nullable=True)
 
     ordenes = db.relationship("Orden", back_populates="usuario", lazy=True)
+    credenciales_proveedor = db.relationship(
+        "ProveedorCredenciales",
+        back_populates="usuario",
+    )
 
     def set_password(self, raw_password):
-        self.password = bcrypt.generate_password_hash(
-            raw_password
-        ).decode("utf-8")
+        self.password = bcrypt.generate_password_hash(raw_password).decode("utf-8")
 
     def check_password(self, raw_password):
-        return bcrypt.check_password_hash(
-            self.password,
-            raw_password
-        )
+        return bcrypt.check_password_hash(self.password, raw_password)
 
     def get_id(self):
         return str(self.id_usuario)
-    
+
     @property
     def id(self):
         return self.id_usuario

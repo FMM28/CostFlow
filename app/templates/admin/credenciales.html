@@ -1,0 +1,108 @@
+{% extends "admin/base.html" %}
+
+{% block title %}
+Credenciales - {{ nombre }}
+{% endblock %}
+
+{% block content %}
+<div class="py-10 px-4 sm:px-6 lg:px-8">
+
+    <div class="max-w-2xl mx-auto space-y-6">
+
+        {# ---------- Encabezado ---------- #}
+        <div class="flex items-start gap-4">
+            <div
+                class="flex-shrink-0 h-14 w-14 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 shadow-lg shadow-emerald-500/20 flex items-center justify-center">
+                <svg class="h-7 w-7 text-white" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z" />
+                </svg>
+            </div>
+            <div class="flex-1">
+                <nav class="text-xs font-medium text-slate-500 mb-2 tracking-wide uppercase">
+                    <a href="{{ url_for('admin.proveedores.index') }}"
+                        class="hover:text-emerald-600 transition">Proveedores</a>
+                    <span class="mx-1.5 text-slate-300">/</span>
+                    <span class="text-slate-700">{{ nombre }}</span>
+                </nav>
+                <h1 class="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
+                    Credenciales de {{ nombre }}
+                </h1>
+                <p class="mt-1.5 text-sm text-slate-500">
+                    Configura las credenciales utilizadas para autenticarse con el proveedor.
+                </p>
+            </div>
+        </div>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        <div class="space-y-3">
+            {% for category, message in messages %}
+            <div class="px-4 py-3 rounded-xl border text-sm font-medium
+            {% if category == 'success' %}bg-emerald-50 border-emerald-200 text-emerald-800
+            {% elif category == 'error' %}bg-red-50 border-red-200 text-red-800
+            {% elif category == 'warning' %}bg-amber-50 border-amber-200 text-amber-800
+            {% else %}bg-blue-50 border-blue-200 text-blue-800
+            {% endif %}">
+                {{ message }}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        {% endwith %}
+
+        {# ---------- Tarjeta principal del formulario ---------- #}
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+
+            <div class="px-6 py-5 border-b border-slate-100 bg-slate-50/60">
+                <div class="flex items-center gap-2">
+                    <svg class="h-5 w-5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke-width="2"
+                        stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75" />
+                    </svg>
+                    <h2 class="text-base font-semibold text-slate-800">Configuración de acceso</h2>
+                </div>
+                <p class="mt-1 text-xs text-slate-500">Completa los campos requeridos para establecer la conexión segura
+                </p>
+            </div>
+
+            <form action="{{ url_post }}" method="post" class="p-6 space-y-6">
+                {% for campo in campos %}
+                <div class="space-y-1.5">
+                    <label for="{{ campo.name }}" class="block text-sm font-semibold text-slate-800">
+                        {{ campo.label }}
+                    </label>
+                    <input id="{{ campo.name }}" name="{{ campo.name }}" type="{{ campo.type | default('text') }}" {% if
+                        campo.value %}value="{{ campo.value }}" {% endif %} {% if campo.placeholder
+                        %}placeholder="{{ campo.placeholder }}" {% endif %} required autocomplete="off"
+                        class="w-full border border-slate-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all text-slate-700 placeholder-slate-400 shadow-sm">
+                </div>
+                {% endfor %}
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                {# ---------- Acciones ---------- #}
+                <div class="flex justify-end gap-3 pt-6 border-t border-slate-100">
+                    <a href="{{ url_for('admin.proveedores.index') }}"
+                        class="px-5 py-3 rounded-xl border border-slate-300 bg-white text-slate-700 font-medium hover:bg-slate-50 transition-all duration-200 shadow-sm flex items-center gap-2">
+                        <svg class="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke-width="2"
+                            stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                        Cancelar
+                    </a>
+
+                    <button type="submit"
+                        class="px-5 py-3 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-medium transition-all duration-200 shadow-sm hover:shadow-md flex items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                        </svg>
+                        Guardar credenciales
+                    </button>
+                </div>
+
+            </form>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

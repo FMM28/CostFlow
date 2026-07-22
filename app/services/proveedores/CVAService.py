@@ -6,6 +6,7 @@ from urllib.parse import urlencode
 
 from flask import current_app
 
+from app.services.proveedor_credenciales_service import ProveedorCredencialesService
 from app.services.proveedores.proveedor_productos import ProveedorProductos
 from app.models.producto_proveedor import ProductoProveedor, ExistenciaSucursal
 
@@ -133,8 +134,22 @@ class CVAService(ProveedorProductos):
 
     @staticmethod
     def _buscar_por_codigo(codigo: str) -> list[ProductoProveedor]:
+        credenciales = ProveedorCredencialesService.obtener("CVA")
+
+        if credenciales is None:
+            logger.error("No existen credenciales configuradas para CVA")
+            return []
+
+        cliente = credenciales.get("cliente")
+
+        if not cliente:
+            logger.error(
+                "Las credenciales de CVA están incompletas",
+            )
+            return []
+
         params = {
-            "cliente": current_app.config["CVA_CLIENTE"],
+            "cliente": cliente,
             "codigo": codigo,
             "promos": "1",
             "sucursales": "1",

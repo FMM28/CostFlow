@@ -4,10 +4,9 @@ from decimal import Decimal
 
 import requests
 
-from flask import current_app
-
 from app.models.producto_proveedor import ProductoProveedor, ExistenciaSucursal
 
+from app.services.proveedor_credenciales_service import ProveedorCredencialesService
 from app.services.proveedores.proveedor_productos import ProveedorProductos
 from app.services.sesion_proveedor_service import SesionProveedorService
 
@@ -25,6 +24,8 @@ class SiclikService(ProveedorProductos):
     CLIENT_ID = "4bd253db-ef76-41f8-a464-288a662cb08d"
 
     REDIRECT_URI = f"{FARGATE_URL}/auth/siclik/callback"
+
+    PROVEEDOR = "SICLIK"
 
     _session = None
 
@@ -72,7 +73,7 @@ class SiclikService(ProveedorProductos):
             )
 
         SesionProveedorService.guardar(
-            proveedor="SICLIK",
+            proveedor=cls.PROVEEDOR,
             cookies=cookies,
         )
 
@@ -134,7 +135,7 @@ class SiclikService(ProveedorProductos):
             if cls._validar_sesion():
                 return cls._session
 
-            SesionProveedorService.eliminar("SICLIK")
+            SesionProveedorService.eliminar(cls.PROVEEDOR)
             cls._session = None
 
         raise Exception("Sesión Siclik expirada")
@@ -142,17 +143,36 @@ class SiclikService(ProveedorProductos):
     @classmethod
     def iniciar_autenticacion(cls):
 
+        credenciales = ProveedorCredencialesService.obtener(cls.PROVEEDOR)
+
+        if credenciales is None:
+            raise RuntimeError(
+                f"No existen credenciales configuradas para {cls.PROVEEDOR}"
+            )
+
+        email = credenciales.get("email")
+        password = credenciales.get("password")
+
+        if not email or not password:
+            raise RuntimeError(f"Las credenciales de {cls.PROVEEDOR} están incompletas")
+
         session = cls._new_session()
 
-        response = session.get(cls.AUTH_URL, allow_redirects=True, timeout=20)
+        response = session.get(
+            cls.AUTH_URL,
+            allow_redirects=True,
+            timeout=20,
+        )
+
+        response.raise_for_status()
 
         url = response.url
 
         cls._oauth_state = url.split("state=")[1].split("&")[0]
 
         payload = {
-            "email": current_app.config["SICLIK_EMAIL"],
-            "password": current_app.config["SICLIK_PASSWORD"],
+            "email": email,
+            "password": password,
             "clientId": cls.CLIENT_ID,
             "state": cls._oauth_state,
             "redirectUri": cls.REDIRECT_URI,
@@ -179,6 +199,18 @@ class SiclikService(ProveedorProductos):
     @classmethod
     def confirmar_autenticacion(cls, codigo):
 
+        credenciales = ProveedorCredencialesService.obtener(cls.PROVEEDOR)
+
+        if credenciales is None:
+            raise RuntimeError(
+                f"No existen credenciales configuradas para {cls.PROVEEDOR}"
+            )
+
+        customer_id = credenciales.get("customer_id")
+
+        if not customer_id:
+            raise RuntimeError(f"Las credenciales de {cls.PROVEEDOR} están incompletas")
+
         session = cls._session
 
         payload = {
@@ -191,7 +223,9 @@ class SiclikService(ProveedorProductos):
         }
 
         response = session.post(
-            f"{cls.LOGIN_URL}/api/auth/confirm-mfa", json=payload, timeout=20
+            f"{cls.LOGIN_URL}/api/auth/confirm-mfa",
+            json=payload,
+            timeout=20,
         )
 
         response.raise_for_status()
@@ -201,7 +235,7 @@ class SiclikService(ProveedorProductos):
             params={
                 "state": cls._oauth_state,
                 "redirectUri": cls.REDIRECT_URI,
-                "customerId": current_app.config["SICLIK_CUSTOMER_ID"],
+                "customerId": customer_id,
             },
             allow_redirects=False,
             timeout=20,
@@ -211,12 +245,16 @@ class SiclikService(ProveedorProductos):
 
         callback = response.headers.get("Location")
 
-        response = session.get(callback, allow_redirects=True, timeout=20)
+        response = session.get(
+            callback,
+            allow_redirects=True,
+            timeout=20,
+        )
 
         response.raise_for_status()
 
         if not cls._validar_sesion():
-            raise Exception("No fue posible crear la sesión Siclik")
+            raise RuntimeError("No fue posible crear la sesión Siclik")
 
         cls._guardar_sesion_bd()
 
@@ -298,8 +336,8 @@ class SiclikService(ProveedorProductos):
 
         return total, existencias
 
-    @staticmethod
-    def _parse_item(item):
+    @classmethod
+    def _parse_item(cls, item):
 
         total, existencias = SiclikService._parse_existencias(item)
 
@@ -321,7 +359,7 @@ class SiclikService(ProveedorProductos):
             )
 
         return ProductoProveedor(
-            proveedor="SICLIK",
+            proveedor=cls.PROVEEDOR,
             nombre=item.get("title", ""),
             precio=precio,
             moneda=item.get("currency", "MXN"),

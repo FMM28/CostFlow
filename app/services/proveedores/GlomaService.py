@@ -4,6 +4,7 @@ from bs4 import BeautifulSoup
 from urllib.parse import urljoin
 from flask import current_app
 
+from app.services.proveedor_credenciales_service import ProveedorCredencialesService
 from app.services.proveedores.proveedor_productos import ProveedorProductos
 from app.models.producto_proveedor import ProductoProveedor, ExistenciaSucursal
 from app.services.sesion_proveedor_service import SesionProveedorService
@@ -108,21 +109,39 @@ class GlomaService(ProveedorProductos):
 
     @classmethod
     def _autenticar(cls):
+        credenciales = ProveedorCredencialesService.obtener(cls.PROVEEDOR)
+
+        if credenciales is None:
+            raise RuntimeError(
+                f"No existen credenciales configuradas para {cls.PROVEEDOR}"
+            )
+
+        usuario = credenciales.get("usuario")
+        password = credenciales.get("password")
+
+        if not usuario or not password:
+            raise RuntimeError(f"Las credenciales de {cls.PROVEEDOR} están incompletas")
+
         ins = cls._get_instance()
         s = cls._get_session()
+
         r = s.post(
             ins.LOGIN_URL,
             data={
-                "usuario": current_app.config["GLOMA_USUARIO"],
-                "contrasena": current_app.config["GLOMA_PASSWORD"],
+                "usuario": usuario,
+                "contrasena": password,
             },
             timeout=15,
         )
+
         r.raise_for_status()
         cookies = s.cookies.get_dict()
+
         if "PHPSESSID" not in cookies:
             raise RuntimeError("No se obtuvo PHPSESSID")
+
         cls._guardar_sesion(cookies)
+
         return cookies
 
     @classmethod

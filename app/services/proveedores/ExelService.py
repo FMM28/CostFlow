@@ -6,7 +6,6 @@ from urllib.parse import urljoin
 
 from bs4 import BeautifulSoup
 from curl_cffi import requests as cffi_requests
-from flask import current_app
 
 from app.models.producto_proveedor import (
     ExistenciaSucursal,
@@ -14,6 +13,7 @@ from app.models.producto_proveedor import (
 )
 from app.services.proveedores.proveedor_productos import ProveedorProductos
 from app.services.sesion_proveedor_service import SesionProveedorService
+from app.services.proveedor_credenciales_service import ProveedorCredencialesService
 
 logger = logging.getLogger(__name__)
 
@@ -156,8 +156,16 @@ class ExelService(ProveedorProductos):
 
     @classmethod
     def _hacer_login(cls, context, page):
-        usuario = current_app.config.get("EXEL_USUARIO", "")
-        password = current_app.config.get("EXEL_PASSWORD", "")
+        credenciales = ProveedorCredencialesService.obtener(proveedor=cls.PROVEEDOR)
+
+        if credenciales is None:
+            raise ExelLoginError("No existen credenciales configuradas para Exel")
+
+        usuario = credenciales.get("usuario")
+        password = credenciales.get("password")
+
+        if not usuario or not password:
+            raise ExelLoginError("Las credenciales de Exel están incompletas")
 
         if not usuario or not password:
             raise ExelLoginError("Credenciales de Exel no configuradas")

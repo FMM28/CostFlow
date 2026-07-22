@@ -41,34 +41,11 @@ class Config:
     DIRECCION_ARP = os.getenv("DIRECCION_ARP")
 
     MARGEN_CONVERSION = float(os.getenv("MARGEN_CONVERSION", 0))
-    
+
     GMAIL_EMAIL = os.getenv("GMAIL_EMAIL")
     GMAIL_PASSWORD = os.getenv("GMAIL_PASSWORD")
 
     CVA_URL = os.getenv("CVA_URL")
-    CVA_CLIENTE = os.getenv("CVA_CLIENTE")
-
-    INGRAM_USERNAME = os.getenv("INGRAM_USERNAME")
-    INGRAM_PASSWORD = os.getenv("INGRAM_PASSWORD")
-    INGRAM_PORT = os.getenv("INGRAM_PORT")
-    INGRAM_URL = os.getenv("INGRAM_URL")
-
     SYSCOM_URL = os.getenv("SYSCOM_URL")
-    SYSCOM_CLIENT_ID = os.getenv("SYSCOM_CLIENT_ID")
-    SYSCOM_CLIENT_SECRET = os.getenv("SYSCOM_CLIENT_SECRET")
-
-    SICLIK_EMAIL = os.getenv("SICLIK_EMAIL")
-    SICLIK_PASSWORD = os.getenv("SICLIK_PASSWORD")
-    SICLIK_CUSTOMER_ID = os.getenv("SICLIK_CUSTOMER_ID")
-
-    TECHSMART_RFC = os.getenv("TECHSMART_RFC")
-    TECHSMART_USUARIO = os.getenv("TECHSMART_USUARIO")
-    TECHSMART_PASSWORD = os.getenv("TECHSMART_PASSWORD")
     TECHSMART_URL = os.getenv("TECHSMART_URL")
-
-    GLOMA_USUARIO = os.getenv("GLOMA_USUARIO")
-    GLOMA_PASSWORD = os.getenv("GLOMA_PASSWORD")
     GLOMA_URL = os.getenv("GLOMA_URL")
-
-    EXEL_USUARIO = os.getenv("EXEL_USUARIO")
-    EXEL_PASSWORD = os.getenv("EXEL_PASSWORD")

@@ -34,9 +34,25 @@ Siclik · Autenticación
             </div>
         </div>
 
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        <div class="space-y-3">
+            {% for category, message in messages %}
+            <div class="px-4 py-3 rounded-xl border text-sm font-medium
+            {% if category == 'success' %}bg-emerald-50 border-emerald-200 text-emerald-800
+            {% elif category == 'error' %}bg-red-50 border-red-200 text-red-800
+            {% elif category == 'warning' %}bg-amber-50 border-amber-200 text-amber-800
+            {% else %}bg-blue-50 border-blue-200 text-blue-800
+            {% endif %}">
+                {{ message }}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        {% endwith %}
+
         {# ---------- Estado de sesión ---------- #}
         <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-
             <div class="px-6 py-4 border-b border-slate-100 bg-slate-50/60">
                 <div class="flex items-center gap-2">
                     <svg class="h-5 w-5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke-width="2"
@@ -74,6 +90,7 @@ Siclik · Autenticación
                                 {% if autenticado %}
                                 La sesión está activa y puedes realizar operaciones con Siclik.
                                 {% else %}
+                                Completa los pasos inferiores para establecer la conexión.
                                 {% endif %}
                             </p>
                         </div>
@@ -95,7 +112,61 @@ Siclik · Autenticación
             </div>
         </div>
 
-        {# ---------- Tarjeta principal ---------- #}
+        {# ---------- Validación de credenciales para MFA ---------- #}
+        {% set email_val = email | default('', true) | trim %}
+        {% set customer_id_val = customer_id | default('', true) | trim %}
+        {% set puede_iniciar_mfa = (email_val != '') and (customer_id_val != '') %}
+
+        {# ---------- Tarjeta de Credenciales ---------- #}
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+            <div class="px-6 py-5 border-b border-slate-100 bg-slate-50/60">
+                <div class="flex items-center gap-2">
+                    <svg class="h-5 w-5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke-width="2"
+                        stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z" />
+                    </svg>
+                    <h2 class="text-base font-semibold text-slate-800">Carga de credenciales</h2>
+                </div>
+                <p class="mt-1 text-xs text-slate-500">Ingresa las credenciales específicas requeridas para este
+                    proveedor</p>
+            </div>
+
+            <!-- Ajusta la acción del formulario a la ruta correcta de tu backend para guardar credenciales -->
+            <form action="#" method="post" class="p-6 space-y-5">
+
+                <div class="space-y-1.5">
+                    <label for="email" class="block text-sm font-semibold text-slate-800">Correo electrónico</label>
+                    <input type="email" id="email" name="email" value="{{ email }}" required
+                        class="w-full border border-slate-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all text-slate-700 placeholder-slate-400 shadow-sm">
+                </div>
+
+                <div class="space-y-1.5">
+                    <label for="customer_id" class="block text-sm font-semibold text-slate-800">Customer ID</label>
+                    <input type="text" id="customer_id" name="customer_id" value="{{ customer_id }}" required
+                        class="w-full border border-slate-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all text-slate-700 placeholder-slate-400 shadow-sm">
+                </div>
+
+                <div class="space-y-1.5">
+                    <label for="password" class="block text-sm font-semibold text-slate-800">Contraseña</label>
+                    <input type="password" id="password" name="password" required
+                        class="w-full border border-slate-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all text-slate-700 placeholder-slate-400 shadow-sm">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                </div>
+
+                <div class="pt-2">
+                    <button type="submit"
+                        class="w-full px-5 py-3 rounded-xl bg-gradient-to-r from-slate-800 to-slate-900 hover:from-emerald-600 hover:to-teal-600 text-white font-medium transition-all duration-200 flex items-center justify-center gap-2 shadow-sm hover:shadow-md">
+                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                        </svg>
+                        Guardar credenciales
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        {# ---------- Tarjeta principal MFA ---------- #}
         <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
 
             <div class="px-6 py-5 border-b border-slate-100 bg-slate-50/60">
@@ -125,7 +196,23 @@ Siclik · Autenticación
                         </div>
                     </div>
 
-                    <button id="btn-iniciar"
+                    {% if not puede_iniciar_mfa %}
+                    <div
+                        class="flex items-start gap-3 p-4 rounded-xl bg-amber-50 border border-amber-200 text-amber-800">
+                        <svg class="w-5 h-5 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke-width="2"
+                            stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+                        </svg>
+                        <div class="text-sm">
+                            <p class="font-semibold">Credenciales incompletas</p>
+                            <p class="text-amber-700">Debes cargar y guardar el correo electrónico y el Customer ID
+                                antes de poder iniciar la autenticación MFA.</p>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <button id="btn-iniciar" {% if not puede_iniciar_mfa %}disabled{% endif %}
                         class="w-full px-5 py-3.5 rounded-xl bg-gradient-to-r from-slate-800 to-slate-900 hover:from-emerald-600 hover:to-teal-600 text-white font-medium transition-all duration-200 flex items-center justify-center gap-2.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:from-slate-300 disabled:to-slate-300 shadow-sm hover:shadow-md">
                         <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                             <path

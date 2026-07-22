@@ -6,10 +6,10 @@ from datetime import datetime
 from decimal import Decimal, InvalidOperation
 
 import paramiko
-from flask import current_app
 
 from app import db
 from app.models.producto import Producto
+from app.services.proveedor_credenciales_service import ProveedorCredencialesService
 from app.services.proveedor_service import ProveedorService
 
 
@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 
 class IngramService:
-    NOMBRE_PROVEEDOR = "INGRAM"
+    PROVEEDOR = "INGRAM"
     ARCHIVO_ZIP = "PRICE.ZIP"
     ARCHIVO_TXT = "PRICE.TXT"
 
@@ -28,20 +28,35 @@ class IngramService:
         los productos a la base de datos.
         """
 
-        host = current_app.config["INGRAM_URL"]
-        port = int(current_app.config["INGRAM_PORT"])
-        username = current_app.config["INGRAM_USERNAME"]
-        password = current_app.config["INGRAM_PASSWORD"]
-
-        proveedor = ProveedorService.search_by_nombre(cls.NOMBRE_PROVEEDOR)
+        proveedor = ProveedorService.search_by_nombre(cls.PROVEEDOR)
 
         if not proveedor:
-            proveedor, error = ProveedorService.create({"nombre": cls.NOMBRE_PROVEEDOR})
+            proveedor, error = ProveedorService.create({"nombre": cls.PROVEEDOR})
 
             if error:
                 logger.error(error)
-
                 return 0
+
+        credenciales = ProveedorCredencialesService.obtener(cls.PROVEEDOR)
+
+        if credenciales is None:
+            logger.error(
+                "No existen credenciales configuradas para %s",
+                cls.PROVEEDOR,
+            )
+            return 0
+
+        host = credenciales.get("host")
+        port = credenciales.get("port")
+        username = credenciales.get("username")
+        password = credenciales.get("password")
+
+        if not all([host, port, username, password]):
+            logger.error(
+                "Las credenciales de %s están incompletas",
+                cls.PROVEEDOR,
+            )
+            return 0
 
         transport = None
         sftp = None
@@ -49,8 +64,11 @@ class IngramService:
         try:
             logger.info("Conectando al SFTP de Ingram...")
 
-            transport = paramiko.Transport((host, port))
-            transport.connect(username=username, password=password)
+            transport = paramiko.Transport((host, int(port)))
+            transport.connect(
+                username=username,
+                password=password,
+            )
 
             sftp = paramiko.SFTPClient.from_transport(transport)
 
