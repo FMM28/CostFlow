@@ -1,0 +1,325 @@
+{% extends 'ventas/base.html' %}
+
+{% block title %}Nueva Cotización{% endblock %}
+
+{% block content %}
+<div class="w-full px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <div class="space-y-3">
+        {% for category, message in messages %}
+        <div class="px-4 py-3 rounded-xl border text-sm font-medium
+                    {% if category == 'success' %} bg-emerald-50 border-emerald-200 text-emerald-800
+                    {% elif category == 'error' %} bg-red-50 border-red-200 text-red-800
+                    {% elif category == 'warning' %} bg-amber-50 border-amber-200 text-amber-800
+                    {% else %} bg-blue-50 border-blue-200 text-blue-800 {% endif %}">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    {% endwith %}
+
+    <form method="post" action="{{ url_for('ventas.ordenes.create_post') }}" class="space-y-8">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <!-- Grid principal: 4 columnas izquierda, 8 columnas derecha -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+
+            <!-- COLUMNA IZQUIERDA: Título, Información de la orden y Botones (STICKY) -->
+            <div class="lg:col-span-4 lg:sticky lg:top-8 lg:self-start">
+                <!-- Título -->
+                <div class="mb-6">
+                    <h1 class="text-3xl font-bold tracking-tight text-gray-900">Nueva cotización</h1>
+                    <p class="text-gray-500 mt-1">Completa los datos de la orden y agrega productos</p>
+                </div>
+
+                <!-- Información de la orden -->
+                <div class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm mb-6">
+                    <h2 class="text-lg font-medium text-gray-900 mb-4">Información de la orden</h2>
+                    <div class="space-y-4">
+                        <div>
+                            <label for="comprador" class="block text-sm font-medium text-gray-700 mb-1">
+                                Comprador <span class="text-red-500">*</span>
+                            </label>
+                            <input type="text" name="comprador" id="comprador" required
+                                value="{{ form_data.get('comprador', '') if form_data else '' }}"
+                                placeholder="Nombre del comprador"
+                                class="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500">
+                        </div>
+                        <div>
+                            <label for="fecha_creacion"
+                                class="block text-sm font-medium text-gray-700 mb-1">Fecha</label>
+                            <input type="date" name="fecha_creacion" id="fecha_creacion"
+                                value="{{ form_data.get('fecha_creacion', today) if form_data else today }}"
+                                class="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500">
+                        </div>
+                    </div>
+                    <input type="hidden" name="estado" value="pendiente">
+                </div>
+
+                <!-- Botones en la misma fila -->
+                <div class="flex gap-3">
+                    <button type="submit"
+                        class="flex-1 px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium rounded-xl transition-colors shadow-sm">
+                        Guardar cotización
+                    </button>
+                    <a href="{{ url_for('ventas.ordenes.index') }}"
+                        class="flex-1 text-center px-6 py-2.5 bg-white border border-gray-300 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+                        Cancelar
+                    </a>
+                </div>
+            </div>
+
+            <!-- COLUMNA DERECHA: Listado de artículos -->
+            <div class="lg:col-span-8">
+                <div class="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
+                    <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
+                        <h2 class="text-lg font-medium text-gray-900">Productos en la orden</h2>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200" id="tabla-productos">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th
+                                        class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Producto</th>
+                                    <th
+                                        class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        SKU / Clave</th>
+                                    <th
+                                        class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Cantidad</th>
+                                    <th
+                                        class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider w-20">
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200" id="lista-productos">
+                                <tr id="empty-row" class="text-gray-500">
+                                    <td colspan="4" class="px-4 py-16 text-center text-sm">
+                                        No hay productos agregados. Utiliza el formulario inferior para añadirlos.
+                                    </td>
+                                </tr>
+                            </tbody>
+                            <tfoot class="bg-gray-50 border-t border-gray-200">
+                                <tr>
+                                    <td colspan="2" class="px-4 py-3 text-right text-sm font-medium text-gray-700">Total
+                                        de productos:</td>
+                                    <td class="px-4 py-3 text-right text-sm font-medium text-gray-900"
+                                        id="total-productos">0</td>
+                                    <td></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+
+                    <div class="p-5 border-t border-gray-200 bg-gray-50/50">
+                        <div class="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
+                            <div class="md:col-span-5">
+                                <label class="block text-xs font-medium text-gray-700 mb-1">Nombre del producto <span
+                                        class="text-red-500">*</span></label>
+                                <input type="text" id="prod-nombre" placeholder="Ej. Cable USB-C 1m"
+                                    class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500/50">
+                            </div>
+                            <div class="md:col-span-3">
+                                <label class="block text-xs font-medium text-gray-700 mb-1">SKU / Clave</label>
+                                <input type="text" id="prod-clave" placeholder="Opcional"
+                                    class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500/50">
+                            </div>
+                            <div class="md:col-span-2">
+                                <label class="block text-xs font-medium text-gray-700 mb-1">Cantidad <span
+                                        class="text-red-500">*</span></label>
+                                <input type="number" id="prod-cantidad" min="1" value="1"
+                                    class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500/50">
+                            </div>
+                            <div class="md:col-span-2">
+                                <button type="button" id="btn-agregar-manual"
+                                    class="w-full px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium rounded-lg transition-colors shadow-sm whitespace-nowrap">
+                                    + Agregar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<script>
+    (function () {
+        let productos = [];
+
+        {% if detalles %}
+        {% for det in detalles %}
+        productos.push({
+            tempId: {{ loop.index }},
+        producto: { { (det.producto or '')| tojson } },
+    clave_producto: { { (det.clave_producto or '')| tojson } },
+    cantidad: { { det.cantidad |default (1) | int } }
+        });
+    {% endfor %}
+    {% endif %}
+
+    let nextId = productos.length > 0 ? Math.max(...productos.map(p => p.tempId)) + 1 : 1;
+
+    const tbody = document.getElementById('lista-productos');
+    const emptyRow = document.getElementById('empty-row');
+    const totalProductosSpan = document.getElementById('total-productos');
+
+    const nombreInp = document.getElementById('prod-nombre');
+    const claveInp = document.getElementById('prod-clave');
+    const cantidadInp = document.getElementById('prod-cantidad');
+
+    function renderizarTabla() {
+        if (productos.length === 0) {
+            if (emptyRow) emptyRow.classList.remove('hidden');
+            const rows = tbody.querySelectorAll('tr:not(#empty-row)');
+            rows.forEach(row => row.remove());
+            if (totalProductosSpan) totalProductosSpan.textContent = '0';
+            return;
+        }
+
+        if (emptyRow) emptyRow.classList.add('hidden');
+
+        const rows = tbody.querySelectorAll('tr:not(#empty-row)');
+        rows.forEach(row => row.remove());
+
+        let totalCantidad = 0;
+        const fragment = document.createDocumentFragment();
+
+        productos.forEach((prod, index) => {
+            const cantidadVal = parseInt(prod.cantidad) || 0;
+            totalCantidad += cantidadVal;
+
+            const tr = document.createElement('tr');
+            tr.className = 'hover:bg-gray-50';
+            tr.dataset.id = prod.tempId;
+
+            const tdProducto = document.createElement('td');
+            tdProducto.className = 'px-4 py-3 text-sm text-gray-900 font-medium';
+            tdProducto.textContent = prod.producto || '—';
+
+            const tdClave = document.createElement('td');
+            tdClave.className = 'px-4 py-3 text-sm text-gray-500';
+            tdClave.textContent = prod.clave_producto || '—';
+
+            const tdCantidad = document.createElement('td');
+            tdCantidad.className = 'px-4 py-3 text-sm text-gray-900 text-right';
+            tdCantidad.textContent = prod.cantidad;
+
+            const tdAccion = document.createElement('td');
+            tdAccion.className = 'px-4 py-3 text-right';
+            const btnEliminar = document.createElement('button');
+            btnEliminar.type = 'button';
+            btnEliminar.className = 'text-red-500 hover:text-red-700 text-sm eliminar-producto';
+            btnEliminar.textContent = 'Eliminar';
+            btnEliminar.dataset.id = prod.tempId;
+            tdAccion.appendChild(btnEliminar);
+
+            tr.appendChild(tdProducto);
+            tr.appendChild(tdClave);
+            tr.appendChild(tdCantidad);
+            tr.appendChild(tdAccion);
+
+            const inputProducto = document.createElement('input');
+            inputProducto.type = 'hidden';
+            inputProducto.name = `detalles[${index}][producto]`;
+            inputProducto.value = prod.producto || '';
+            tr.appendChild(inputProducto);
+
+            const inputClave = document.createElement('input');
+            inputClave.type = 'hidden';
+            inputClave.name = `detalles[${index}][clave_producto]`;
+            inputClave.value = prod.clave_producto || '';
+            tr.appendChild(inputClave);
+
+            const inputCantidad = document.createElement('input');
+            inputCantidad.type = 'hidden';
+            inputCantidad.name = `detalles[${index}][cantidad]`;
+            inputCantidad.value = prod.cantidad;
+            tr.appendChild(inputCantidad);
+
+            fragment.appendChild(tr);
+        });
+
+        tbody.appendChild(fragment);
+        if (totalProductosSpan) totalProductosSpan.textContent = totalCantidad;
+
+        document.querySelectorAll('.eliminar-producto').forEach(btn => {
+            btn.removeEventListener('click', handleEliminar);
+            btn.addEventListener('click', handleEliminar);
+        });
+    }
+
+    function handleEliminar(e) {
+        const id = parseInt(e.currentTarget.dataset.id);
+        productos = productos.filter(p => p.tempId !== id);
+        renderizarTabla();
+    }
+
+    function agregarProductoManual() {
+        const nombre = nombreInp.value.trim();
+        if (!nombre) {
+            alert('El nombre del producto es obligatorio');
+            return;
+        }
+
+        let cantidad = parseInt(cantidadInp.value);
+        if (isNaN(cantidad) || cantidad < 1) {
+            alert('La cantidad debe ser mayor a 0');
+            return;
+        }
+
+        const nuevoProducto = {
+            tempId: nextId++,
+            producto: nombre,
+            clave_producto: claveInp.value.trim() || '',
+            cantidad: cantidad
+        };
+
+        productos.push(nuevoProducto);
+        renderizarTabla();
+        limpiarFormularioManual();
+    }
+
+    function limpiarFormularioManual() {
+        nombreInp.value = '';
+        claveInp.value = '';
+        cantidadInp.value = '1';
+    }
+
+    const btnAgregar = document.getElementById('btn-agregar-manual');
+    if (btnAgregar) {
+        btnAgregar.addEventListener('click', agregarProductoManual);
+    }
+
+    const inputs = [nombreInp, claveInp, cantidadInp];
+    inputs.forEach(input => {
+        if (input) {
+            input.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    agregarProductoManual();
+                }
+            });
+        }
+    });
+
+    const form = document.querySelector('form');
+    if (form) {
+        form.addEventListener('submit', (e) => {
+            if (productos.length === 0) {
+                e.preventDefault();
+                alert('Debe agregar al menos un producto a la orden');
+            }
+        });
+    }
+
+    renderizarTabla();
+    }) ();
+</script>
+{% endblock %}

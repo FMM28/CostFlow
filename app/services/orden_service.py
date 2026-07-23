@@ -533,8 +533,6 @@ class OrdenService:
             (órdenes, total_páginas, error)
         """
         try:
-            from datetime import datetime
-
             # Asegurar valores válidos
             page = max(1, page)
             per_page = max(1, per_page)
@@ -668,6 +666,165 @@ class OrdenService:
 
         except SQLAlchemyError as exc:
             logger.exception(f"Error en búsqueda de órdenes: {exc}")
+
+            return (
+                [],
+                0,
+                "Error de base de datos al buscar órdenes",
+            )
+
+    @staticmethod
+    def search_orders_by_user(
+        id_usuario: int,
+        search: Optional[str] = None,
+        estado: Optional[str] = None,
+        fecha_inicio: Optional[str] = None,
+        fecha_fin: Optional[str] = None,
+        page: int = 1,
+        per_page: int = 12,
+    ) -> Tuple[List[Orden], int, Optional[str]]:
+        """
+        Busca órdenes de un usuario específico (no administrador), con filtros y paginación.
+
+        Args:
+            id_usuario: ID del usuario cuyas órdenes se van a consultar (obligatorio).
+
+        Returns:
+            Tuple[List[Orden], int, Optional[str]]
+            (órdenes, total_páginas, error)
+        """
+        try:
+            if not id_usuario:
+                return [], 0, "id_usuario es requerido"
+
+            # Asegurar valores válidos
+            page = max(1, page)
+            per_page = max(1, per_page)
+
+            query = Orden.query.options(joinedload(Orden.usuario))
+
+            # Filtro estricto por usuario propietario de la orden
+            query = query.filter(Orden.id_usuario == id_usuario)
+
+            # Estado
+            if estado:
+                if estado not in ESTADOS_VALIDOS:
+                    return [], 0, f"Estado '{estado}' no válido"
+
+                query = query.filter(Orden.estado == estado)
+
+            # Fechas
+            try:
+                if fecha_inicio:
+                    inicio_dt = datetime.strptime(
+                        fecha_inicio,
+                        "%Y-%m-%d",
+                    )
+
+                    query = query.filter(Orden.fecha_creacion >= inicio_dt)
+
+                if fecha_fin:
+                    fin_dt = datetime.strptime(
+                        fecha_fin,
+                        "%Y-%m-%d",
+                    ).replace(
+                        hour=23,
+                        minute=59,
+                        second=59,
+                        microsecond=999999,
+                    )
+
+                    query = query.filter(Orden.fecha_creacion <= fin_dt)
+
+            except ValueError:
+                return [], 0, "Formato de fecha inválido (YYYY-MM-DD)"
+
+            # Búsqueda
+            if search and search.strip():
+                query = query.outerjoin(Orden.detalles)
+
+                bloques = [
+                    bloque.strip() for bloque in search.split("+") if bloque.strip()
+                ]
+
+                condiciones = []
+
+                for bloque in bloques:
+                    prefijo = None
+                    valor = bloque
+
+                    if ":" in bloque:
+                        prefijo, valor = bloque.split(":", 1)
+
+                        prefijo = prefijo.lower().strip()
+                        valor = valor.strip()
+
+                    termino = f"%{valor}%"
+
+                    # búsqueda especializada (sin prefijo 'vend', no aplica para no-admins)
+                    if prefijo == "sku":
+                        condicion = OrdenDetalle.clave_producto.ilike(termino)
+
+                    elif prefijo == "prod":
+                        condicion = OrdenDetalle.producto.ilike(termino)
+
+                    elif prefijo == "comp":
+                        condicion = Orden.comprador.ilike(termino)
+
+                    elif prefijo == "ord":
+                        condicion = Orden.clave_orden.ilike(termino)
+
+                    else:
+                        condicion = db.or_(
+                            Orden.clave_orden.ilike(termino),
+                            Orden.comprador.ilike(termino),
+                            OrdenDetalle.producto.ilike(termino),
+                            OrdenDetalle.clave_producto.ilike(termino),
+                        )
+
+                    condiciones.append(condicion)
+
+                query = query.filter(db.and_(*condiciones)).distinct()
+
+            # Orden estable
+            query = query.order_by(
+                Orden.fecha_creacion.desc(),
+                Orden.id_orden.desc(),
+            )
+
+            # Paginación
+            paginated = query.paginate(
+                page=page,
+                per_page=per_page,
+                error_out=False,
+            )
+
+            if paginated.total == 0:
+                total_pages = 1
+                actual_page = 1
+                items = paginated.items
+            else:
+                total_pages = paginated.pages
+                actual_page = page
+
+                if page > total_pages:
+                    actual_page = total_pages
+                    paginated = query.paginate(
+                        page=actual_page,
+                        per_page=per_page,
+                        error_out=False,
+                    )
+
+                items = paginated.items
+
+            return (
+                items,
+                total_pages,
+                None,
+            )
+
+        except SQLAlchemyError as exc:
+            logger.exception(f"Error en búsqueda de órdenes por usuario: {exc}")
 
             return (
                 [],

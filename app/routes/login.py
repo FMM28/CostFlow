@@ -18,7 +18,7 @@ def login():
             if user.role == "admin":
                 return redirect(url_for("admin.dashboard.dashboard"))
             else:
-                return redirect(url_for("ventas.dashboard"))
+                return redirect(url_for("ventas.ordenes.index"))
 
         flash("Usuario o contraseña incorrectos", "danger")
 

@@ -1,0 +1,645 @@
+{% extends 'ventas/base.html' %}
+
+{% block title %}Detalle del producto{% endblock %}
+
+{% block content %}
+<div class="h-full w-full max-w-[2200px] mx-auto px-4 sm:px-6 lg:px-10 py-6 flex flex-col lg:flex-row gap-6 min-h-0">
+
+    <!-- SIDEBAR -->
+    <div class="hidden lg:flex lg:flex-col lg:w-[380px] xl:w-[420px] flex-shrink-0 space-y-6 overflow-y-auto pr-1">
+
+        <div id="sticky-title-container">
+            <h2 class="text-xl font-bold text-gray-900 leading-tight line-clamp-5">{{ detalle.producto or
+                'detalle.producto' }}</h2>
+        </div>
+
+        <!-- IMAGEN -->
+        <div
+            class="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden w-56 sm:w-64 aspect-square mx-auto">
+            {% set url_img = detalle.url_imagen if detalle.url_imagen and detalle.url_imagen|string|lower not in
+            ('none', 'null', 'undefined') else '' %}
+
+            <img src="{{ url_img }}" alt="{{ detalle.producto or '' }}" class="w-full h-full object-cover" {% if not
+                url_img %}style="display:none;" {% endif %}
+                onerror="this.style.display='none'; if(this.nextElementSibling) this.nextElementSibling.style.display='flex';">
+
+            <div class="w-full h-full flex items-center justify-center bg-gray-100 text-gray-400"
+                style="{% if url_img %}display:none;{% else %}display:flex;{% endif %}">
+                <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                        d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14" />
+                </svg>
+            </div>
+        </div>
+
+        <!-- RESUMEN -->
+        <div class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
+            <h2 class="text-lg font-semibold text-gray-900 mb-5">Resumen</h2>
+            <div class="space-y-4">
+
+                <div class="flex items-center justify-between">
+                    <span class="text-sm text-gray-500">Cantidad</span>
+                    <span class="font-semibold text-gray-900">{{ detalle.cantidad or 0 }}</span>
+                </div>
+
+                <div class="flex items-center justify-between">
+                    <span class="text-sm text-gray-500">Costo unitario</span>
+                    <span class="font-semibold text-gray-900">
+                        ${{ "%.2f"|format((detalle.precio_unitario or 0) + (detalle.costo_envio or 0)) }}
+                    </span>
+                </div>
+
+                <div class="flex items-center justify-between">
+                    <span class="text-sm text-gray-500">Venta unitaria</span>
+                    <span class="font-semibold text-emerald-700">
+                        ${{ "%.2f"|format(detalle.precio_venta or 0) }}
+                    </span>
+                </div>
+
+                <div class="pt-4 border-t border-gray-200">
+                    <div class="text-sm text-gray-500 mb-1">Subtotal</div>
+                    <div class="text-3xl font-bold text-gray-900">
+                        ${{ "%.2f"|format(detalle.subtotal or 0) }}
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- ACCIONES -->
+        <div class="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm flex flex-col gap-3">
+            <button type="submit" form="form-detalle"
+                class="inline-flex items-center justify-center gap-2 w-full px-5 py-2.5 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition font-medium shadow-sm">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
+                Guardar cambios
+            </button>
+            <a href="{{ url_for('ventas.ordenes.detail', id_orden=detalle.orden.id_orden) }}"
+                class="inline-flex items-center justify-center w-full px-4 py-2.5 border border-gray-300 rounded-xl hover:bg-gray-50 transition text-sm text-gray-700 font-medium">
+                Cancelar
+            </a>
+        </div>
+
+    </div>
+
+    <!-- CONTENIDO -->
+    <div class="flex-1 min-w-0 min-h-0 overflow-y-auto pr-1 space-y-6 pb-6">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        <div class="space-y-3">
+            {% for category, message in messages %}
+            <div class="px-4 py-3 rounded-xl border text-sm font-medium
+                    {% if category == 'success' %} bg-emerald-50 border-emerald-200 text-emerald-800
+                    {% elif category == 'error' %} bg-red-50 border-red-200 text-red-800
+                    {% elif category == 'warning' %} bg-amber-50 border-amber-200 text-amber-800
+                    {% else %} bg-blue-50 border-blue-200 text-blue-800 {% endif %}">
+                {{ message }}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        {% endwith %}
+
+        <form id="form-detalle" method="POST"
+            action="{{ url_for('ventas.ordenes.detail_update', id_detalle=detalle.id_detalle) }}" class="space-y-6">
+
+            <!-- INFORMACIÓN DEL PRODUCTO -->
+            <div class="bg-white border border-gray-200 rounded-2xl shadow-sm">
+                <div class="px-6 py-5 border-b border-gray-200">
+                    <h2 class="text-lg font-semibold text-gray-900">Información del producto</h2>
+                </div>
+                <div class="p-6 grid grid-cols-1 sm:grid-cols-2 gap-5">
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            Nombre del producto
+                        </label>
+                        <input type="text" id="input-producto" name="producto" value="{{ detalle.producto or '' }}"
+                            required class="w-full px-4 py-2 border border-gray-300 rounded-xl">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            SKU
+                            <span class="text-gray-400 font-normal ml-1">(clave del producto)</span>
+                        </label>
+                        <input type="text" id="input-sku" name="clave_producto"
+                            value="{{ detalle.clave_producto or '' }}"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-xl">
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- PROVEEDOR -->
+            <div class="bg-white border border-gray-200 rounded-2xl shadow-sm">
+                <div class="px-6 py-5 border-b border-gray-200">
+                    <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+
+                        <div>
+                            <h2 class="text-lg font-semibold text-gray-900">Proveedor</h2>
+                            <p class="text-sm text-gray-500 mt-1">
+                                Disponibilidad y costos de compra
+                            </p>
+                        </div>
+
+                        <div class="flex flex-wrap items-center gap-3">
+
+                            <button type="button" id="btn-open-manual-provider"
+                                class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-700 transition">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M12 4v16m8-8H4" />
+                                </svg>
+                                Agregar proveedor
+                            </button>
+
+                            <!-- Botón modificado para manejar la lógica de validación y carga -->
+                            <button type="button" id="btn-ver-comparacion"
+                                data-url="{{ url_for('ventas.ordenes.detail_proveedores', id_detalle=detalle.id_detalle) }}"
+                                class="inline-flex items-center gap-2 text-sm font-medium text-emerald-700 hover:text-emerald-800 transition disabled:opacity-60 disabled:cursor-not-allowed">
+                                <span id="btn-comparacion-text">Ver comparación</span>
+
+                                <!-- Icono normal -->
+                                <svg id="btn-comparacion-icon" class="w-4 h-4" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M9 5l7 7-7 7" />
+                                </svg>
+
+                                <!-- Spinner de carga (oculto por defecto) -->
+                                <svg id="btn-comparacion-spinner" class="hidden animate-spin w-4 h-4 text-emerald-700"
+                                    xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                                        stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor"
+                                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                                    </path>
+                                </svg>
+                            </button>
+
+                        </div>
+
+                    </div>
+                </div>
+                <div class="p-6">
+                    {% if detalle.proveedor %}
+                    <div class="p-5 rounded-2xl border border-emerald-200 bg-emerald-50">
+                        <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-5">
+                            <div>
+                                <div class="text-lg font-semibold text-emerald-900">{{ detalle.proveedor.nombre or
+                                    '' }}
+                                </div>
+                                <div class="mt-1 text-sm text-emerald-700">Proveedor seleccionado actualmente</div>
+                            </div>
+                            <div class="grid grid-cols-2 gap-6">
+                                <div>
+                                    <div class="text-xs uppercase tracking-wide text-emerald-600">Precio unitario
+                                    </div>
+                                    <div class="mt-1 text-xl font-bold text-emerald-900">${{
+                                        "%.2f"|format(detalle.precio_unitario or 0) }}</div>
+                                </div>
+                                <div>
+                                    <div class="text-xs uppercase tracking-wide text-emerald-600">Envío x/pieza
+                                    </div>
+                                    <div class="mt-1 text-xl font-bold text-emerald-900">${{
+                                        "%.2f"|format(detalle.costo_envio or 0) }}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="p-5 rounded-2xl border border-dashed border-gray-300 bg-gray-50 text-gray-500">
+                        No hay proveedor seleccionado para este producto.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- COSTOS Y MÁRGENES -->
+            <div class="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
+                <div class="px-6 py-5 border-b border-gray-200">
+                    <h2 class="text-lg font-semibold text-gray-900">Costos y márgenes</h2>
+                    <p class="text-sm text-gray-500 mt-1">Ajusta los valores para calcular el precio de venta y la
+                        ganancia estimada</p>
+                </div>
+
+                <div class="p-6 space-y-8">
+                    <!-- TARJETAS DE RESUMEN -->
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                        <div class="p-4 rounded-2xl bg-gray-50 border border-gray-200">
+                            <div class="flex items-center gap-1.5 mb-2">
+                                <svg class="w-4 h-4 text-gray-400 shrink-0" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M20 7H4a2 2 0 00-2 2v6a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M16 13a1 1 0 100-2 1 1 0 000 2z" />
+                                </svg>
+                                <div class="text-xs uppercase tracking-wide text-gray-500 font-medium">Costo total
+                                </div>
+                            </div>
+                            <div class="text-2xl font-bold text-gray-900" id="costo-total">$0.00</div>
+                            <div class="text-xs text-gray-400 mt-1">Precio + envío por pieza</div>
+                        </div>
+
+                        <div class="p-4 rounded-2xl bg-emerald-50 border border-emerald-200">
+                            <div class="flex items-center gap-1.5 mb-2">
+                                <svg class="w-4 h-4 text-emerald-500 shrink-0" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                                </svg>
+                                <div class="text-xs uppercase tracking-wide text-emerald-600 font-medium">Ganancia
+                                </div>
+                            </div>
+                            <div class="text-2xl font-bold text-emerald-800" id="ganancia-total">$0.00</div>
+                            <div class="text-xs text-emerald-500 mt-1">Por unidad vendida</div>
+                        </div>
+
+                        <div class="p-4 rounded-2xl bg-blue-50 border border-blue-200">
+                            <div class="flex items-center gap-1.5 mb-2">
+                                <svg class="w-4 h-4 text-blue-500 shrink-0" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M7 7h.01M7 3h5l5.5 5.5a7 7 0 11-9.9 9.9L3 13V8l4-5z" />
+                                </svg>
+                                <div class="text-xs uppercase tracking-wide text-blue-600 font-medium">Precio de
+                                    venta</div>
+                            </div>
+                            <div class="text-2xl font-bold text-blue-800" id="precio-final">$0.00</div>
+                            <div class="text-xs text-blue-400 mt-1">Lo que paga el cliente</div>
+                        </div>
+
+                        <div class="p-4 rounded-2xl bg-purple-50 border border-purple-200">
+                            <div class="flex items-center gap-1.5 mb-2">
+                                <svg class="w-4 h-4 text-purple-500 shrink-0" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                                </svg>
+                                <div class="text-xs uppercase tracking-wide text-purple-600 font-medium">Subtotal
+                                </div>
+                            </div>
+                            <div class="text-2xl font-bold text-purple-800" id="subtotal-final">$0.00</div>
+                            <div class="text-xs text-purple-400 mt-1">Venta × cantidad</div>
+                        </div>
+                    </div>
+
+                    <!-- CAMPOS DE ENTRADA -->
+                    <div class="grid grid-cols-1 xl:grid-cols-2 gap-8">
+                        <!-- COSTOS DE COMPRA -->
+                        <div class="space-y-5">
+                            <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">¿Cuánto te
+                                cuesta comprarlo?</h3>
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Cantidad de
+                                        piezas</label>
+                                    <p class="text-xs text-gray-400 mb-2">¿Cuántas unidades incluye esta orden?</p>
+                                    <input type="number" id="cantidad" name="cantidad" min="1"
+                                        value="{{ detalle.cantidad or 0 }}"
+                                        class="w-full px-4 py-2 border border-gray-300 rounded-xl bg-white">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Precio de compra por
+                                        pieza</label>
+                                    <p class="text-xs text-gray-400 mb-2">Lo que cobra el proveedor por cada unidad
+                                    </p>
+                                    <div class="relative">
+                                        <span
+                                            class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-medium">$</span>
+                                        <input type="number" step="0.01" id="precio_unitario" name="precio_unitario"
+                                            value="{{ detalle.precio_unitario or 0 }}"
+                                            class="w-full pl-7 pr-4 py-2 border border-gray-300 rounded-xl bg-white">
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Costo de envío por
+                                        pieza</label>
+                                    <p class="text-xs text-gray-400 mb-2">Envío dividido entre el número de piezas
+                                    </p>
+                                    <div class="relative">
+                                        <span
+                                            class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-medium">$</span>
+                                        <input type="number" step="0.01" id="costo_envio" name="costo_envio"
+                                            value="{{ detalle.costo_envio or 0 }}"
+                                            class="w-full pl-7 pr-4 py-2 border border-gray-300 rounded-xl bg-white">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- GANANCIA Y PRECIO DE VENTA -->
+                        <div class="space-y-5">
+                            <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">¿Cuánto quieres
+                                ganar?</h3>
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Margen de
+                                        ganancia</label>
+                                    <p class="text-xs text-gray-400 mb-3">Porcentaje sobre el precio de venta</p>
+                                    <div class="flex items-center gap-3 mb-3">
+                                        <input type="range" min="0" max="99" step="1" id="ganancia_slider"
+                                            class="flex-1 accent-gray-600">
+                                        <div class="flex items-center gap-1">
+                                            <input type="number" step="0.1" min="0" max="99" id="ganancia_porcentaje"
+                                                name="margen_ganancia" value="{{ detalle.margen_ganancia or 0 }}"
+                                                class="w-20 px-2 py-1.5 border border-gray-300 rounded-lg text-right text-sm bg-white">
+                                            <span class="text-sm text-gray-500 font-medium">%</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Ganancia en pesos
+                                        por pieza</label>
+                                    <div id="ganancia-unitaria-visual"
+                                        class="w-full px-4 py-2.5 rounded-xl bg-gray-50 border border-gray-200 text-emerald-800 font-bold text-lg">
+                                        $0.00</div>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Precio de venta al
+                                        cliente</label>
+                                    <div id="precio-venta-visual"
+                                        class="w-full px-4 py-2.5 rounded-xl bg-gray-50 border border-gray-200 text-gray-900 font-bold text-lg">
+                                        $0.00</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- INFORMACIÓN ADICIONAL Y NOTAS INTERNAS -->
+            <div class="bg-white border border-gray-200 rounded-2xl shadow-sm">
+                <div class="px-6 py-5 border-b border-gray-200">
+                    <h2 class="text-lg font-semibold text-gray-900">Información adicional</h2>
+                    <p class="text-sm text-gray-500 mt-1">Datos extra del producto y notas privadas del equipo</p>
+                </div>
+                <div class="p-6 grid grid-cols-1 sm:grid-cols-2 gap-5">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            Información adicional
+                        </label>
+                        <p class="text-xs text-gray-400 mb-2">
+                            Detalles complementarios del producto (descripciones, características, etc.)
+                        </p>
+                        <textarea name="informacion_adicional" rows="4"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-xl resize-y">{{ detalle.informacion_adicional or '' }}</textarea>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            Notas internas
+                        </label>
+                        <p class="text-xs text-gray-400 mb-2">
+                            Observaciones privadas (no visibles para el cliente)
+                        </p>
+                        <textarea name="notas_internas" rows="4"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-xl resize-y bg-amber-50/40">{{ detalle.notas_internas or '' }}</textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- URLs -->
+            <div class="bg-white border border-gray-200 rounded-2xl shadow-sm">
+                <div class="px-6 py-5 border-b border-gray-200">
+                    <h2 class="text-lg font-semibold text-gray-900">URLs</h2>
+                </div>
+                <div class="p-6 grid grid-cols-1 sm:grid-cols-2 gap-5">
+                    {% set url_prod = detalle.url_producto if detalle.url_producto and
+                    detalle.url_producto|string|lower not in ('none', 'null', 'undefined') else '' %}
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            URL del producto
+                        </label>
+
+                        <div class="flex gap-2">
+                            <input type="url" id="url_producto" name="url_producto" value="{{ url_prod }}"
+                                class="flex-1 min-w-0 px-4 py-2 border border-gray-300 rounded-xl">
+
+                            <button type="button" id="btn-copy-url"
+                                class="inline-flex items-center justify-center px-3 border border-gray-300 rounded-xl hover:bg-gray-50 transition"
+                                title="Copiar URL">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2M10 18h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                </svg>
+                            </button>
+
+                            <a id="btn-open-url" href="{{ url_prod or '#' }}" target="_blank" rel="noopener noreferrer"
+                                class="inline-flex items-center justify-center px-3 border border-gray-300 rounded-xl hover:bg-gray-50 transition 
+                                    {% if not url_prod %}pointer-events-none opacity-50{% endif %}">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M14 3h7m0 0v7m0-7L10 14" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M5 5h5M5 5v14h14v-5" />
+                                </svg>
+                            </a>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">URL de imagen</label>
+                        <input type="url" name="url_imagen" value="{{ url_img }}"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-xl">
+                    </div>
+                </div>
+            </div>
+
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        </form>
+    </div>
+</div>
+
+<!-- MODAL PROVEEDOR MANUAL -->
+<div id="manual-provider-modal" class="fixed inset-0 z-50 hidden">
+    <div class="absolute inset-0 bg-black/50"></div>
+    <div class="relative h-full flex items-center justify-center p-4">
+        <div class="w-full max-w-2xl bg-white rounded-2xl shadow-2xl">
+            <div class="flex items-center justify-between p-6 border-b border-gray-200">
+                <h2 class="text-xl font-semibold text-gray-900">Agregar proveedor manualmente</h2>
+                <button type="button" id="btn-close-manual-provider"
+                    class="text-gray-400 hover:text-gray-600">✕</button>
+            </div>
+            <form method="POST"
+                action="{{ url_for('ventas.ordenes.detail_assign_proveedor_manual', id_detalle=detalle.id_detalle) }}"
+                class="p-6 space-y-5">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Proveedor</label>
+                    <input type="text" name="proveedor" required
+                        class="w-full h-11 px-4 rounded-xl border border-gray-200">
+                </div>
+                <div class="flex justify-end gap-3 pt-2">
+                    <button type="button" id="btn-cancel-manual-provider"
+                        class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">Cancelar</button>
+                    <button type="submit"
+                        class="px-5 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700">Guardar
+                        proveedor</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    (() => {
+        // --- 1. LÓGICA DE CÁLCULOS ---
+        const cantidad = document.getElementById('cantidad');
+        const precioUnitario = document.getElementById('precio_unitario');
+        const costoEnvio = document.getElementById('costo_envio');
+        const gananciaPct = document.getElementById('ganancia_porcentaje');
+        const slider = document.getElementById('ganancia_slider');
+
+        const precioVentaVis = document.getElementById('precio-venta-visual');
+        const gananciaVis = document.getElementById('ganancia-unitaria-visual');
+        const costoTotalUI = document.getElementById('costo-total');
+        const gananciaUI = document.getElementById('ganancia-total');
+        const precioFinalUI = document.getElementById('precio-final');
+        const subtotalUI = document.getElementById('subtotal-final');
+
+        const currency = v => `$${Number(v || 0).toFixed(2)}`;
+
+        function actualizarResumen() {
+            const qty = Number(cantidad.value || 0);
+            const precio = Number(precioUnitario.value || 0);
+            const envio = Number(costoEnvio.value || 0);
+            const margen = Math.min(Math.max(Number(gananciaPct.value || 0), 0), 99);
+            const divisor = 1 - (margen / 100);
+            const ventaProducto = divisor > 0 ? precio / divisor : 0;
+            const venta = ventaProducto + envio;
+            const ganancia = ventaProducto - precio;
+            const subtotal = venta * qty;
+
+            precioVentaVis.textContent = currency(venta);
+            gananciaVis.textContent = currency(ganancia);
+            costoTotalUI.textContent = currency(precio + envio);
+            gananciaUI.textContent = currency(ganancia);
+            precioFinalUI.textContent = currency(venta);
+            subtotalUI.textContent = currency(subtotal);
+        }
+
+        slider.addEventListener('input', () => {
+            gananciaPct.value = slider.value;
+            actualizarResumen();
+        });
+
+        gananciaPct.addEventListener('input', () => {
+            slider.value = gananciaPct.value;
+            actualizarResumen();
+        });
+
+        [cantidad, precioUnitario, costoEnvio].forEach(el => {
+            el.addEventListener('input', actualizarResumen);
+        });
+
+        slider.value = gananciaPct.value;
+        actualizarResumen();
+
+        // --- 2. LÓGICA DEL MODAL ---
+        const modal = document.getElementById('manual-provider-modal');
+        const openBtn = document.getElementById('btn-open-manual-provider');
+        const closeBtn = document.getElementById('btn-close-manual-provider');
+        const cancelBtn = document.getElementById('btn-cancel-manual-provider');
+
+        if (openBtn) {
+            openBtn.addEventListener('click', () => {
+                modal.classList.remove('hidden');
+                document.body.classList.add('overflow-hidden');
+            });
+        }
+
+        [closeBtn, cancelBtn].forEach(btn => {
+            if (btn) {
+                btn.addEventListener('click', () => {
+                    modal.classList.add('hidden');
+                    document.body.classList.remove('overflow-hidden');
+                });
+            }
+        });
+
+        modal?.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                modal.classList.add('hidden');
+                document.body.classList.remove('overflow-hidden');
+            }
+        });
+
+
+        // --- 3. LÓGICA DEL BOTÓN "VER COMPARACIÓN" ---
+        const inputProducto = document.getElementById('input-producto');
+        const inputSku = document.getElementById('input-sku');
+        const btnComparacion = document.getElementById('btn-ver-comparacion');
+
+        if (inputProducto && inputSku && btnComparacion) {
+            // Guardamos los valores originales al cargar la página
+            const initialProducto = inputProducto.value;
+            const initialSku = inputSku.value;
+
+            btnComparacion.addEventListener('click', (e) => {
+                e.preventDefault();
+
+                const currentProducto = inputProducto.value.trim();
+                const currentSku = inputSku.value.trim();
+
+                // Verificamos si hay cambios sin guardar
+                const hasChanges = (currentProducto !== initialProducto) || (currentSku !== initialSku);
+
+                if (hasChanges) {
+                    const confirmacion = confirm("Has modificado el Nombre del producto o el SKU sin guardar los cambios. Esto puede afectar los resultados de la búsqueda. ¿Deseas continuar de todos modos?");
+                    if (!confirmacion) {
+                        return;
+                    }
+                }
+
+                // Mostrar estado de carga
+                const textSpan = document.getElementById('btn-comparacion-text');
+                const iconSvg = document.getElementById('btn-comparacion-icon');
+                const spinnerSvg = document.getElementById('btn-comparacion-spinner');
+
+                textSpan.textContent = "Consultando proveedores, esto puede tardar unos segundos...";
+                iconSvg.classList.add('hidden');
+                spinnerSvg.classList.remove('hidden');
+
+                btnComparacion.disabled = true;
+                btnComparacion.classList.add('opacity-60', 'cursor-not-allowed');
+
+                setTimeout(() => {
+                    window.location.href = btnComparacion.dataset.url;
+                }, 800);
+            });
+        }
+        // --- 4. COPIAR Y ABRIR URL ---
+        const urlInput = document.getElementById('url_producto');
+        const btnCopyUrl = document.getElementById('btn-copy-url');
+
+        if (urlInput && btnCopyUrl) {
+            btnCopyUrl.addEventListener('click', (e) => {
+                e.preventDefault();
+
+                const texto = urlInput.value.trim();
+                if (!texto) return;
+
+                urlInput.select();
+                urlInput.setSelectionRange(0, 99999);
+
+                try {
+                    navigator.clipboard.writeText(texto);
+                } catch {
+                    document.execCommand('copy');
+                }
+
+                const original = btnCopyUrl.innerHTML;
+                btnCopyUrl.innerHTML = 'Copiado';
+
+                setTimeout(() => {
+                    btnCopyUrl.innerHTML = original;
+                }, 1200);
+            });
+        }
+    })();
+</script>
+{% endblock %}

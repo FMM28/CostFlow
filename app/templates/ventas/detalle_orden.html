@@ -1,0 +1,1067 @@
+{% extends 'ventas/base.html' %}
+
+{% block title %}Orden {{ orden.clave_orden or ('ID ' ~ orden.id_orden) }}{% endblock %}
+
+{% block content %}
+<div class="max-w-[1700px] mx-auto px-4 lg:px-6 py-8 space-y-6">
+
+    <!-- Header -->
+    <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+        <div class="flex items-center gap-4">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900">
+                    Orden {{ orden.clave_orden or ('ID ' ~ orden.id_orden) }}
+                </h1>
+                <p class="text-sm text-gray-500 mt-1">
+                    Creada el {{ orden.fecha_creacion.strftime('%d/%m/%Y') if orden.fecha_creacion else '—' }}
+                </p>
+            </div>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-3">
+            <!-- Volver -->
+            <a href="{{ url_for('ventas.ordenes.index') }}"
+                class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-xl hover:bg-gray-100 transition">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                </svg>
+                Volver
+            </a>
+
+            <!-- Configurar PDF -->
+            <button type="button" id="btn-config-pdf"
+                class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-xl hover:bg-gray-100 transition">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                Configurar PDF
+            </button>
+
+            <!-- Configuración UNAM -->
+            <button type="button" id="btn-config-unam" disabled
+                class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-400 bg-gray-100 border border-gray-200 rounded-xl cursor-not-allowed transition"
+                title="Disponible solo para tipo de cotización UNAM">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                </svg>
+                Configuración UNAM
+            </button>
+
+            <!-- Agrupaciones -->
+            <a href="{{ url_for('ventas.ordenes.agrupaciones', id_orden=orden.id_orden) }}"
+                class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-xl hover:bg-blue-700 transition shadow-sm">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                </svg>
+                Agrupaciones
+            </a>
+
+            <!-- Exportar PDF -->
+            <a href="{{ url_for('ventas.ordenes.preview_pdf', id_orden=orden.id_orden) }}"
+                class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-violet-600 rounded-xl hover:bg-violet-700 transition shadow-sm">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+                Exportar PDF
+            </a>
+
+            <!-- Eliminar -->
+            <form method="POST" action="{{ url_for('ventas.ordenes.delete', id_orden=orden.id_orden) }}"
+                onsubmit="return confirm('¿Eliminar esta orden?')">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit"
+                    class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-xl hover:bg-red-700 transition group">
+                    <img src="/static/icons/trash.svg" class="w-4 h-4 group-hover:hidden">
+                    <img src="/static/icons/trash_open.svg" class="w-4 h-4 hidden group-hover:block">
+                    Eliminar orden
+                </button>
+            </form>
+        </div>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <div class="space-y-3">
+        {% for category, message in messages %}
+        <div class="px-4 py-3 rounded-xl border text-sm font-medium
+            {% if category == 'success' %}
+                bg-emerald-50 border-emerald-200 text-emerald-800
+            {% elif category == 'error' %}
+                bg-red-50 border-red-200 text-red-800
+            {% elif category == 'warning' %}
+                bg-amber-50 border-amber-200 text-amber-800
+            {% else %}
+                bg-slate-50 border-slate-200 text-slate-800
+            {% endif %}">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    {% endwith %}
+
+    <!-- Layout principal -->
+    <div class="grid grid-cols-1 xl:grid-cols-12 gap-6">
+
+        <!-- Sidebar -->
+        <div class="xl:col-span-3 space-y-6">
+            <!-- Información -->
+            <div class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
+                <h2 class="text-lg font-semibold text-gray-900 mb-5 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    Información
+                </h2>
+
+                <form method="POST" action="{{ url_for('ventas.ordenes.update', id_orden=orden.id_orden) }}"
+                    class="space-y-4" id="form-orden">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                    <div class="space-y-1">
+                        <label class="block text-sm font-medium text-gray-700">
+                            Clave
+                        </label>
+                        <input type="text" name="clave_orden" value="{{ orden.clave_orden if orden.clave_orden }}"
+                            placeholder="No asignada" class="w-full h-11 px-4 rounded-xl border border-gray-200 bg-white text-gray-700
+                       focus:outline-none focus:ring-2 focus:ring-emerald-500/50
+                       focus:border-emerald-500 transition">
+                    </div>
+
+                    <div class="space-y-1">
+                        <label class="block text-sm font-medium text-gray-700">
+                            Comprador
+                        </label>
+                        <input type="text" name="comprador" value="{{ orden.comprador }}" class="w-full h-11 px-4 rounded-xl border border-gray-200 bg-white text-gray-700
+                       focus:outline-none focus:ring-2 focus:ring-emerald-500/50
+                       focus:border-emerald-500 transition">
+                    </div>
+
+                    <div class="space-y-1">
+                        <label class="block text-sm font-medium text-gray-700">
+                            Fecha de creación
+                        </label>
+                        <input type="date" name="fecha_creacion"
+                            value="{{ orden.fecha_creacion.strftime('%Y-%m-%d') if orden.fecha_creacion else '' }}"
+                            class="w-full h-11 px-4 rounded-xl border border-gray-200 bg-white text-gray-700
+                       focus:outline-none focus:ring-2 focus:ring-emerald-500/50
+                       focus:border-emerald-500 transition">
+                    </div>
+
+                    <!-- Fecha de vigencia -->
+                    <div class="space-y-1">
+                        <label class="block text-sm font-medium text-gray-700">
+                            Fecha de vigencia
+                        </label>
+                        <input type="date" name="vigencia"
+                            value="{{ orden.vigencia.strftime('%Y-%m-%d') if orden.vigencia else '' }}" class="w-full h-11 px-4 rounded-xl border border-gray-200 bg-white text-gray-700
+                       focus:outline-none focus:ring-2 focus:ring-emerald-500/50
+                       focus:border-emerald-500 transition">
+                    </div>
+
+                    <div class="space-y-1">
+                        <label class="block text-sm font-medium text-gray-700">
+                            Tipo de cotización
+                        </label>
+
+                        <div class="relative">
+                            <select name="tipo_cotizacion" id="tipo_cotizacion" class="w-full h-11 px-4 pr-10 rounded-xl border border-gray-200 bg-white
+                   text-gray-700 appearance-none cursor-pointer
+                   focus:outline-none focus:ring-2 focus:ring-emerald-500/50
+                   focus:border-emerald-500 transition">
+
+                                <option value="" disabled {% if not orden.tipo_cotizacion %}selected{% endif %}>
+                                    Seleccione un tipo...
+                                </option>
+
+                                <option value="UNAM" {% if orden.tipo_cotizacion=='UNAM' %}selected{% endif %}>
+                                    UNAM
+                                </option>
+
+                                <option value="OTROS" {% if orden.tipo_cotizacion=='OTROS' %}selected{% endif %}>
+                                    OTROS
+                                </option>
+
+                                <option value="PERSONA FISICA" {% if orden.tipo_cotizacion=='PERSONA FISICA'
+                                    %}selected{% endif %}>
+                                    PERSONA FISICA
+                                </option>
+                            </select>
+
+                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
+                                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M19 9l-7 7-7-7" />
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Estado -->
+                    <div class="space-y-1">
+                        <label class="block text-sm font-medium text-gray-700">
+                            Estado
+                        </label>
+
+                        <div class="relative">
+                            <select name="estado" class="w-full h-11 px-4 pr-10 rounded-xl border border-gray-200 bg-white
+                           text-gray-700 appearance-none cursor-pointer
+                           focus:outline-none focus:ring-2 focus:ring-emerald-500/50
+                           focus:border-emerald-500 transition">
+
+                                <option value="pendiente" {% if orden.estado=='pendiente' %}selected{% endif %}>
+                                    Pendiente
+                                </option>
+
+                                <option value="aprobada" {% if orden.estado=='aprobada' %}selected{% endif %}>
+                                    Aprobada
+                                </option>
+
+                                <option value="completada" {% if orden.estado=='completada' %}selected{% endif %}>
+                                    Completada
+                                </option>
+
+                                <option value="cancelada" {% if orden.estado=='cancelada' %}selected{% endif %}>
+                                    Cancelada
+                                </option>
+                            </select>
+
+                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
+                                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M19 9l-7 7-7-7" />
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Hidden fields: términos, firma, imágenes, UNAM -->
+                    {% set info = orden.informacion_adicional or {} %}
+                    <input type="hidden" name="terminos_condiciones" id="terminos_condiciones"
+                        value="{{ orden.terminos_condiciones|e }}">
+                    <input type="hidden" name="incluir_firma" id="incluir_firma"
+                        value="{{ '1' if orden.incluir_firma else '0' }}">
+                    <input type="hidden" name="incluir_imagenes" id="incluir_imagenes"
+                        value="{{ '1' if orden.incluir_imagenes else '0' }}">
+                    <input type="hidden" name="no_solicitud" id="no_solicitud"
+                        value="{{ info.get('no_solicitud', '') }}">
+                    <input type="hidden" name="proveedor_unam" id="proveedor_unam"
+                        value="{{ info.get('proveedor_unam', '') }}">
+                    <input type="hidden" name="departamento" id="departamento"
+                        value="{{ info.get('departamento', '') }}">
+                    <input type="hidden" name="punto_entrega" id="punto_entrega"
+                        value="{{ info.get('punto_entrega', '') }}">
+
+                    <button type="submit" class="w-full px-4 py-2.5 bg-emerald-600 text-white rounded-xl
+                   hover:bg-emerald-700 transition font-medium">
+                        Guardar cambios
+                    </button>
+                </form>
+            </div>
+
+            <!-- Seguimiento -->
+            <div class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
+                <h2 class="text-lg font-semibold text-gray-900 mb-5 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    </svg>
+                    Seguimiento
+                </h2>
+
+                {% set is_active = orden.seguimiento and orden.seguimiento.activo %}
+
+                <form method="POST" action="{{ url_for('ventas.ordenes.cambiar_estado', id_orden=orden.id_orden) }}"
+                    class="mb-6">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                    <div class="flex items-center justify-between p-3 rounded-xl border border-gray-200 bg-gray-50">
+                        <label class="flex items-center gap-3 cursor-pointer w-full">
+                            <input type="checkbox" name="activo" value="1" class="sr-only peer" {% if is_active
+                                %}checked{% endif %} onchange="this.form.submit()">
+
+                            <div
+                                class="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-emerald-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600">
+                            </div>
+
+                            <div>
+                                <span class="text-sm font-semibold text-gray-800 block">Activar seguimiento</span>
+                                <span class="text-xs text-gray-500">Habilitar el monitoreo automático de esta
+                                    orden.</span>
+                            </div>
+                        </label>
+                    </div>
+                </form>
+
+                <form method="POST"
+                    action="{{ url_for('ventas.ordenes.actualizar_seguimiento', id_orden=orden.id_orden) }}"
+                    class="space-y-5 {% if not is_active %}opacity-50 pointer-events-none{% endif %}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="activo" value="1">
+
+                    <div class="space-y-4 pt-2">
+                        <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Configuración de alertas
+                        </p>
+
+                        <div class="space-y-3">
+                            <label class="flex items-start gap-3 cursor-pointer group">
+                                <input type="checkbox" name="cambio_precio" value="1"
+                                    class="mt-0.5 w-4 h-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500/50"
+                                    {% if is_active and orden.seguimiento.cambio_precio %}checked{% endif %} {% if not
+                                    is_active %}disabled{% endif %}>
+                                <span class="text-sm text-gray-700 group-hover:text-gray-900">Notificar cambio de
+                                    precio</span>
+                            </label>
+
+                            <label class="flex items-start gap-3 cursor-pointer group">
+                                <input type="checkbox" name="sin_stock" value="1"
+                                    class="mt-0.5 w-4 h-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500/50"
+                                    {% if is_active and orden.seguimiento.sin_stock %}checked{% endif %} {% if not
+                                    is_active %}disabled{% endif %}>
+                                <span class="text-sm text-gray-700 group-hover:text-gray-900">Notificar cuando esté sin
+                                    stock</span>
+                            </label>
+
+                            <label class="flex items-start gap-3 cursor-pointer group">
+                                <input type="checkbox" name="mejor_oferta" value="1"
+                                    class="mt-0.5 w-4 h-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500/50"
+                                    {% if is_active and orden.seguimiento.mejor_oferta %}checked{% endif %} {% if not
+                                    is_active %}disabled{% endif %}>
+                                <span class="text-sm text-gray-700 group-hover:text-gray-900">Notificar si hay mejor
+                                    oferta</span>
+                            </label>
+                        </div>
+
+                        <div class="space-y-3 pt-2">
+                            <div class="space-y-1">
+                                <label class="block text-sm font-medium text-gray-700">
+                                    Frecuencia de revisión (horas)
+                                </label>
+                                <input type="number" name="frecuencia_horas" min="1"
+                                    value="{{ orden.seguimiento.frecuencia_horas if is_active else 24 }}" {% if not
+                                    is_active %}disabled{% endif %} class="w-full h-11 px-4 rounded-xl border border-gray-200 bg-white text-gray-700
+                                   focus:outline-none focus:ring-2 focus:ring-emerald-500/50
+                                   focus:border-emerald-500 transition disabled:bg-gray-50 disabled:text-gray-400">
+                            </div>
+
+                            <div class="space-y-1">
+                                <label class="block text-sm font-medium text-gray-700">
+                                    Diferencia mínima ($)
+                                </label>
+                                <input type="number" name="diferencia_minima" step="0.01" min="0"
+                                    value="{{ orden.seguimiento.diferencia_minima if is_active else 0 }}" {% if not
+                                    is_active %}disabled{% endif %} placeholder="0.00" class="w-full h-11 px-4 rounded-xl border border-gray-200 bg-white text-gray-700
+       focus:outline-none focus:ring-2 focus:ring-emerald-500/50
+       focus:border-emerald-500 transition disabled:bg-gray-50 disabled:text-gray-400">
+                                <p class="text-xs text-gray-400">Monto mínimo en pesos de variación para disparar la
+                                    alerta de Mejor Oferta.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="submit" {% if not is_active %}disabled{% endif %} class="w-full px-4 py-2.5 bg-emerald-600 text-white rounded-xl
+                       hover:bg-emerald-700 transition font-medium flex items-center justify-center gap-2
+                       disabled:bg-gray-300 disabled:cursor-not-allowed disabled:hover:bg-gray-300">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                        </svg>
+                        Guardar configuración
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Contenido principal -->
+        <div class="xl:col-span-9 space-y-6">
+            <!-- Agregar producto - Solo manual -->
+            <div class="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
+                <button type="button" id="toggle-panel-btn"
+                    class="w-full px-6 py-4 flex items-center justify-between bg-gradient-to-r from-gray-50 to-white hover:from-gray-100 hover:to-gray-50 transition group">
+                    <div class="flex items-center gap-3 text-left">
+                        <div
+                            class="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center group-hover:scale-110 transition-transform">
+                            <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 4v16m8-8H4" />
+                            </svg>
+                        </div>
+                        <div>
+                            <h2 class="text-lg font-semibold text-gray-900">
+                                Agregar producto
+                            </h2>
+                            <p class="text-sm text-gray-500">
+                                Añadir productos a la orden manualmente
+                            </p>
+                        </div>
+                    </div>
+                    <!-- Flecha que rotará -->
+                    <svg class="w-5 h-5 text-gray-500 transition-transform duration-300 transform group-hover:scale-110"
+                        fill="none" stroke="currentColor" viewBox="0 0 24 24" id="toggle-icon">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                </button>
+
+                <div id="panel-agregar-producto" class="hidden border-t border-gray-200 bg-gray-50/50">
+                    <div class="p-5">
+                        <form method="POST" action="{{ url_for('ventas.ordenes.add_detail', id_orden=orden.id_orden) }}"
+                            class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                            <div class="md:col-span-2">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">
+                                    Nombre del producto <span class="text-red-500">*</span>
+                                </label>
+                                <input type="text" name="producto" required placeholder="Ej. Cable USB-C 1m"
+                                    class="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500">
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">
+                                    SKU / Clave
+                                </label>
+                                <input type="text" name="clave_producto" placeholder="Opcional"
+                                    class="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500">
+                            </div>
+
+                            <div class="flex gap-2">
+                                <div class="flex-1">
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">
+                                        Cantidad <span class="text-red-500">*</span>
+                                    </label>
+                                    <input type="number" name="cantidad" min="1" value="1" required
+                                        class="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500">
+                                </div>
+                                <button type="submit"
+                                    class="px-4 py-2.5 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 whitespace-nowrap transition shadow-sm">
+                                    + Agregar
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tabla de productos -->
+            <div class="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
+                <div class="px-6 py-5 border-b border-gray-200 bg-gray-50 flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-gray-200 flex items-center justify-center">
+                            <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                            </svg>
+                        </div>
+                        <div>
+                            <h2 class="text-xl font-semibold text-gray-900">
+                                Productos
+                            </h2>
+                            <p class="text-sm text-gray-500 mt-0.5">
+                                <span class="inline-flex items-center gap-1.5">
+                                    <span class="font-semibold text-gray-700">{{ orden.detalles|length }}</span>
+                                    {{ 'producto' if orden.detalles|length == 1 else 'productos' }}
+                                    registrado{{ 's' if orden.detalles|length != 1 else '' }}
+                                </span>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="overflow-hidden overflow-x-auto">
+                    <table class="w-full min-w-[800px] divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th
+                                    class="px-4 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                    Producto
+                                </th>
+                                <th
+                                    class="px-4 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                    SKU
+                                </th>
+                                <th
+                                    class="px-4 py-4 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                    Cantidad
+                                </th>
+                                <th
+                                    class="px-4 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                    Subtotal
+                                </th>
+                                <th
+                                    class="px-4 py-4 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                    Acciones
+                                </th>
+                            </tr>
+                        </thead>
+
+                        <tbody class="divide-y divide-gray-100 bg-white">
+                            {% for detalle in orden.detalles %}
+                            <tr class="hover:bg-gray-50/80 transition">
+                                <!-- PRODUCTO -->
+                                <td class="px-4 py-4">
+                                    <div class="flex items-center gap-3">
+                                        <!-- Imagen -->
+                                        <div class="flex-shrink-0 relative w-12 h-12">
+                                            {% if detalle.url_imagen %}
+                                            <img src="{{ detalle.url_imagen }}"
+                                                class="w-12 h-12 rounded-lg object-cover border border-gray-200 bg-white absolute inset-0"
+                                                onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                            <div
+                                                class="w-12 h-12 rounded-lg border border-gray-200 bg-gray-100 items-center justify-center hidden absolute inset-0">
+                                                <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor"
+                                                    viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        stroke-width="1.5"
+                                                        d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                                </svg>
+                                            </div>
+                                            {% else %}
+                                            <div
+                                                class="w-12 h-12 rounded-lg border border-gray-200 bg-gray-100 flex items-center justify-center">
+                                                <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor"
+                                                    viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        stroke-width="1.5"
+                                                        d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                                </svg>
+                                            </div>
+                                            {% endif %}
+                                        </div>
+
+                                        <!-- Información -->
+                                        <div>
+                                            <div class="font-semibold text-gray-900 text-sm">
+                                                {{ detalle.producto }}
+                                            </div>
+                                            {% if detalle.proveedor %}
+                                            <div class="mt-1">
+                                                <span
+                                                    class="text-xs px-2 py-0.5 bg-emerald-50 text-emerald-700 rounded-full">
+                                                    {{ detalle.proveedor.nombre }}
+                                                </span>
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </td>
+
+                                <!-- SKU -->
+                                <td class="px-4 py-4">
+                                    <span class="text-sm text-gray-500">
+                                        {{ detalle.clave_producto or '—' }}
+                                    </span>
+                                </td>
+
+                                <!-- CANTIDAD -->
+                                <td class="px-4 py-4 text-center">
+                                    <span
+                                        class="inline-flex items-center justify-center min-w-[40px] h-8 px-2 rounded-lg bg-gray-100 text-gray-800 text-sm font-semibold">
+                                        {{ detalle.cantidad }}
+                                    </span>
+                                </td>
+
+                                <!-- SUBTOTAL -->
+                                <td class="px-4 py-4 text-right">
+                                    <div class="text-sm font-bold text-gray-900">
+                                        ${{ "%.2f"|format(detalle.subtotal) }}
+                                    </div>
+                                </td>
+
+                                <!-- ACCIONES -->
+                                <td class="px-4 py-4">
+                                    <div class="flex flex-col items-center justify-center gap-2">
+                                        <a href="{{ url_for('ventas.ordenes.detail_show', id_detalle=detalle.id_detalle) }}"
+                                            class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 transition w-full justify-center">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor"
+                                                viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M15 12H9m12 0A9 9 0 113 12a9 9 0 0118 0z" />
+                                            </svg>
+                                            Detalles
+                                        </a>
+
+                                        <form method="POST"
+                                            action="{{ url_for('ventas.ordenes.detail_delete', id_detalle=detalle.id_detalle) }}"
+                                            onsubmit="return confirm('¿Eliminar este producto?')" class="w-full">
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                            <button type="submit"
+                                                class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition w-full justify-center">
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor"
+                                                    viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        stroke-width="2"
+                                                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                </svg>
+                                                Eliminar
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="5" class="px-4 py-12 text-center text-gray-500">
+                                    <div class="flex flex-col items-center gap-2">
+                                        <svg class="w-12 h-12 text-gray-300" fill="none" stroke="currentColor"
+                                            viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                                d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                                        </svg>
+                                        <p class="text-sm">No hay productos registrados en esta orden</p>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+
+                        <tfoot class="bg-gray-50 border-t border-gray-200">
+                            <tr>
+                                <td colspan="3" class="px-4 py-3 text-right text-sm font-medium text-gray-600">
+                                    Subtotal
+                                </td>
+                                <td class="px-4 py-3 text-right font-semibold text-gray-900">
+                                    ${{ "%.2f"|format(orden.subtotal) }}
+                                </td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td colspan="3" class="px-4 py-3 text-right text-sm font-medium text-gray-600">
+                                    IVA (16%)
+                                </td>
+                                <td class="px-4 py-3 text-right font-semibold text-gray-900">
+                                    ${{ "%.2f"|format(orden.iva) }}
+                                </td>
+                                <td></td>
+                            </tr>
+                            <tr class="border-t border-gray-300">
+                                <td colspan="3" class="px-4 py-4 text-right text-base font-semibold text-gray-900">
+                                    Total
+                                </td>
+                                <td class="px-4 py-4 text-right">
+                                    <div class="text-xl font-bold text-gray-900">
+                                        ${{ "%.2f"|format(orden.total) }}
+                                    </div>
+                                </td>
+                                <td></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ======================= MODAL: Configurar PDF ======================= -->
+<div id="modal-config-pdf" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-pdf-title"
+    role="dialog" aria-modal="true">
+    <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
+
+        <div
+            class="inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full">
+            <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                <div class="flex items-center justify-between mb-5">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-violet-100 flex items-center justify-center">
+                            <svg class="w-5 h-5 text-violet-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            </svg>
+                        </div>
+                        <h3 class="text-xl font-semibold text-gray-900" id="modal-pdf-title">
+                            Configurar PDF
+                        </h3>
+                    </div>
+                    <button type="button" class="btn-cerrar-pdf text-gray-400 hover:text-gray-500 transition">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- Opciones de generación -->
+                <div class="space-y-4">
+                    <p class="text-sm text-gray-500">
+                        Personaliza el contenido que se incluirá al generar el documento PDF.
+                    </p>
+
+                    <!-- Incluir firma -->
+                    <label
+                        class="flex items-start gap-3 p-4 rounded-xl border border-gray-200 hover:border-emerald-300 hover:bg-emerald-50/30 transition cursor-pointer group">
+                        <input type="checkbox" id="chk-incluir-firma"
+                            class="mt-0.5 w-5 h-5 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500/50 cursor-pointer">
+                        <div>
+                            <span class="text-sm font-semibold text-gray-800 block">Incluir firma</span>
+                            <span class="text-xs text-gray-500">Agrega la firma del vendedor al final del
+                                documento.</span>
+                        </div>
+                    </label>
+
+                    <!-- Incluir imágenes -->
+                    <label
+                        class="flex items-start gap-3 p-4 rounded-xl border border-gray-200 hover:border-emerald-300 hover:bg-emerald-50/30 transition cursor-pointer group">
+                        <input type="checkbox" id="chk-incluir-imagenes"
+                            class="mt-0.5 w-5 h-5 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500/50 cursor-pointer">
+                        <div>
+                            <span class="text-sm font-semibold text-gray-800 block">Incluir imágenes de productos</span>
+                            <span class="text-xs text-gray-500">Muestra las imágenes de cada producto en la tabla del
+                                PDF.</span>
+                        </div>
+                    </label>
+
+                    <!-- Términos y condiciones -->
+                    <div class="pt-2">
+                        <label class="block text-sm font-semibold text-gray-800 mb-2">
+                            Términos y condiciones
+                        </label>
+                        <p class="text-xs text-gray-500 mb-2">
+                            Texto que se incluirá al pie del documento generado.
+                        </p>
+                        <textarea id="contenido_terminos" rows="8"
+                            class="w-full px-4 py-3 border border-gray-200 rounded-xl bg-white text-gray-700 text-sm
+                               focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition resize-none"
+                            placeholder="Escribe aquí los términos y condiciones..."></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse gap-3">
+                <button type="button" id="btn-guardar-pdf"
+                    class="w-full inline-flex justify-center rounded-xl px-4 py-2.5 bg-emerald-600 text-base font-medium text-white hover:bg-emerald-700 focus:outline-none transition sm:w-auto sm:text-sm">
+                    Guardar cambios
+                </button>
+                <button type="button"
+                    class="btn-cerrar-pdf w-full inline-flex justify-center rounded-xl px-4 py-2.5 bg-white text-base font-medium text-gray-700 border border-gray-300 hover:bg-gray-50 focus:outline-none transition sm:mt-0 sm:w-auto sm:text-sm">
+                    Cancelar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ======================= MODAL: Configuración UNAM ======================= -->
+<div id="modal-config-unam" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-unam-title"
+    role="dialog" aria-modal="true">
+    <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
+
+        <div
+            class="inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-xl sm:w-full">
+            <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                <div class="flex items-center justify-between mb-5">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center">
+                            <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                            </svg>
+                        </div>
+                        <h3 class="text-xl font-semibold text-gray-900" id="modal-unam-title">
+                            Configuración UNAM
+                        </h3>
+                    </div>
+                    <button type="button" class="btn-cerrar-unam text-gray-400 hover:text-gray-500 transition">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+
+                <div class="space-y-4">
+                    <p class="text-sm text-gray-500">
+                        Completa los datos adicionales requeridos para cotizaciones tipo UNAM.
+                    </p>
+
+                    <div class="space-y-1">
+                        <label class="block text-sm font-medium text-gray-700">
+                            No. de solicitud
+                        </label>
+                        <input type="text" id="input-no-solicitud" class="w-full h-11 px-4 rounded-xl border border-gray-200 bg-white text-gray-700
+                       focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition">
+                    </div>
+
+                    <div class="space-y-1">
+                        <label class="block text-sm font-medium text-gray-700">
+                            Proveedor UNAM
+                        </label>
+                        <input type="text" id="input-proveedor-unam" class="w-full h-11 px-4 rounded-xl border border-gray-200 bg-white text-gray-700
+                       focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition">
+                    </div>
+
+                    <!-- DEPARTAMENTO: ahora es un <select> que lista los departamentos -->
+                    <div class="space-y-1">
+                        <label class="block text-sm font-medium text-gray-700">
+                            Departamento UNAM
+                        </label>
+                        <div class="relative">
+                            <select id="input-departamento"
+                                class="w-full h-11 px-4 pr-10 rounded-xl border border-gray-200 bg-white text-gray-700 appearance-none cursor-pointer
+                                   focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition">
+                                <option value="" disabled selected>Seleccione un departamento...</option>
+                                {% for dep in departamentos|default([]) %}
+                                <option value="{{ dep.nombre }}">{{ dep.nombre }}</option>
+                                {% endfor %}
+                            </select>
+                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
+                                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M19 9l-7 7-7-7" />
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- PUNTO DE ENTREGA: input + datalist (editable manualmente) -->
+                    <div class="space-y-1">
+                        <label class="block text-sm font-medium text-gray-700">
+                            Punto de entrega
+                        </label>
+                        <input type="text" id="input-punto-entrega" list="datalist-puntos-entrega"
+                            placeholder="Seleccione o escriba un punto de entrega..."
+                            class="w-full h-11 px-4 rounded-xl border border-gray-200 bg-white text-gray-700
+                               focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition">
+                        <datalist id="datalist-puntos-entrega">
+                            <!-- Opciones generadas dinámicamente según el departamento seleccionado -->
+                        </datalist>
+                        <p class="text-xs text-gray-400 mt-1">
+                            Puede seleccionar uno de la lista o escribir manualmente uno nuevo.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse gap-3">
+                <button type="button" id="btn-guardar-unam"
+                    class="w-full inline-flex justify-center rounded-xl px-4 py-2.5 bg-emerald-600 text-base font-medium text-white hover:bg-emerald-700 focus:outline-none transition sm:w-auto sm:text-sm">
+                    Guardar cambios
+                </button>
+                <button type="button"
+                    class="btn-cerrar-unam w-full inline-flex justify-center rounded-xl px-4 py-2.5 bg-white text-base font-medium text-gray-700 border border-gray-300 hover:bg-gray-50 focus:outline-none transition sm:mt-0 sm:w-auto sm:text-sm">
+                    Cancelar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+(function () {
+    try {
+
+        const departamentosData = [
+            {% for dep in departamentos|default([]) %}
+            {
+                nombre: {{ dep.nombre|tojson }},
+                puntos_entrega: {{ (dep.puntos_entrega or [])|tojson }}
+            }{% if not loop.last %},{% endif %}
+            {% endfor %}
+        ];
+
+        /* ---------- Toggle panel agregar producto ---------- */
+        const toggleButton = document.getElementById('toggle-panel-btn');
+        const panel = document.getElementById('panel-agregar-producto');
+        const icon = document.getElementById('toggle-icon');
+
+        if (toggleButton && panel && icon) {
+            toggleButton.addEventListener('click', function (e) {
+                e.preventDefault();
+                if (panel.classList.contains('hidden')) {
+                    panel.classList.remove('hidden');
+                    icon.style.transform = 'rotate(180deg)';
+                } else {
+                    panel.classList.add('hidden');
+                    icon.style.transform = 'rotate(0deg)';
+                }
+            });
+        }
+
+        /* ---------- Botón UNAM: habilitar/deshabilitar según tipo cotización ---------- */
+        const tipoCotizacionSelect = document.getElementById('tipo_cotizacion');
+        const btnConfigUnam = document.getElementById('btn-config-unam');
+
+        function toggleUnamButton() {
+            if (!tipoCotizacionSelect || !btnConfigUnam) return;
+            if (tipoCotizacionSelect.value === 'UNAM') {
+                btnConfigUnam.disabled = false;
+                btnConfigUnam.classList.remove('text-gray-400', 'bg-gray-100', 'border-gray-200', 'cursor-not-allowed');
+                btnConfigUnam.classList.add('text-gray-700', 'bg-white', 'border-gray-300', 'hover:bg-gray-100', 'cursor-pointer');
+                btnConfigUnam.title = '';
+            } else {
+                btnConfigUnam.disabled = true;
+                btnConfigUnam.classList.add('text-gray-400', 'bg-gray-100', 'border-gray-200', 'cursor-not-allowed');
+                btnConfigUnam.classList.remove('text-gray-700', 'bg-white', 'border-gray-300', 'hover:bg-gray-100', 'cursor-pointer');
+                btnConfigUnam.title = 'Disponible solo para tipo de cotización UNAM';
+            }
+        }
+
+        if (tipoCotizacionSelect) {
+            tipoCotizacionSelect.addEventListener('change', toggleUnamButton);
+            toggleUnamButton();
+        }
+
+        /* ---------- Helper: modal genérico ---------- */
+        function openModal(modal) {
+            if (!modal) return;
+            modal.classList.remove('hidden');
+            document.body.classList.add('overflow-hidden');
+        }
+        function closeModal(modal) {
+            if (!modal) return;
+            modal.classList.add('hidden');
+            document.body.classList.remove('overflow-hidden');
+        }
+
+        /* ---------- Modal Configurar PDF ---------- */
+        const modalPdf = document.getElementById('modal-config-pdf');
+        const btnConfigPdf = document.getElementById('btn-config-pdf');
+        const chkFirma = document.getElementById('chk-incluir-firma');
+        const chkImagenes = document.getElementById('chk-incluir-imagenes');
+        const textareaTerminos = document.getElementById('contenido_terminos');
+
+        // Hidden inputs del form
+        const hiddenFirma = document.getElementById('incluir_firma');
+        const hiddenImagenes = document.getElementById('incluir_imagenes');
+        const hiddenTerminos = document.getElementById('terminos_condiciones');
+
+        if (btnConfigPdf && modalPdf) {
+            btnConfigPdf.addEventListener('click', function () {
+                // Cargar valores actuales en los controles del modal
+                if (chkFirma && hiddenFirma) chkFirma.checked = hiddenFirma.value === '1';
+                if (chkImagenes && hiddenImagenes) chkImagenes.checked = hiddenImagenes.value === '1';
+                if (textareaTerminos && hiddenTerminos) textareaTerminos.value = hiddenTerminos.value;
+                openModal(modalPdf);
+            });
+        }
+
+        // Cerrar modal PDF
+        document.querySelectorAll('.btn-cerrar-pdf').forEach(btn => {
+            btn.addEventListener('click', () => closeModal(modalPdf));
+        });
+        if (modalPdf) {
+            modalPdf.addEventListener('click', function (e) {
+                if (e.target === modalPdf || e.target.classList.contains('bg-opacity-75')) {
+                    closeModal(modalPdf);
+                }
+            });
+        }
+
+        // Guardar PDF
+        const btnGuardarPdf = document.getElementById('btn-guardar-pdf');
+        if (btnGuardarPdf) {
+            btnGuardarPdf.addEventListener('click', function () {
+                if (hiddenFirma && chkFirma) hiddenFirma.value = chkFirma.checked ? '1' : '0';
+                if (hiddenImagenes && chkImagenes) hiddenImagenes.value = chkImagenes.checked ? '1' : '0';
+                if (hiddenTerminos && textareaTerminos) hiddenTerminos.value = textareaTerminos.value;
+
+                const form = document.getElementById('form-orden');
+                if (form) {
+                    if (typeof form.requestSubmit === 'function') form.requestSubmit();
+                    else form.submit();
+                }
+                closeModal(modalPdf);
+            });
+        }
+
+        /* ---------- Modal Configuración UNAM ---------- */
+        const modalUnam = document.getElementById('modal-config-unam');
+        const inputNoSolicitud = document.getElementById('input-no-solicitud');
+        const inputProveedorUnam = document.getElementById('input-proveedor-unam');
+        const inputDepartamento = document.getElementById('input-departamento');
+        const inputPuntoEntrega = document.getElementById('input-punto-entrega');
+        const datalistPuntos = document.getElementById('datalist-puntos-entrega');
+
+        const hiddenNoSolicitud = document.getElementById('no_solicitud');
+        const hiddenProveedorUnam = document.getElementById('proveedor_unam');
+        const hiddenDepartamento = document.getElementById('departamento');
+        const hiddenPuntoEntrega = document.getElementById('punto_entrega');
+
+        function actualizarPuntosEntrega(limpiarPunto = true) {
+            if (!datalistPuntos) return;
+            const depNombre = inputDepartamento ? inputDepartamento.value : '';
+            const dep = departamentosData.find(d => d.nombre === depNombre);
+
+            datalistPuntos.innerHTML = '';
+
+            if (dep && Array.isArray(dep.puntos_entrega)) {
+                dep.puntos_entrega.forEach(punto => {
+                    const option = document.createElement('option');
+                    option.value = punto;
+                    datalistPuntos.appendChild(option);
+                });
+            }
+
+            if (limpiarPunto && inputPuntoEntrega) {
+                inputPuntoEntrega.value = '';
+                if (hiddenPuntoEntrega) hiddenPuntoEntrega.value = '';
+            }
+        }
+
+        if (inputDepartamento) {
+            inputDepartamento.addEventListener('change', () => actualizarPuntosEntrega(true));
+        }
+
+        if (btnConfigUnam && modalUnam) {
+            btnConfigUnam.addEventListener('click', function () {
+                if (btnConfigUnam.disabled) return;
+                // Cargar valores actuales
+                if (inputNoSolicitud && hiddenNoSolicitud) inputNoSolicitud.value = hiddenNoSolicitud.value;
+                if (inputProveedorUnam && hiddenProveedorUnam) inputProveedorUnam.value = hiddenProveedorUnam.value;
+
+                if (inputDepartamento && hiddenDepartamento) inputDepartamento.value = hiddenDepartamento.value;
+                actualizarPuntosEntrega(false);
+
+                if (inputPuntoEntrega && hiddenPuntoEntrega) inputPuntoEntrega.value = hiddenPuntoEntrega.value;
+
+                openModal(modalUnam);
+            });
+        }
+
+        // Cerrar modal UNAM
+        document.querySelectorAll('.btn-cerrar-unam').forEach(btn => {
+            btn.addEventListener('click', () => closeModal(modalUnam));
+        });
+        if (modalUnam) {
+            modalUnam.addEventListener('click', function (e) {
+                if (e.target === modalUnam || e.target.classList.contains('bg-opacity-75')) {
+                    closeModal(modalUnam);
+                }
+            });
+        }
+
+        const btnGuardarUnam = document.getElementById('btn-guardar-unam');
+        if (btnGuardarUnam) {
+            btnGuardarUnam.addEventListener('click', function () {
+                if (hiddenNoSolicitud && inputNoSolicitud) hiddenNoSolicitud.value = inputNoSolicitud.value;
+                if (hiddenProveedorUnam && inputProveedorUnam) hiddenProveedorUnam.value = inputProveedorUnam.value;
+                if (hiddenDepartamento && inputDepartamento) hiddenDepartamento.value = inputDepartamento.value;
+                if (hiddenPuntoEntrega && inputPuntoEntrega) hiddenPuntoEntrega.value = inputPuntoEntrega.value;
+
+                const form = document.getElementById('form-orden');
+                if (form) {
+                    if (typeof form.requestSubmit === 'function') form.requestSubmit();
+                    else form.submit();
+                }
+                closeModal(modalUnam);
+            });
+        }
+
+    } catch (err) {
+        console.error('Error inicializando la vista de orden:', err);
+    }
+})();
+</script>
+{% endblock %}

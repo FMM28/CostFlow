@@ -15,7 +15,7 @@ EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 USERNAME_RE = re.compile(r"^[a-zA-Z0-9_.-]{3,45}$")
 NUMBER_RE = re.compile(r"^(?:\+(\d{1,3}))?(\d{10,15})$")
 MIN_PASSWORD_LENGTH = 8
-VALID_ROLES = ("admin", "vendedor")
+VALID_ROLES = ("admin", "ventas")
 
 
 def _validate_email(email: str) -> Tuple[bool, Optional[str]]:

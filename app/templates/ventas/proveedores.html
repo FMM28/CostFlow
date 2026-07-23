@@ -1,0 +1,519 @@
+{% extends "ventas/base.html" %}
+
+{% block title %}Seleccionar proveedor{% endblock %}
+
+{% block content %}
+<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 px-8 py-2">
+
+    <div>
+        <h1 class="text-3xl font-semibold text-gray-900">
+            Comparar proveedores
+        </h1>
+        <p class="mt-1 text-sm text-gray-500">
+            Revisa las opciones disponibles y selecciona el proveedor que deseas utilizar.
+        </p>
+    </div>
+
+    <div class="flex flex-wrap items-center gap-3">
+
+        <button type="button" id="btn-open-manual-provider"
+            class="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-emerald-600 text-white text-sm font-medium transition hover:bg-emerald-700">
+
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24"
+                stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+            </svg>
+
+            Agregar proveedor manual
+        </button>
+
+        <a href="{{ request.referrer or url_for('productos.index') }}"
+            class="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg border border-gray-300 bg-white text-sm font-medium text-gray-700 transition-all duration-200 hover:bg-gray-50 hover:border-gray-400 hover:shadow-sm">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24"
+                stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+            </svg>
+
+            Regresar
+        </a>
+
+    </div>
+
+</div>
+
+<!-- Listado -->
+<div class="space-y-4 px-8">
+
+    {% if productos %}
+
+    {% for producto in productos %}
+
+    <div
+        class="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden transition-all duration-200 hover:shadow-md hover:border-gray-300">
+
+        <div class="flex flex-col lg:flex-row gap-0">
+
+            <!-- Imagen -->
+            <div class="flex-shrink-0 w-full lg:w-48 bg-gray-50 flex items-center justify-center p-4">
+
+                {% if producto.url_imagen %}
+                <img src="{{ producto.url_imagen }}" alt=""
+                    class="w-full h-auto max-h-64 object-contain rounded-xl shadow-md"
+                    onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                <div class="hidden w-full h-48 items-center justify-center text-xs text-gray-400">
+                    <div class="text-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 mx-auto mb-1" fill="none"
+                            viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a2.25 2.25 0 002.25-2.25V6a2.25 2.25 0 00-2.25-2.25H3.75A2.25 2.25 0 001.5 6v12a2.25 2.25 0 002.25 2.25z" />
+                        </svg>
+                        <span>Sin imagen</span>
+                    </div>
+                </div>
+                {% else %}
+                <div class="w-full h-48 flex items-center justify-center text-xs text-gray-400">
+                    <div class="text-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 mx-auto mb-1" fill="none"
+                            viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a2.25 2.25 0 002.25-2.25V6a2.25 2.25 0 00-2.25-2.25H3.75A2.25 2.25 0 001.5 6v12a2.25 2.25 0 002.25 2.25z" />
+                        </svg>
+                        <span>Sin imagen</span>
+                    </div>
+                </div>
+                {% endif %}
+
+            </div>
+
+            <!-- Contenido principal -->
+            <div class="flex-1 p-5">
+
+                <!-- Header: Nombre y Proveedor -->
+                <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-4">
+                    <div class="flex-1 min-w-0">
+                        <h2 class="text-lg font-semibold text-gray-900 leading-tight">
+                            {{ producto.nombre }}
+                        </h2>
+                        <div class="mt-1 flex items-center gap-2 text-sm text-gray-600">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-gray-400" fill="none"
+                                viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                            </svg>
+                            <span class="font-medium">{{ producto.proveedor }}</span>
+                        </div>
+                    </div>
+
+                    <!-- Existencia -->
+                    <div class="flex-shrink-0">
+                        <div
+                            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-50 border border-gray-200">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-gray-500" fill="none"
+                                viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                            </svg>
+                            <div class="text-sm">
+                                <span class="text-gray-500">Stock: </span>
+                                <span class="font-semibold text-gray-900">
+                                    {{ producto.existencia if producto.existencia is not none else 'N/D' }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Grid de información: Precio y Link -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center">
+
+                    <!-- Precio -->
+                    <div class="price-container"
+                        data-precio="{{ producto.descuento if producto.descuento else producto.precio }}"
+                        data-moneda="{{ producto.moneda }}">
+
+                        {% if producto.descuento %}
+                        <!-- Con descuento -->
+                        <div class="flex flex-col gap-1">
+                            <div class="flex items-center gap-2">
+                                <span class="text-sm text-gray-400 line-through">
+                                    {{ "{:,.2f}".format(producto.precio) }} {{ producto.moneda }}
+                                </span>
+                                <span
+                                    class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-700">
+                                    {{ (((producto.precio - producto.descuento) / producto.precio) * 100)|round|int }}%
+                                    OFF
+                                </span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="text-2xl font-bold text-gray-900">
+                                    {{ "{:,.2f}".format(producto.descuento) }}
+                                </span>
+                                <span class="text-sm font-medium text-gray-600 moneda-actual">
+                                    {{ producto.moneda }}
+                                </span>
+
+                                {% if producto.moneda != 'MXN' %}
+                                <button type="button"
+                                    class="btn-convertir-mxn inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-amber-100 text-amber-700 text-xs font-medium hover:bg-amber-200 transition-colors"
+                                    data-precio="{{ producto.descuento }}" data-precio-original="{{ producto.precio }}"
+                                    data-moneda="{{ producto.moneda }}" data-tiene-descuento="true"
+                                    data-mostrando="original">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none"
+                                        viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                            d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25H12" />
+                                    </svg>
+                                    MXN
+                                </button>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        {% else %}
+                        <!-- Sin descuento -->
+                        <div class="flex items-baseline gap-2">
+                            <span class="text-2xl font-bold text-gray-900">
+                                {{ "{:,.2f}".format(producto.precio) }}
+                            </span>
+                            <span class="text-sm font-medium text-gray-600 moneda-actual">
+                                {{ producto.moneda }}
+                            </span>
+
+                            {% if producto.moneda != 'MXN' %}
+                            <button type="button"
+                                class="btn-convertir-mxn inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-amber-100 text-amber-700 text-xs font-medium hover:bg-amber-200 transition-colors"
+                                data-precio="{{ producto.precio }}" data-precio-original="{{ producto.precio }}"
+                                data-moneda="{{ producto.moneda }}" data-tiene-descuento="false"
+                                data-mostrando="original">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none"
+                                    viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                        d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25H12" />
+                                </svg>
+                                MXN
+                            </button>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Link al producto -->
+                    <div class="sm:text-right">
+                        {% if producto.url %}
+                        <a href="{{ producto.url }}" target="_blank"
+                            class="inline-flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors">
+                            <span>Ver en {{ producto.proveedor }}</span>
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+                            </svg>
+                        </a>
+                        {% endif %}
+                    </div>
+
+                </div>
+
+                <!-- Existencias por sucursal (colapsable) -->
+                {% if producto.existencias_sucursal %}
+                <div class="mt-4 pt-4 border-t border-gray-100">
+                    <details class="group">
+                        <summary
+                            class="cursor-pointer select-none text-sm text-gray-500 hover:text-gray-700 flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg"
+                                class="w-4 h-4 transition-transform group-open:rotate-90" fill="none"
+                                viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+                            </svg>
+                            Ver disponibilidad por sucursal
+                            <span class="text-xs text-gray-400">
+                                ({{ producto.existencias_sucursal|length }} sucursales)
+                            </span>
+                        </summary>
+                        <div class="mt-3 flex flex-wrap gap-2">
+                            {% for sucursal in producto.existencias_sucursal %}
+                            <span
+                                class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium bg-gray-50 text-gray-700 border border-gray-200">
+                                <span
+                                    class="w-2 h-2 rounded-full {% if sucursal.existencia > 0 %}bg-emerald-500{% else %}bg-gray-400{% endif %}"></span>
+                                <span>{{ sucursal.sucursal }}</span>
+                                <span class="px-1.5 py-0.5 rounded bg-white border border-gray-300 text-gray-900">
+                                    {{ sucursal.existencia }}
+                                </span>
+                            </span>
+                            {% endfor %}
+                        </div>
+                    </details>
+                </div>
+                {% endif %}
+
+            </div>
+
+            <!-- Botón de acción -->
+            <div
+                class="flex-shrink-0 p-5 lg:p-6 lg:border-l border-gray-200 bg-gray-50 lg:bg-transparent flex items-center">
+                <form method="post"
+                    action="{{ url_for('ventas.ordenes.detail_select_proveedor', id_detalle=id_detalle) }}"
+                    class="w-full">
+
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="proveedor" value="{{ producto.proveedor }}">
+                    <input type="hidden" name="precio"
+                        value="{{ producto.descuento if producto.descuento else producto.precio }}">
+                    <input type="hidden" name="moneda" value="{{ producto.moneda }}">
+                    <input type="hidden" name="existencia" value="{{ producto.existencia }}">
+                    <input type="hidden" name="url" value="{{ producto.url }}">
+                    <input type="hidden" name="url_imagen" value="{{ producto.url_imagen }}">
+
+                    <button type="submit"
+                        class="w-full px-6 py-3 rounded-lg bg-gray-900 text-white text-sm font-semibold transition-all duration-200 hover:bg-black hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0">
+                        Seleccionar
+                    </button>
+
+                </form>
+            </div>
+
+        </div>
+
+    </div>
+
+    {% endfor %}
+
+    {% else %}
+
+    <div class="bg-white border border-dashed border-gray-300 rounded-2xl p-12 text-center">
+
+        <h3 class="text-lg font-semibold text-gray-900">
+            No se encontraron proveedores
+        </h3>
+
+        <p class="mt-2 text-sm text-gray-500 max-w-lg mx-auto">
+            No fue posible localizar este producto en los proveedores configurados
+        </p>
+
+        <button type="button" id="btn-open-manual-provider-empty"
+            class="mt-6 inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-700">
+
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24"
+                stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+            </svg>
+
+            Agregar proveedor manual
+        </button>
+
+    </div>
+
+    {% endif %}
+
+</div>
+
+</div>
+
+<div id="manual-provider-modal" class="fixed inset-0 z-50 hidden">
+
+    <div class="absolute inset-0 bg-black/50"></div>
+
+    <div class="relative h-full flex items-center justify-center p-4">
+
+        <div class="w-full max-w-2xl bg-white rounded-2xl shadow-2xl">
+
+            <div class="flex items-center justify-between p-6 border-b border-gray-200">
+                <h2 class="text-xl font-semibold text-gray-900">
+                    Agregar proveedor manualmente
+                </h2>
+
+                <button type="button" id="btn-close-manual-provider" class="text-gray-400 hover:text-gray-600">
+                    ✕
+                </button>
+            </div>
+
+            <form method="POST"
+                action="{{ url_for('ventas.ordenes.detail_assign_proveedor_manual', id_detalle=id_detalle) }}"
+                class="p-6 space-y-5">
+
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">
+                        Proveedor
+                    </label>
+                    <input type="text" name="proveedor" required
+                        class="w-full h-11 px-4 rounded-xl border border-gray-200">
+                </div>
+
+                <div class="flex justify-end gap-3 pt-2">
+
+                    <button type="button" id="btn-cancel-manual-provider"
+                        class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
+                        Cancelar
+                    </button>
+
+                    <button type="submit" class="px-5 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700">
+                        Guardar proveedor
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+
+        // Modal handlers
+        const modal = document.getElementById('manual-provider-modal');
+
+        const openButtons = [
+            document.getElementById('btn-open-manual-provider'),
+            document.getElementById('btn-open-manual-provider-empty')
+        ];
+
+        const closeButtons = [
+            document.getElementById('btn-close-manual-provider'),
+            document.getElementById('btn-cancel-manual-provider')
+        ];
+
+        openButtons.forEach(btn => {
+            if (btn) {
+                btn.addEventListener('click', () => {
+                    modal.classList.remove('hidden');
+                    document.body.classList.add('overflow-hidden');
+                });
+            }
+        });
+
+        closeButtons.forEach(btn => {
+            if (btn) {
+                btn.addEventListener('click', () => {
+                    modal.classList.add('hidden');
+                    document.body.classList.remove('overflow-hidden');
+                });
+            }
+        });
+
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                modal.classList.add('hidden');
+                document.body.classList.remove('overflow-hidden');
+            }
+        });
+
+        // Formateador para números
+        const fmtPrecio = (n) => Number(n).toLocaleString('en-US', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        });
+
+        const ICON_SVG = `
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24"
+                stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25H12" />
+            </svg>`;
+
+        const SPINNER_SVG = `
+            <svg class="animate-spin w-3.5 h-3.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                </path>
+            </svg>`;
+
+        // Currency conversion functionality
+        const conversionButtons = document.querySelectorAll('.btn-convertir-mxn');
+
+        conversionButtons.forEach(button => {
+            let estadoOriginal = null;
+
+            button.addEventListener('click', async function () {
+                const priceContainer = this.closest('.price-container');
+                const monedaActualSpan = priceContainer.querySelector('.moneda-actual');
+
+                // Encontrar el elemento de precio (puede ser el grande o el tachado)
+                const precioActualSpan = priceContainer.querySelector('.text-2xl.font-bold');
+                const precioTachadoSpan = priceContainer.querySelector('.text-gray-400.line-through');
+
+                const monedaOriginal = this.dataset.moneda;
+                const tieneDescuento = this.dataset.tieneDescuento === 'true';
+                const mostrandoMXN = this.dataset.mostrando === 'mxn';
+
+                if (mostrandoMXN && estadoOriginal) {
+                    // Restaurar
+                    if (precioActualSpan) precioActualSpan.textContent = estadoOriginal.precioActual;
+                    if (monedaActualSpan) monedaActualSpan.textContent = estadoOriginal.moneda;
+                    if (precioTachadoSpan && estadoOriginal.precioTachado !== null) {
+                        precioTachadoSpan.textContent = estadoOriginal.precioTachado;
+                    }
+                    this.dataset.mostrando = 'original';
+                    this.innerHTML = `${ICON_SVG} MXN`;
+                    return;
+                }
+
+                if (!estadoOriginal) {
+                    estadoOriginal = {
+                        precioActual: precioActualSpan ? precioActualSpan.textContent.trim() : null,
+                        moneda: monedaActualSpan ? monedaActualSpan.textContent.trim() : null,
+                        precioTachado: precioTachadoSpan ? precioTachadoSpan.textContent.trim() : null
+                    };
+                }
+
+                const htmlOriginal = this.innerHTML;
+                this.disabled = true;
+                this.innerHTML = `${SPINNER_SVG} ...`;
+
+                try {
+                    const precio = parseFloat(this.dataset.precio);
+                    const response = await fetch(`/calcular-conversion/${precio}/${monedaOriginal}`);
+                    const data = await response.json();
+
+                    if (!response.ok || !data.equivalencia) {
+                        throw new Error(data.error || 'Error al obtener la conversión');
+                    }
+
+                    const tasa = data.equivalencia / precio;
+
+                    if (precioActualSpan) {
+                        precioActualSpan.textContent = fmtPrecio(data.equivalencia);
+                    }
+                    if (monedaActualSpan) {
+                        monedaActualSpan.textContent = 'MXN';
+                    }
+
+                    if (tieneDescuento && precioTachadoSpan) {
+                        const precioOrig = parseFloat(this.dataset.precioOriginal);
+                        const precioOrigConvertido = precioOrig * tasa;
+                        // Actualizar el texto completo incluyendo la moneda
+                        const monedaText = precioTachadoSpan.textContent.split(' ').pop();
+                        precioTachadoSpan.textContent = `${fmtPrecio(precioOrigConvertido)} ${monedaText}`;
+                    }
+
+                    this.dataset.mostrando = 'mxn';
+                    this.innerHTML = `${ICON_SVG} Original`;
+
+                } catch (error) {
+                    console.error('Error al convertir:', error);
+                    this.innerHTML = 'Error';
+                    this.classList.remove('bg-amber-100', 'text-amber-700', 'hover:bg-amber-200');
+                    this.classList.add('bg-red-100', 'text-red-700');
+
+                    setTimeout(() => {
+                        this.innerHTML = htmlOriginal;
+                        this.classList.remove('bg-red-100', 'text-red-700');
+                        this.classList.add('bg-amber-100', 'text-amber-700', 'hover:bg-amber-200');
+                        this.disabled = false;
+                    }, 2000);
+                    return;
+                }
+
+                this.disabled = false;
+            });
+        });
+
+    });
+</script>
+{% endblock %}

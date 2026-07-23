@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Ventas{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="icon" href="{{ url_for('static', filename='icons/logo2.svg') }}">
+</head>
+
+<body class="bg-gray-100 text-gray-800 flex flex-col h-screen">
+
+    <!-- Barra de navegación -->
+    <header class="bg-gray-900 text-gray-100 shadow-sm border-b border-gray-800/60 flex-shrink-0">
+        <div class="w-full px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+
+                <!--  Información del Usuario -->
+                <div class="flex items-center space-x-3">
+                    <div class="relative">
+                        <div
+                            class="w-9 h-9 rounded-full bg-gray-800 flex items-center justify-center ring-2 ring-gray-700/50">
+                            <img src="{{ url_for('static', filename='icons/usuario.svg') }}" alt="avatar"
+                                class="w-5 h-5 opacity-80">
+                        </div>
+                        <span
+                            class="absolute bottom-0 right-0 block h-2.5 w-2.5 rounded-full ring-2 ring-gray-900 bg-green-400"></span>
+                    </div>
+                    <div class="flex flex-col min-w-0">
+                        <span class="text-sm font-semibold text-white truncate">
+                            {{ current_user.nombre }} {{ current_user.ap_paterno }}
+                        </span>
+                        <span class="text-xs text-gray-400 font-medium">Ventas</span>
+                    </div>
+                </div>
+
+                <!--  Botones de Navegación  -->
+                <nav class="flex items-center space-x-2">
+
+                    <!--  Ver Órdenes -->
+                    <a href="{{ url_for('ventas.ordenes.index') }}"
+                        class="group flex items-center space-x-2 px-3 py-2 rounded-md text-gray-400 hover:text-white hover:bg-gray-800/60 transition-all duration-200"
+                        title="Ver todas las órdenes">
+                        <img src="{{ url_for('static', filename='icons/ordenes.svg') }}" alt="ordenes"
+                            class="w-5 h-5 opacity-70 group-hover:opacity-100 transition-opacity">
+                        <span class="text-sm font-medium hidden sm:inline">Órdenes</span>
+                    </a>
+
+                    <!--  Nueva Orden -->
+                    <a href="{{ url_for('ventas.ordenes.create') }}"
+                        class="group flex items-center space-x-2 px-3 py-2 rounded-md text-gray-400 hover:text-white hover:bg-gray-800/60 transition-all duration-200"
+                        title="Crear nueva orden">
+                        <svg xmlns="http://www.w3.org/2000/svg"
+                            class="w-5 h-5 opacity-70 group-hover:opacity-100 transition-opacity" fill="none"
+                            viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+                        </svg>
+                        <span class="text-sm font-medium hidden sm:inline">Nueva Orden</span>
+                    </a>
+
+                </nav>
+
+                <!--  Cerrar Sesión -->
+                <div>
+                    <a href="{{ url_for('auth.logout') }}"
+                        class="group flex items-center space-x-2 px-3 py-2 rounded-md text-gray-400 hover:text-red-400 hover:bg-red-500/10 transition-all duration-200"
+                        title="Cerrar sesión">
+                        <img src="{{ url_for('static', filename='icons/logout.svg') }}" alt="logout"
+                            class="w-5 h-5 opacity-70 group-hover:opacity-100 transition-opacity">
+                        <span class="text-sm font-medium hidden sm:inline">Cerrar sesión</span>
+                    </a>
+                </div>
+
+            </div>
+        </div>
+    </header>
+
+    <!-- Contenido Principal -->
+    <main class="flex-1 overflow-y-auto p-2">
+        {% block content %}
+        {% endblock %}
+    </main>
+
+</body>
+
+</html>
