@@ -1,5 +1,9 @@
 import logging
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from concurrent.futures import (
+    ThreadPoolExecutor,
+    as_completed,
+    TimeoutError as FutureTimeoutError,
+)
 
 from flask import current_app
 
@@ -32,7 +36,18 @@ class BuscadorProducto:
         ExelService,
     ]
 
-    MAX_WORKERS = 4
+    MAX_WORKERS = 24
+    TIMEOUT_GLOBAL_SEGUNDOS = 50
+    _executor: ThreadPoolExecutor | None = None
+
+    @classmethod
+    def _get_executor(cls) -> ThreadPoolExecutor:
+        if cls._executor is None:
+            cls._executor = ThreadPoolExecutor(
+                max_workers=cls.MAX_WORKERS,
+                thread_name_prefix="buscador-producto",
+            )
+        return cls._executor
 
     @classmethod
     def _nombre_proveedor(cls, proveedor_service) -> str:
@@ -75,6 +90,19 @@ class BuscadorProducto:
                 return None, f"{nombre_proveedor}: {str(e)}"
 
     @classmethod
+    def _buscar_en_bd(
+        cls, app, nombre: str, sku: str
+    ) -> tuple[list[ProductoProveedor], str | None]:
+        with app.app_context():
+            try:
+                return ProveedoresBDService.buscar_producto(
+                    nombre=nombre, sku=sku
+                ), None
+            except Exception as e:
+                logger.exception("Error al consultar BD.")
+                return [], f"BD: {str(e)}"
+
+    @classmethod
     def buscar(cls, nombre=None, sku=None):
 
         nombre = (nombre or "").strip()
@@ -86,6 +114,7 @@ class BuscadorProducto:
 
         app = current_app._get_current_object()
         cache = ProductosCacheService()
+        executor = cls._get_executor()
 
         resultados: list[ProductoProveedor] = []
         errores: list[str] = []
@@ -107,60 +136,68 @@ class BuscadorProducto:
             logger.debug("Resultados cacheados: %s", list(cached.keys()))
 
         # -------------------------
-        # 2. WORKERS
+        # 2. WORKERS (proveedores externos + BD en paralelo)
         # -------------------------
         faltantes = proveedores_externos_keys - proveedores_cacheados
         providers_to_query = [provider_map[p] for p in faltantes]
 
         nuevos_externos: list[ProductoProveedor] = []
 
-        if providers_to_query:
-            with ThreadPoolExecutor(
-                max_workers=min(cls.MAX_WORKERS, len(providers_to_query)),
-            ) as executor:
-                futures = {
-                    executor.submit(
-                        cls._buscar_en_proveedor,
-                        app,
-                        proveedor,
-                        nombre,
-                        sku,
-                    ): proveedor.__name__
-                    for proveedor in providers_to_query
-                }
+        futures = {
+            executor.submit(
+                cls._buscar_en_proveedor,
+                app,
+                proveedor,
+                nombre,
+                sku,
+            ): proveedor.__name__
+            for proveedor in providers_to_query
+        }
 
-                for future in as_completed(futures):
-                    try:
+        bd_future = executor.submit(cls._buscar_en_bd, app, nombre, sku)
+        futures[bd_future] = "BD"
+
+        pendientes = set(futures.keys())
+
+        try:
+            for future in as_completed(futures, timeout=cls.TIMEOUT_GLOBAL_SEGUNDOS):
+                pendientes.discard(future)
+                nombre_tarea = futures[future]
+
+                try:
+                    if future is bd_future:
+                        bd_resultados, error = future.result()
+                        resultados.extend(bd_resultados)
+                    else:
                         resultado, error = future.result()
-
                         if resultado:
                             resultados.append(resultado)
                             nuevos_externos.append(resultado)
 
-                        if error:
-                            errores.append(error)
+                    if error:
+                        errores.append(error)
 
-                    except Exception as e:
-                        errores.append(str(e))
+                except Exception as e:
+                    errores.append(f"{nombre_tarea}: {str(e)}")
+
+        except FutureTimeoutError:
+            pendientes_nombres = [futures[f] for f in pendientes]
+            logger.warning(
+                "Timeout global alcanzado (%ss). Pendientes sin respuesta: %s",
+                cls.TIMEOUT_GLOBAL_SEGUNDOS,
+                pendientes_nombres,
+            )
+            for nombre_tarea in pendientes_nombres:
+                errores.append(f"{nombre_tarea}: timeout global")
 
         # -------------------------
-        # 3. BD
-        # -------------------------
-        bd_resultados = ProveedoresBDService.buscar_producto(
-            nombre=nombre,
-            sku=sku,
-        )
-
-        resultados.extend(bd_resultados)
-
-        # -------------------------
-        # 4. CACHE UPDATE
+        # 3. CACHE UPDATE
         # -------------------------
         if sku and nuevos_externos:
             cache.set(sku, nuevos_externos)
 
         # -------------------------
-        # 5. FILTER + SORT
+        # 4. FILTER + SORT
         # -------------------------
         final = [p for p in resultados if p.existencia and p.existencia > 0]
 
