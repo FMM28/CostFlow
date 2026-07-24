@@ -6,6 +6,7 @@ from app.auth.login_manager import load_user
 from app.logging_config import setup_logging
 from .routes import register_blueprints
 from app.commands.commands import register_commands
+from app.errors import register_error_handlers
 
 
 def create_app():
@@ -24,5 +25,6 @@ def create_app():
 
     register_blueprints(app)
     register_commands(app)
+    register_error_handlers(app)
 
     return app

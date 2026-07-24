@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Error 429</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
+    <div class="bg-white rounded-lg shadow-lg p-8 max-w-md w-full text-center">
+        <h1 class="text-6xl font-bold text-yellow-500 mb-4">429</h1>
+        <h2 class="text-2xl font-semibold text-gray-800 mb-2">Demasiadas Solicitudes</h2>
+        <p class="text-gray-600 mb-6">Has enviado demasiadas solicitudes. Por favor, espera un momento e intenta nuevamente.</p>
+        <div class="flex flex-col sm:flex-row gap-3 justify-center">
+            <button onclick="history.back()" class="px-6 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-800 transition">
+                Volver Atrás
+            </button>
+            <a href="{{ url_for('auth.login') }}" class="px-6 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition">
+                Ir al Login
+            </a>
+        </div>
+    </div>
+</body>
+</html>
