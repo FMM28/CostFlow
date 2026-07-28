@@ -1,0 +1,11 @@
+.git
+.gitignore
+.venv/
+__pycache__/
+*.pyc
+.env
+logs/
+app/static/uploads/firmas
+certbot/
+.vscode/
+.idea/

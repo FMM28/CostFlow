@@ -386,6 +386,28 @@ class CotizacionMapper:
 
         return detalles
 
+    @staticmethod
+    def _static_path_from_url(url_firma):
+        if not url_firma:
+            return None
+
+        try:
+            nombre_archivo = Path(url_firma).name
+
+            ruta = (
+                Path(current_app.static_folder) / "uploads" / "firmas" / nombre_archivo
+            )
+
+            if not ruta.exists():
+                logger.warning(f"No existe la firma en la ruta esperada: {ruta}")
+                return None
+
+            return str(ruta.resolve())
+
+        except Exception as error:
+            logger.error(f"No se pudo resolver la ruta de la firma: {error}")
+            return None
+
     @classmethod
     def from_orden(cls, orden: Orden) -> Cotizacion:
 
@@ -406,7 +428,7 @@ class CotizacionMapper:
             telefono=orden.usuario.numero,
             correo=orden.usuario.email,
             firma=(
-                str(orden.usuario.url_firma)
+                cls._static_path_from_url(orden.usuario.url_firma)
                 if orden.incluir_firma and orden.usuario.url_firma
                 else None
             ),

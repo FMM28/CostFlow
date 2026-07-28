@@ -8,6 +8,7 @@ from .routes import register_blueprints
 from app.commands.commands import register_commands
 from app.errors import register_error_handlers
 from app.security import configure_security_headers
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 
 def create_app():
@@ -15,6 +16,14 @@ def create_app():
     app.config.from_object(Config)
 
     csrf.init_app(app)
+
+    app.wsgi_app = ProxyFix(
+        app.wsgi_app,
+        x_for=1,
+        x_proto=1,
+        x_host=1,
+        x_port=1,
+    )
 
     db.init_app(app)
     migrate.init_app(app, db)

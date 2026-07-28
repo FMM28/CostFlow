@@ -6,7 +6,7 @@ def configure_security_headers(app: Flask):
     @app.after_request
     def add_security_headers(response):
         # Evita que la página pueda cargarse dentro de un iframe
-        response.headers["X-Frame-Options"] = "DENY"
+        response.headers["X-Frame-Options"] = "SAMEORIGIN"
 
         # Evita MIME Sniffing
         response.headers["X-Content-Type-Options"] = "nosniff"

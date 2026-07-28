@@ -1,0 +1,116 @@
+services:
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        UID: ${UID}
+        GID: ${GID}
+
+    image: costflow:latest
+
+    container_name: costflow-app
+
+    restart: unless-stopped
+
+    init: true
+
+    ipc: host
+
+    env_file:
+      - .env
+
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+    expose:
+      - "8000"
+
+    volumes:
+      - ./logs:/app/logs
+
+      - ./app/static/css:/app/app/static/css:ro
+      - ./app/static/fonts:/app/app/static/fonts:ro
+      - ./app/static/icons:/app/app/static/icons:ro
+      - ./app/static/img:/app/app/static/img:ro
+      - ./app/static/js:/app/app/static/js:ro
+      - ./app/static/uploads:/app/app/static/uploads
+
+    command: >
+      gunicorn
+      -c docker/gunicorn.conf.py
+      "app:create_app()"
+
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')"
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+    networks:
+      - costflow
+
+  nginx:
+    image: nginx:1.30-alpine
+
+    container_name: costflow-nginx
+
+    restart: unless-stopped
+
+    depends_on:
+      app:
+        condition: service_healthy
+
+    ports:
+      - "80:80"
+      - "443:443"
+
+    volumes:
+      - ./docker/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+
+      - ./app/static/css:/app/app/static/css:ro
+      - ./app/static/fonts:/app/app/static/fonts:ro
+      - ./app/static/icons:/app/app/static/icons:ro
+      - ./app/static/img:/app/app/static/img:ro
+      - ./app/static/js:/app/app/static/js:ro
+      - ./app/static/uploads:/app/app/static/uploads
+
+      - ./logs/nginx:/var/log/nginx
+
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
+
+    networks:
+      - costflow
+
+  certbot:
+    image: certbot/certbot:latest
+
+    container_name: costflow-certbot
+
+    restart: unless-stopped
+
+    volumes:
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
+
+    entrypoint: /bin/sh
+
+    command: >
+      -c "trap exit TERM; while :; do certbot renew --webroot -w /var/www/certbot; sleep 12h & wait $${!}; done;"
+
+    networks:
+      - costflow
+
+networks:
+  costflow:
+    driver: bridge
