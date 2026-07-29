@@ -9,3 +9,4 @@ app/static/uploads/firmas
 certbot/
 .vscode/
 .idea/
+backups
