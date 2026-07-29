@@ -2,11 +2,13 @@ from __future__ import annotations
 
 import logging
 from datetime import datetime, timezone
-from typing import Optional, List, Tuple
+from typing import List, Optional, Tuple
 
+from sqlalchemy import func
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 
 from app.extensions import db
+from app.models.producto import Producto
 from app.models.proveedor import Proveedor
 
 logger = logging.getLogger(__name__)
@@ -243,3 +245,28 @@ class ProveedorService:
             db.session.rollback()
             logger.error("Error al eliminar proveedor id=%s: %s", id_proveedor, exc)
             return False, "Error de base de datos al eliminar el proveedor"
+
+    @staticmethod
+    def get_latests_updates() -> dict[str, datetime]:
+        try:
+            resultado = (
+                db.session.query(Proveedor.nombre, func.max(Producto.actualizado_en))
+                .join(Producto, Producto.id_proveedor == Proveedor.id_proveedor)
+                .group_by(Proveedor.id_proveedor, Proveedor.nombre)
+                .all()
+            )
+
+            return {nombre: fecha for nombre, fecha in resultado}
+
+        except SQLAlchemyError:
+            db.session.rollback()
+            logger.exception(
+                "Error al obtener la última actualización de los catálogos de proveedores."
+            )
+            raise
+
+        except Exception:
+            logger.exception(
+                "Error inesperado al obtener la última actualización de los catálogos de proveedores."
+            )
+            raise

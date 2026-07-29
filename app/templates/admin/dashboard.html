@@ -1,12 +1,222 @@
 {% extends "admin/base.html" %}
 
-{% block title %}Dashboard{% endblock %}
-{% block header %}Dashboard{% endblock %}
+{% block title %}
+Dashboard
+{% endblock %}
 
 {% block content %}
+<div class="p-4 md:p-8 font-sans text-slate-800">
 
-<div class="bg-white p-6 rounded-xl shadow-sm">
-    Bienvenido al panel de administración
+    <!-- Header -->
+    <header class="mb-8">
+        <h1 class="text-3xl font-bold text-slate-900">Panel de Administración</h1>
+        <p class="text-slate-500 mt-1">Resumen general del sistema y estado de proveedores.</p>
+    </header>
+
+    <!-- Grid Principal -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+        <!-- Columna Izquierda: Órdenes Recientes -->
+        <div class="lg:col-span-2 bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+            <div class="px-6 py-4 border-b border-slate-200 flex justify-between items-center">
+                <h2 class="text-lg font-semibold text-slate-900">Últimas Órdenes</h2>
+
+                <a href="{{ url_for('admin.ordenes.index') }}"
+                    class="inline-flex items-center gap-2 px-4 py-2 bg-slate-900 text-white text-sm font-medium rounded-lg hover:bg-slate-800 active:bg-slate-950 transition shadow-sm">
+                    <span>Ver todas las órdenes</span>
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
+                    </svg>
+                </a>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-left">
+                    <thead class="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider">
+                        <tr>
+                            <th class="px-6 py-3">Clave</th>
+                            <th class="px-6 py-3">Comprador</th>
+                            <th class="px-6 py-3">Fecha creación</th>
+                            <th class="px-6 py-3">Estado</th>
+                            <th class="px-6 py-3 text-right">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100">
+                        {% for orden in ultimas_ordenes %}
+                        <tr class="hover:bg-slate-50 transition">
+                            <td class="px-6 py-4 text-sm font-medium text-slate-900">
+                                {{ orden.clave_orden or 'Sin clave' }}
+                            </td>
+                            <td class="px-6 py-4 text-sm text-slate-600">
+                                {{ orden.comprador }}
+                            </td>
+                            <td class="px-6 py-4 text-sm text-slate-500">
+                                {% if orden.fecha_creacion %}
+                                <div class="flex items-center gap-1.5">
+                                    <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor"
+                                        viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z">
+                                        </path>
+                                    </svg>
+                                    {{ orden.fecha_creacion.strftime('%d/%m/%Y') }}
+                                </div>
+                                {% else %}
+                                <span class="text-slate-400 italic">—</span>
+                                {% endif %}
+                            </td>
+                            <td class="px-6 py-4 text-sm">
+                                {% if orden.estado == 'pendiente' %}
+                                <span
+                                    class="px-2.5 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-amber-100 text-amber-800">
+                                    Pendiente
+                                </span>
+                                {% elif orden.estado in ['aprobada', 'completada'] %}
+                                <span
+                                    class="px-2.5 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-emerald-100 text-emerald-800">
+                                    {{ orden.estado | capitalize }}
+                                </span>
+                                {% elif orden.estado in ['rechazada', 'cancelada'] %}
+                                <span
+                                    class="px-2.5 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-rose-100 text-rose-800">
+                                    {{ orden.estado | capitalize }}
+                                </span>
+                                {% else %}
+                                <span
+                                    class="px-2.5 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-slate-100 text-slate-800">
+                                    {{ orden.estado | capitalize }}
+                                </span>
+                                {% endif %}
+                            </td>
+                            <td class="px-6 py-4 text-right text-sm">
+                                <a href="{{ url_for('admin.ordenes.detail', id_orden=orden.id_orden) }}"
+                                    class="inline-flex items-center px-3 py-1.5 border border-slate-300 shadow-sm text-xs font-medium rounded-md text-slate-700 bg-white hover:bg-slate-50 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition">
+                                    Ver detalles
+                                </a>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="5" class="px-6 py-8 text-center text-slate-500 text-sm">
+                                No hay órdenes recientes para mostrar.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Columna Derecha: Estado del Sistema y Proveedores -->
+        <div class="flex flex-col gap-6">
+
+            <!-- Tarjeta: Sesión Siclik -->
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                <h2 class="text-lg font-semibold text-slate-900 mb-4">Estado de Conexión</h2>
+                <div
+                    class="flex items-center justify-between p-4 rounded-lg {% if sesion_siclik_activa %}bg-emerald-50 border border-emerald-200{% else %}bg-rose-50 border border-rose-200{% endif %}">
+                    <div>
+                        <p
+                            class="text-sm font-medium {% if sesion_siclik_activa %}text-emerald-900{% else %}text-rose-900{% endif %}">
+                            Sesión Siclik
+                        </p>
+                        <p
+                            class="text-xs {% if sesion_siclik_activa %}text-emerald-700{% else %}text-rose-700{% endif %}">
+                            {% if sesion_siclik_activa %}
+                            Conexión activa y operativa
+                            {% else %}
+                            Sesión inactiva o expirada
+                            {% endif %}
+                        </p>
+                    </div>
+                    <div
+                        class="w-3 h-3 rounded-full {% if sesion_siclik_activa %}bg-emerald-500 animate-pulse{% else %}bg-rose-500{% endif %}">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tarjeta: Actualizaciones de Catálogo -->
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200">
+                <div class="px-6 py-4 border-b border-slate-200 flex justify-between items-center">
+                    <div>
+                        <h2 class="text-lg font-semibold text-slate-900">Proveedores</h2>
+                    </div>
+                </div>
+
+                <ul class="divide-y divide-slate-100">
+                    {% for proveedor, fecha in actualizaciones_catalogo.items() %}
+                    <li class="px-6 py-4 flex items-center justify-between hover:bg-slate-50 transition">
+                        <div class="flex items-center gap-3">
+                            <div
+                                class="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 border border-slate-200">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4">
+                                    </path>
+                                </svg>
+                            </div>
+                            <span class="text-sm font-medium text-slate-800">{{ proveedor }}</span>
+                        </div>
+
+                        <span
+                            class="fecha-proveedor px-3 py-1.5 inline-flex items-center gap-1.5 text-xs font-semibold rounded-lg bg-slate-100 text-slate-700 whitespace-nowrap border border-slate-200"
+                            data-fecha="{{ fecha }}">
+                            <svg class="w-3.5 h-3.5 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            {{ fecha.strftime('%d/%m %H:%M') if fecha.strftime is defined else fecha }}
+                        </span>
+                    </li>
+                    {% else %}
+                    <li class="px-6 py-8 text-center text-slate-500 text-sm">
+                        No hay proveedores registrados.
+                    </li>
+                    {% endfor %}
+                </ul>
+
+                <div
+                    class="px-6 py-3 bg-slate-50 border-t border-slate-200 flex flex-wrap gap-3 text-xs text-slate-600 rounded-b-xl">
+                    <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                        1-2 días</span>
+                    <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-amber-500"></span> ~1
+                        semana</span>
+                    <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-rose-500"></span> >1
+                        semana</span>
+                </div>
+            </div>
+
+        </div>
+    </div>
 </div>
 
+<!-- Script para calcular y colorear el estado de los proveedores -->
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const elementosFecha = document.querySelectorAll('.fecha-proveedor');
+        const ahora = new Date();
+
+        elementosFecha.forEach(el => {
+            const fechaStr = el.getAttribute('data-fecha');
+            if (!fechaStr) return;
+
+            const fecha = new Date(fechaStr);
+            if (isNaN(fecha.getTime())) return;
+
+            const diffMilisegundos = ahora - fecha;
+            const diffDias = Math.floor(diffMilisegundos / (1000 * 60 * 60 * 24));
+
+            el.classList.remove('bg-slate-100', 'text-slate-700', 'border-slate-200');
+
+            if (diffDias <= 2) {
+                el.classList.add('bg-emerald-50', 'text-emerald-800', 'border-emerald-200');
+            } else if (diffDias <= 7) {
+                el.classList.add('bg-amber-50', 'text-amber-800', 'border-amber-200');
+            } else {
+                el.classList.add('bg-rose-50', 'text-rose-800', 'border-rose-200');
+            }
+        });
+    });
+</script>
 {% endblock %}

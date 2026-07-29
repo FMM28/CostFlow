@@ -97,6 +97,18 @@ class OrdenService:
             return None
 
     @staticmethod
+    def get_latests_by_user(id_usuario: int, limite: int = 10) -> list[Orden]:
+        """
+        Obtiene las últimas órdenes de un usuario, ordenadas por fecha de creación descendente.
+        """
+        return (
+            Orden.query.filter_by(id_usuario=id_usuario)
+            .order_by(Orden.fecha_creacion.desc())
+            .limit(limite)
+            .all()
+        )
+
+    @staticmethod
     def _validate_create_data(data: dict) -> Optional[str]:
         """Valida los datos requeridos para crear una orden."""
 
