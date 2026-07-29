@@ -2,23 +2,26 @@ import logging
 from concurrent.futures import (
     ThreadPoolExecutor,
     as_completed,
+)
+from concurrent.futures import (
     TimeoutError as FutureTimeoutError,
 )
 
 from flask import current_app
 
-from app.models.producto_proveedor import ProductoProveedor
 from app.cache.productos_cache_service import ProductosCacheService
+from app.models.producto_proveedor import ProductoProveedor
 from app.services.proveedores import (
+    AindiService,
     CVAService,
-    SyscomService,
-    SiclikService,
-    TechSmartService,
+    ExelService,
     GlomaService,
     PCELService,
-    AindiService,
+    PCHService,
     ProveedoresBDService,
-    ExelService,
+    SiclikService,
+    SyscomService,
+    TechSmartService,
 )
 
 logger = logging.getLogger(__name__)
@@ -34,6 +37,7 @@ class BuscadorProducto:
         PCELService,
         AindiService,
         ExelService,
+        PCHService
     ]
 
     MAX_WORKERS = 24

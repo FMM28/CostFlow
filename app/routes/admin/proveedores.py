@@ -111,6 +111,23 @@ PROVEEDORES_CONFIG = {
             {"name": "cliente", "label": "Cliente", "type": "text", "oculto": False},
         ],
     },
+    "pch": {
+        "nombre": "PCH",
+        "campos": [
+            {
+                "name": "customer",
+                "label": "Customer",
+                "type": "text",
+                "oculto": False,
+            },
+            {
+                "name": "key",
+                "label": "Key",
+                "type": "password",
+                "oculto": True,
+            },
+        ],
+    },
 }
 
 
@@ -277,7 +294,7 @@ def actualizar_credenciales(proveedor):
     # Obtener proveedor de la base de datos
     proveedor_db = ProveedorService.search_by_nombre(config["nombre"])
     if proveedor_db is None:
-        proveedor_bd, error = ProveedorService.create({"nombre": config["nombre"]})
+        proveedor_db, error = ProveedorService.create({"nombre": config["nombre"]})
 
     # Guardar credenciales
     success = ProveedorCredencialesService.guardar(

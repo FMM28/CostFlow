@@ -58,3 +58,4 @@ class Config:
     SYSCOM_URL = os.getenv("SYSCOM_URL")
     TECHSMART_URL = os.getenv("TECHSMART_URL")
     GLOMA_URL = os.getenv("GLOMA_URL")
+    PCH_URL = os.getenv("PCH_URL")
