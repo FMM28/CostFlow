@@ -86,27 +86,21 @@ services:
 
       - ./logs/nginx:/var/log/nginx
 
-      - ./certbot/conf:/etc/letsencrypt
-      - ./certbot/www:/var/www/certbot
-
     networks:
       - costflow
 
-  certbot:
-    image: certbot/certbot:latest
+  cloudflared:
+    image: cloudflare/cloudflared:latest
 
-    container_name: costflow-certbot
+    container_name: costflow-cloudflared
 
     restart: unless-stopped
 
-    volumes:
-      - ./certbot/conf:/etc/letsencrypt
-      - ./certbot/www:/var/www/certbot
+    command: tunnel --no-autoupdate run --token ${CLOUDFLARE_TUNNEL_TOKEN}
 
-    entrypoint: /bin/sh
-
-    command: >
-      -c "trap exit TERM; while :; do certbot renew --webroot -w /var/www/certbot; sleep 12h & wait $${!}; done;"
+    depends_on:
+      nginx:
+        condition: service_started
 
     networks:
       - costflow
