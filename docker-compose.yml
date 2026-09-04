@@ -104,6 +104,21 @@ services:
     networks:
       - costflow
 
+  cloudflared-ssh:
+    image: cloudflare/cloudflared:latest
+
+    container_name: costflow-cloudflared-ssh
+
+    restart: unless-stopped
+
+    command: tunnel --no-autoupdate run --token ${CLOUDFLARE_SSH_TUNNEL_TOKEN}
+
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+    networks:
+      - costflow
+
 networks:
   costflow:
     driver: bridge
