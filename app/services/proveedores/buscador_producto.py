@@ -22,6 +22,7 @@ from app.services.proveedores import (
     SiclikService,
     SyscomService,
     TechSmartService,
+    SuperMexService,
 )
 
 logger = logging.getLogger(__name__)
@@ -37,7 +38,8 @@ class BuscadorProducto:
         PCELService,
         AindiService,
         ExelService,
-        PCHService
+        PCHService,
+        SuperMexService,
     ]
 
     MAX_WORKERS = 24

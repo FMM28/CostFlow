@@ -59,3 +59,4 @@ class Config:
     TECHSMART_URL = os.getenv("TECHSMART_URL")
     GLOMA_URL = os.getenv("GLOMA_URL")
     PCH_URL = os.getenv("PCH_URL")
+    SUPERMEX_URL = os.getenv("SUPERMEX_URL")

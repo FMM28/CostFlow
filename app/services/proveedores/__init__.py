@@ -12,6 +12,7 @@ from .PYPRService import PYPRService
 from .SiclikService import SiclikService
 from .SyscomService import SyscomService
 from .TechsmartService import TechSmartService
+from .SupermexService import SuperMexService
 from .buscador_producto import BuscadorProducto
 
 __all__ = [
@@ -29,5 +30,6 @@ __all__ = [
     ArrobaComputerService,
     PYPRService,
     ExelService,
+    SuperMexService,
     BuscadorProducto,
 ]

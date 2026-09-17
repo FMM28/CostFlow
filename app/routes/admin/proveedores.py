@@ -128,6 +128,23 @@ PROVEEDORES_CONFIG = {
             },
         ],
     },
+    "supermex": {
+            "nombre": "SUPERMEX",
+            "campos": [
+                {
+                    "name": "email",
+                    "label": "Email",
+                    "type": "text",
+                    "oculto": False,
+                },
+                {
+                    "name": "password",
+                    "label": "Password",
+                    "type": "password",
+                    "oculto": True,
+                },
+            ],
+        },
 }
 
 
