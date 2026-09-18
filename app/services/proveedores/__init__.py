@@ -13,6 +13,7 @@ from .SiclikService import SiclikService
 from .SyscomService import SyscomService
 from .TechsmartService import TechSmartService
 from .SupermexService import SuperMexService
+from .PedidosComService import PedidosComService
 from .buscador_producto import BuscadorProducto
 
 __all__ = [
@@ -31,5 +32,6 @@ __all__ = [
     PYPRService,
     ExelService,
     SuperMexService,
+    PedidosComService,
     BuscadorProducto,
 ]

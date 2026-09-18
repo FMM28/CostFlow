@@ -60,3 +60,6 @@ class Config:
     GLOMA_URL = os.getenv("GLOMA_URL")
     PCH_URL = os.getenv("PCH_URL")
     SUPERMEX_URL = os.getenv("SUPERMEX_URL")
+
+    PEDIDOS_COM_ALGOLIA_APP_ID = os.getenv("PEDIDOS_COM_ALGOLIA_APP_ID")
+    PEDIDOS_COM_ALGOLIA_API_KEY = os.getenv("PEDIDOS_COM_ALGOLIA_API_KEY")
