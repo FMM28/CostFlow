@@ -1,17 +1,19 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
-from flask_login import login_required, current_user
+import os
+import tempfile
+
+from flask import Blueprint, flash, jsonify, redirect, render_template, request, url_for
+from flask_login import current_user, login_required
+from werkzeug.utils import secure_filename
+
 from app.auth.decorators import role_required
-from app.services.proveedores.SiclikService import SiclikService
 from app.services.proveedor_credenciales_service import ProveedorCredencialesService
 from app.services.proveedor_service import ProveedorService
 from app.services.proveedores import (
-    ImportacionDigitalService,
     ArrobaComputerService,
+    ImportacionDigitalService,
     PYPRService,
 )
-from werkzeug.utils import secure_filename
-import tempfile
-import os
+from app.services.proveedores.SiclikService import SiclikService
 
 proveedores_bp = Blueprint("proveedores", __name__)
 
@@ -129,22 +131,22 @@ PROVEEDORES_CONFIG = {
         ],
     },
     "supermex": {
-            "nombre": "SUPERMEX",
-            "campos": [
-                {
-                    "name": "email",
-                    "label": "Email",
-                    "type": "text",
-                    "oculto": False,
-                },
-                {
-                    "name": "password",
-                    "label": "Password",
-                    "type": "password",
-                    "oculto": True,
-                },
-            ],
-        },
+        "nombre": "SUPERMEX",
+        "campos": [
+            {
+                "name": "email",
+                "label": "Email",
+                "type": "text",
+                "oculto": False,
+            },
+            {
+                "name": "password",
+                "label": "Password",
+                "type": "password",
+                "oculto": True,
+            },
+        ],
+    },
 }
 
 
@@ -184,8 +186,7 @@ def siclik_update():
 
     proveedor = ProveedorService.search_by_nombre("SICLIK")
     if proveedor is None:
-        flash("El proveedor SICLIK no existe", "error")
-        return redirect(url_for("admin.proveedores.siclik"))
+        proveedor, _error = ProveedorService.create({"nombre": "SICLIK"})
 
     credenciales = {
         "email": email,
@@ -311,7 +312,7 @@ def actualizar_credenciales(proveedor):
     # Obtener proveedor de la base de datos
     proveedor_db = ProveedorService.search_by_nombre(config["nombre"])
     if proveedor_db is None:
-        proveedor_db, error = ProveedorService.create({"nombre": config["nombre"]})
+        proveedor_db, _error = ProveedorService.create({"nombre": config["nombre"]})
 
     # Guardar credenciales
     success = ProveedorCredencialesService.guardar(
