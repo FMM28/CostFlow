@@ -1,3 +1,4 @@
+from decimal import Decimal
 import logging
 from urllib.parse import urljoin
 
@@ -114,15 +115,27 @@ class SuperMexService(ProveedorProductos):
         precio = None
         if precio_elemento:
             try:
-                precio = float(precio_elemento.get("content", precio_elemento.get_text(strip=True)))
-            except (TypeError, ValueError):
+                precio = Decimal(
+                    precio_elemento.get(
+                        "content",
+                        precio_elemento.get_text(strip=True),
+                    ).replace(",", "")
+                )
+            except (TypeError, ValueError, ArithmeticError):
                 try:
-                    precio = float(precio_elemento.get_text(strip=True).replace(",", ""))
-                except (TypeError, ValueError):
+                    precio = Decimal(
+                        precio_elemento
+                        .get_text(strip=True)
+                        .replace(",", "")
+                    )
+                except (TypeError, ValueError, ArithmeticError):
                     logger.exception(
                         "Error procesando precio de SUPERMEX para SKU: %s",
                         termino,
                     )
+
+        if precio is not None:
+            precio = precio / Decimal("1.16")
 
         moneda = (
             moneda_elemento.get("content")

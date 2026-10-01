@@ -105,6 +105,7 @@ class AindiService(ProveedorProductos):
 
         try:
             precio = Decimal(str(precio))
+            precio = precio / Decimal("1.16")
         except Exception:
             logger.exception(
                 "AINDI: No fue posible convertir el precio '%s'.",

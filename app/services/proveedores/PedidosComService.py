@@ -1,3 +1,4 @@
+from decimal import Decimal
 
 import requests
 from flask import current_app
@@ -97,11 +98,14 @@ class PedidosComService(ProveedorProductos):
 
         if url:
             url = f"https://www.pedidos.com/articulos/{url.lstrip('/')}"
+            
+        precio = Decimal(hit.get("PRECIO") or "0")
+        precio = (precio / Decimal("1.16")).quantize(Decimal("0.01"))
 
         return ProductoProveedor(
             proveedor=cls.PROVEEDOR,
             nombre=hit.get("TITULO"),
-            precio=hit.get("PRECIO"),
+            precio=precio,
             moneda="MXN",
             existencia=hit.get("STOCK"),
             descuento=None,
