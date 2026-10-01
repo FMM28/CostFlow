@@ -16,14 +16,14 @@ from app.services.proveedores import (
     CVAService,
     ExelService,
     GlomaService,
-    PCELService,
+    # PCELService,      #Desactivado
     PCHService,
+    PedidosComService,
     ProveedoresBDService,
     SiclikService,
+    SuperMexService,
     SyscomService,
     TechSmartService,
-    SuperMexService,
-    PedidosComService,
 )
 
 logger = logging.getLogger(__name__)
@@ -36,7 +36,7 @@ class BuscadorProducto:
         SiclikService,
         TechSmartService,
         GlomaService,
-        PCELService,
+        # PCELService,      #Desactivado
         AindiService,
         ExelService,
         PCHService,
