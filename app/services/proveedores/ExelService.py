@@ -45,7 +45,7 @@ class ExelService(ProveedorProductos):
 
     USER_AGENT = (
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
-        "(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+        "KHTML, like Gecko Chrome/124.0.0.0 Safari/537.36"
     )
 
     # ------------------------------------------------------------------
@@ -139,6 +139,7 @@ class ExelService(ProveedorProductos):
         for recurso in (context, browser):
             if recurso is None:
                 continue
+
             try:
                 recurso.close()
             except Exception:
@@ -153,15 +154,18 @@ class ExelService(ProveedorProductos):
                 "--disable-infobars",
             ],
         )
+
         context = browser.new_context(
             user_agent=cls.USER_AGENT,
             locale="es-MX",
             viewport={"width": 1366, "height": 768},
             timezone_id="America/Mexico_City",
         )
+
         cls._aplicar_stealth(context)
 
         cookies = cls._cargar_cookies()
+
         if cookies:
             try:
                 context.add_cookies(cookies)
@@ -171,7 +175,11 @@ class ExelService(ProveedorProductos):
         page = context.new_page()
 
         try:
-            page.goto(cls.BASE_URL + "/", wait_until="domcontentloaded", timeout=20000)
+            page.goto(
+                cls.BASE_URL + "/",
+                wait_until="domcontentloaded",
+                timeout=20000,
+            )
         except Exception as e:
             cls._cerrar(browser, context)
             raise ExelSesionInvalidaError(
@@ -188,7 +196,9 @@ class ExelService(ProveedorProductos):
                 cls._verificar_redirect_password(page.url)
 
                 if "/Acceso" in page.url:
-                    raise ExelSesionInvalidaError("Sesión inválida después de login")
+                    raise ExelSesionInvalidaError(
+                        "Sesión inválida después de login"
+                    )
         except Exception:
             cls._cerrar(browser, context)
             raise
@@ -209,14 +219,22 @@ class ExelService(ProveedorProductos):
             try:
                 return Decimal(texto_limpio)
             except Exception as e:
-                logger.warning(f"No se pudo convertir el precio '{texto}': {e}")
+                logger.warning(
+                    f"No se pudo convertir el precio '{texto}': {e}"
+                )
                 return Decimal("0")
 
         texto_limpio = texto_limpio.replace(",", "")
+
         try:
             return Decimal(texto_limpio)
         except Exception:
-            texto_alternativo = re.sub(r"[^\d.]", "", texto.replace(",", "."))
+            texto_alternativo = re.sub(
+                r"[^\d.]",
+                "",
+                texto.replace(",", "."),
+            )
+
             try:
                 return Decimal(texto_alternativo)
             except Exception as e:
@@ -237,41 +255,63 @@ class ExelService(ProveedorProductos):
         ) or producto.select_one(
             ".descripcion, [class*='descripcion'], .nombre, [class*='nombre']"
         )
+
         nombre = nombre_tag.get_text(" ", strip=True) if nombre_tag else ""
 
         precio_tag = producto.select_one(
             "span.span_precio_producto"
-        ) or producto.select_one(".precio, [class*='precio']")
+        ) or producto.select_one(
+            ".precio, [class*='precio']"
+        )
+
         precio = cls._parse_precio(
             precio_tag.get_text(" ", strip=True) if precio_tag else "0"
         )
 
-        img_tag = producto.select_one("img.imgproducto") or producto.select_one(
+        img_tag = producto.select_one(
+            "img.imgproducto"
+        ) or producto.select_one(
             "img[src*='imgProducto'], img[src*='producto']"
         )
+
         imagen = img_tag.get("src", "") if img_tag else ""
 
         detalle_tag = producto.select_one(
             "a.BUSCADOR--Detalle__Link"
-        ) or producto.select_one("a[href*='Detalle'], a[href*='detalle']")
+        ) or producto.select_one(
+            "a[href*='Detalle'], a[href*='detalle']"
+        )
+
         detalle = detalle_tag.get("href", "") if detalle_tag else ""
 
         popup_tag = producto.select_one(
             "a[id^='lnkAlmacenes'], a[href*='PopUp_producto_y_existencias']"
         )
+
         url_existencias = popup_tag.get("href", "") if popup_tag else ""
 
         def _entero(selector):
             tag = producto.select_one(selector)
+
             if not tag:
                 return 0
-            numeros = re.findall(r"\d+", tag.get_text(strip=True).replace(",", ""))
+
+            numeros = re.findall(
+                r"\d+",
+                tag.get_text(strip=True).replace(",", ""),
+            )
+
             return int(numeros[0]) if numeros else 0
 
         existencia_nacional = _entero("span.span_existencia_nacional")
-        existencia_local = _entero("span.span_existencia_localidad_cliente")
+        existencia_local = _entero(
+            "span.span_existencia_localidad_cliente"
+        )
 
-        localidad_tag = producto.select_one("span.span_leyenda_localidad_cliente")
+        localidad_tag = producto.select_one(
+            "span.span_leyenda_localidad_cliente"
+        )
+
         localidad = (
             localidad_tag.get_text(strip=True).rstrip(":").strip()
             if localidad_tag
@@ -302,13 +342,17 @@ class ExelService(ProveedorProductos):
         ]
 
         contenedores = []
+
         for selector in selectores:
             contenedores = soup.select(selector)
+
             if contenedores:
                 break
 
         if not contenedores:
-            logger.warning(f"[Exel] Sin resultados en el HTML para '{sku}'")
+            logger.warning(
+                f"[Exel] Sin resultados en el HTML para '{sku}'"
+            )
             return None
 
         sku_norm = cls._normalizar_codigo(sku)
@@ -317,7 +361,10 @@ class ExelService(ProveedorProductos):
         for producto in contenedores:
             codigo_tag = producto.select_one(
                 "span[tag='codigo']"
-            ) or producto.select_one(".codigo, .sku, [class*='codigo'], [class*='sku']")
+            ) or producto.select_one(
+                ".codigo, .sku, [class*='codigo'], [class*='sku']"
+            )
+
             if not codigo_tag:
                 continue
 
@@ -348,29 +395,42 @@ class ExelService(ProveedorProductos):
 
             if exacto:
                 return datos
+
             if coincidencia_parcial is None:
                 coincidencia_parcial = datos
 
         if coincidencia_parcial is None:
-            logger.warning(f"[Exel] Ningún producto coincide con '{sku}'")
+            logger.warning(
+                f"[Exel] Ningún producto coincide con '{sku}'"
+            )
 
         return coincidencia_parcial
 
     @staticmethod
     def _parse_tabla_existencias(html):
         soup = BeautifulSoup(html, "html.parser")
-        filas = soup.select("#existenciaLocalidad table tr") or soup.select("table tr")
+        tabla = soup.select_one("#existenciaLocalidad table")
 
+        if not tabla:
+            return [], 0
+
+        filas = tabla.select("tr")
         existencias = []
         total = 0
 
         for fila in filas:
-            columnas = fila.select("td")
+            columnas = fila.select(":scope > td")
+
             if len(columnas) < 2:
                 continue
 
             sucursal = columnas[0].get_text(" ", strip=True)
-            match = re.search(r"\d+", columnas[1].get_text().replace(",", ""))
+
+            match = re.search(
+                r"\d+",
+                columnas[1].get_text().replace(",", ""),
+            )
+
             if not sucursal or not match:
                 continue
 
@@ -378,14 +438,17 @@ class ExelService(ProveedorProductos):
 
             if not any(e.sucursal == sucursal for e in existencias):
                 existencias.append(
-                    ExistenciaSucursal(sucursal=sucursal, existencia=cantidad)
+                    ExistenciaSucursal(
+                        sucursal=sucursal,
+                        existencia=cantidad,
+                    )
                 )
                 total += cantidad
 
         return existencias, total
 
     # ------------------------------------------------------------------
-    # Navegación con Playwright 
+    # Navegación con Playwright
     # ------------------------------------------------------------------
     @classmethod
     def _obtener_html_busqueda(cls, page, sku):
@@ -397,13 +460,19 @@ class ExelService(ProveedorProductos):
             wait_until="domcontentloaded",
             timeout=cls.TIMEOUT_NAVEGACION,
         )
+
         cls._verificar_redirect_password(page.url)
 
         if "/Acceso" in page.url:
-            raise ExelSesionInvalidaError("Exel redirigió al login durante la búsqueda")
+            raise ExelSesionInvalidaError(
+                "Exel redirigió al login durante la búsqueda"
+            )
 
         try:
-            page.wait_for_load_state("networkidle", timeout=15000)
+            page.wait_for_load_state(
+                "networkidle",
+                timeout=15000,
+            )
         except Exception:
             pass
 
@@ -412,13 +481,17 @@ class ExelService(ProveedorProductos):
                 """() => {
                     const tags = document.querySelectorAll("span[tag='codigo']");
                     return Array.from(tags).some(el =>
-                        /[A-Za-z0-9]/.test(el.textContent.replace(/C[oó]digo:/i, ''))
+                        /[A-Za-z0-9]/.test(
+                            el.textContent.replace(/C[oó]digo:/i, '')
+                        )
                     );
                 }""",
                 timeout=cls.TIMEOUT_RENDER,
             )
         except Exception:
-            logger.warning(f"[Exel] No se cargaron resultados para '{sku}'")
+            logger.warning(
+                f"[Exel] No se cargaron resultados para '{sku}'"
+            )
             return None
 
         return page.content()
@@ -434,32 +507,42 @@ class ExelService(ProveedorProductos):
                 url = urljoin(cls.BASE_URL + "/", url)
 
             popup = None
+
             try:
                 popup = context.new_page()
+
                 popup.goto(
                     url,
                     wait_until="domcontentloaded",
                     timeout=cls.TIMEOUT_NAVEGACION,
                 )
+
                 cls._verificar_redirect_password(popup.url)
 
                 try:
                     popup.wait_for_selector(
-                        "table tr td", timeout=cls.TIMEOUT_POPUP
+                        "table tr td",
+                        timeout=cls.TIMEOUT_POPUP,
                     )
                 except Exception:
                     pass
 
-                existencias, total = cls._parse_tabla_existencias(popup.content())
+                existencias, total = cls._parse_tabla_existencias(
+                    popup.content()
+                )
+
                 if existencias:
                     return existencias, total
 
             except ExelPasswordDesactualizadaError:
                 raise
+
             except Exception as e:
                 logger.error(
-                    f"Error obteniendo existencias de {url}: {e}", exc_info=True
+                    f"Error obteniendo existencias de {url}: {e}",
+                    exc_info=True,
                 )
+
             finally:
                 if popup is not None:
                     try:
@@ -472,28 +555,25 @@ class ExelService(ProveedorProductos):
     @classmethod
     def _crear_producto(cls, context, datos):
         existencias, total = cls._obtener_existencias(
-            context, [datos.get("url_existencias"), datos.get("url")]
+            context,
+            [datos.get("url_existencias"), datos.get("url")],
         )
 
-        # Respaldo: usar lo que ya venía en el listado
-        if not existencias and datos.get("existencia_local"):
-            existencias = [
-                ExistenciaSucursal(
-                    sucursal=datos.get("localidad") or "MEXICO",
-                    existencia=datos["existencia_local"],
-                )
-            ]
-
-        if total == 0:
-            total = datos.get("existencia", 0)
-
         url_imagen = datos["imagen"]
+
         if url_imagen and not url_imagen.startswith("http"):
-            url_imagen = urljoin(cls.BASE_URL + "/", url_imagen)
+            url_imagen = urljoin(
+                cls.BASE_URL + "/",
+                url_imagen,
+            )
 
         url_producto = datos["url"]
+
         if url_producto and not url_producto.startswith("http"):
-            url_producto = urljoin(cls.BASE_URL + "/", url_producto)
+            url_producto = urljoin(
+                cls.BASE_URL + "/",
+                url_producto,
+            )
 
         return ProductoProveedor(
             proveedor=cls.PROVEEDOR,
@@ -523,16 +603,19 @@ class ExelService(ProveedorProductos):
         with cls._lock:
             with sync_playwright() as playwright:
                 browser = context = None
+
                 try:
                     browser, context, page = cls._abrir_contexto_autenticado(
                         playwright
                     )
 
                     html = cls._obtener_html_busqueda(page, sku)
+
                     if not html:
                         return None
 
                     datos = cls._parse_resultado_busqueda(html, sku)
+
                     if not datos:
                         return None
 
@@ -542,7 +625,8 @@ class ExelService(ProveedorProductos):
                         cls._guardar_cookies(context.cookies())
                     except Exception as e:
                         logger.error(
-                            f"Error guardando cookies: {e}", exc_info=True
+                            f"Error guardando cookies: {e}",
+                            exc_info=True,
                         )
 
                     return producto
@@ -555,7 +639,10 @@ class ExelService(ProveedorProductos):
                     raise
 
                 except Exception as e:
-                    logger.error(f"Error buscando producto {sku}: {e}", exc_info=True)
+                    logger.error(
+                        f"Error buscando producto {sku}: {e}",
+                        exc_info=True,
+                    )
                     return None
 
                 finally:
