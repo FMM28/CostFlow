@@ -449,6 +449,7 @@
                     if (precioTachadoSpan && estadoOriginal.precioTachado !== null) {
                         precioTachadoSpan.textContent = estadoOriginal.precioTachado;
                     }
+
                     this.dataset.mostrando = 'original';
                     this.innerHTML = `${ICON_SVG} MXN`;
                     return;
@@ -468,7 +469,12 @@
 
                 try {
                     const precio = parseFloat(this.dataset.precio);
-                    const response = await fetch(`/calcular-conversion/${precio}/${monedaOriginal}`);
+                    const precioUrl = precio.toFixed(2);
+
+                    const response = await fetch(
+                        `/calcular-conversion/${precioUrl}/${monedaOriginal}`
+                    );
+
                     const data = await response.json();
 
                     if (!response.ok || !data.equivalencia) {
@@ -480,6 +486,7 @@
                     if (precioActualSpan) {
                         precioActualSpan.textContent = fmtPrecio(data.equivalencia);
                     }
+
                     if (monedaActualSpan) {
                         monedaActualSpan.textContent = 'MXN';
                     }
@@ -487,6 +494,7 @@
                     if (tieneDescuento && precioTachadoSpan) {
                         const precioOrig = parseFloat(this.dataset.precioOriginal);
                         const precioOrigConvertido = precioOrig * tasa;
+
                         // Actualizar el texto completo incluyendo la moneda
                         const monedaText = precioTachadoSpan.textContent.split(' ').pop();
                         precioTachadoSpan.textContent = `${fmtPrecio(precioOrigConvertido)} ${monedaText}`;
