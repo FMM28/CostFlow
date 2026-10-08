@@ -7,7 +7,7 @@ from app.models.producto_proveedor import ProductoProveedor
 from app.services.proveedores.proveedor_productos import ProveedorProductos
 
 
-class PedidosComService(ProveedorProductos):
+class Pedidos_ComService(ProveedorProductos):
     PROVEEDOR = "PEDIDOS_COM"
 
     ALGOLIA_INDEX = "Pedidos"

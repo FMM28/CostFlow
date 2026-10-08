@@ -18,7 +18,7 @@ from app.services.proveedores import (
     GlomaService,
     # PCELService,      #Desactivado
     PCHService,
-    PedidosComService,
+    Pedidos_ComService,
     ProveedoresBDService,
     SiclikService,
     SuperMexService,
@@ -41,7 +41,7 @@ class BuscadorProducto:
         AindiService,
         PCHService,
         SuperMexService,
-        PedidosComService,
+        Pedidos_ComService,
     ]
 
     MAX_WORKERS = 24
