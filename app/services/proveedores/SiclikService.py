@@ -1,15 +1,12 @@
 import logging
-
 from decimal import Decimal
 
 import requests
 
-from app.models.producto_proveedor import ProductoProveedor, ExistenciaSucursal
-
+from app.models.producto_proveedor import ExistenciaSucursal, ProductoProveedor
 from app.services.proveedor_credenciales_service import ProveedorCredencialesService
 from app.services.proveedores.proveedor_productos import ProveedorProductos
 from app.services.sesion_proveedor_service import SesionProveedorService
-
 
 logger = logging.getLogger(__name__)
 
@@ -20,6 +17,8 @@ class SiclikService(ProveedorProductos):
     FARGATE_URL = "https://fargate.siclik.mx:8997"
 
     AUTH_URL = f"{FARGATE_URL}/auth/siclik"
+
+    CATALOG_SEARCH_URL = f"{FARGATE_URL}/product-catalog/catalog-search"
 
     CLIENT_ID = "4bd253db-ef76-41f8-a464-288a662cb08d"
 
@@ -33,7 +32,6 @@ class SiclikService(ProveedorProductos):
 
     @classmethod
     def _new_session(cls):
-
         session = requests.Session()
 
         session.headers.update(
@@ -55,7 +53,6 @@ class SiclikService(ProveedorProductos):
 
     @classmethod
     def _guardar_sesion_bd(cls):
-
         if not cls._session:
             return
 
@@ -81,7 +78,6 @@ class SiclikService(ProveedorProductos):
 
     @classmethod
     def _cargar_sesion_bd(cls):
-
         cookies = SesionProveedorService.obtener("SICLIK")
 
         if not cookies:
@@ -103,7 +99,6 @@ class SiclikService(ProveedorProductos):
 
     @classmethod
     def _validar_sesion(cls):
-
         if not cls._session:
             return False
 
@@ -124,7 +119,6 @@ class SiclikService(ProveedorProductos):
 
     @classmethod
     def _get_session(cls):
-
         if cls._session:
             if cls._validar_sesion():
                 return cls._session
@@ -142,7 +136,6 @@ class SiclikService(ProveedorProductos):
 
     @classmethod
     def iniciar_autenticacion(cls):
-
         credenciales = ProveedorCredencialesService.obtener(cls.PROVEEDOR)
 
         if credenciales is None:
@@ -154,7 +147,9 @@ class SiclikService(ProveedorProductos):
         password = credenciales.get("password")
 
         if not email or not password:
-            raise RuntimeError(f"Las credenciales de {cls.PROVEEDOR} están incompletas")
+            raise RuntimeError(
+                f"Las credenciales de {cls.PROVEEDOR} están incompletas"
+            )
 
         session = cls._new_session()
 
@@ -179,7 +174,9 @@ class SiclikService(ProveedorProductos):
         }
 
         response = session.post(
-            f"{cls.LOGIN_URL}/api/auth/signin", json=payload, timeout=20
+            f"{cls.LOGIN_URL}/api/auth/signin",
+            json=payload,
+            timeout=20,
         )
 
         response.raise_for_status()
@@ -198,7 +195,6 @@ class SiclikService(ProveedorProductos):
 
     @classmethod
     def confirmar_autenticacion(cls, codigo):
-
         credenciales = ProveedorCredencialesService.obtener(cls.PROVEEDOR)
 
         if credenciales is None:
@@ -209,13 +205,15 @@ class SiclikService(ProveedorProductos):
         customer_id = credenciales.get("customer_id")
 
         if not customer_id:
-            raise RuntimeError(f"Las credenciales de {cls.PROVEEDOR} están incompletas")
+            raise RuntimeError(
+                f"Las credenciales de {cls.PROVEEDOR} están incompletas"
+            )
 
         session = cls._session
 
         payload = {
-            "source": "Login",
-            "code": codigo,
+            "source": "login",
+            "mfaCode": codigo,
             "rememberDevice": True,
             "clientId": cls.CLIENT_ID,
             "redirectUri": cls.REDIRECT_URI,
@@ -225,6 +223,19 @@ class SiclikService(ProveedorProductos):
         response = session.post(
             f"{cls.LOGIN_URL}/api/auth/confirm-mfa",
             json=payload,
+            timeout=20,
+        )
+
+        response.raise_for_status()
+
+        response = session.post(
+            f"{cls.LOGIN_URL}/api/auth/authorize",
+            json={
+                "clientId": cls.CLIENT_ID,
+                "customerId": customer_id,
+                "redirectUri": cls.REDIRECT_URI,
+                "state": cls._oauth_state,
+            },
             timeout=20,
         )
 
@@ -262,7 +273,6 @@ class SiclikService(ProveedorProductos):
 
     @classmethod
     def sesion_activa(cls):
-
         try:
             cls._get_session()
             return True
@@ -279,11 +289,19 @@ class SiclikService(ProveedorProductos):
             logger.error(f"Error al eliminar sesión: {e}")
 
     @classmethod
-    def _obtener_detalle(cls, sku):
+    def _buscar_catalogo(cls, sku):
+        payload = {
+            "searchType": "keyword",
+            "searchValue": sku,
+            "page": 1,
+            "pageSize": 12,
+            "filters": {},
+        }
+
         try:
-            response = cls._get_session().get(
-                f"{cls.FARGATE_URL}/product-catalog/details/{sku}",
-                params={"allowVariants": "false"},
+            response = cls._get_session().post(
+                cls.CATALOG_SEARCH_URL,
+                json=payload,
                 headers={
                     "Origin": "https://siclik.mx",
                     "Referer": "https://siclik.mx/",
@@ -291,12 +309,9 @@ class SiclikService(ProveedorProductos):
                 timeout=15,
             )
 
-            if response.status_code == 404:
-                return None
-
             if response.status_code == 401:
                 logger.warning(
-                    f"Error 401 al obtener detalle de {sku}, eliminando cookies"
+                    f"Error 401 al buscar SKU {sku}, eliminando cookies"
                 )
                 cls._eliminar_sesion_bd()
                 cls._session = None
@@ -304,23 +319,39 @@ class SiclikService(ProveedorProductos):
                     "La sesion de Siclik Compusoluciones ha vencido."
                 )
 
+            if response.status_code == 404:
+                return None
+
             response.raise_for_status()
-            return response.json()
+
+            data = response.json()
+
+            items = data.get("items", [])
+
+            if not items:
+                return None
+
+            sku_buscado = str(sku).strip().upper()
+
+            for item in items:
+                if str(item.get("sku", "")).strip().upper() == sku_buscado:
+                    return item
+
+            return items[0]
 
         except requests.exceptions.RequestException as e:
-            logger.error(f"Error al obtener detalle de {sku}: {e}")
+            logger.error(f"Error al buscar SKU {sku} en Siclik: {e}")
             raise
 
     @staticmethod
     def _parse_existencias(item):
-
         existencias = []
 
         total = 0
 
-        inventario = item.get("inventory", {})
+        inventario = item.get("inventory", [])
 
-        for stock in inventario.get("stock", []):
+        for stock in inventario:
             cantidad = int(stock.get("quantity", 0))
 
             if cantidad <= 0:
@@ -329,7 +360,10 @@ class SiclikService(ProveedorProductos):
             almacen = stock.get("warehouse", "N/A")
 
             existencias.append(
-                ExistenciaSucursal(sucursal=f"WAREHOUSE {almacen}", existencia=cantidad)
+                ExistenciaSucursal(
+                    sucursal=f"WAREHOUSE {almacen}",
+                    existencia=cantidad,
+                )
             )
 
             total += cantidad
@@ -338,52 +372,54 @@ class SiclikService(ProveedorProductos):
 
     @classmethod
     def _parse_item(cls, item):
+        total, existencias = cls._parse_existencias(item)
 
-        total, existencias = SiclikService._parse_existencias(item)
+        prices = item.get("prices", {})
 
-        precio = Decimal(str(item.get("price", 0)))
+        precio = Decimal(str(prices.get("listPrice", 0)))
 
-        precio_promocion = Decimal(str(item.get("promotionPrice", 0)))
+        precio_promocion = Decimal(str(prices.get("promotionPrice", 0)))
 
         descuento = precio_promocion if precio_promocion > 0 else None
 
-        imagen = None
+        sku = item.get("sku")
+        sku2 = item.get("sku2")
 
-        imagenes = item.get("images", [])
+        if sku2 is not None:
+            sku2 = str(sku2).strip() or None
 
-        if imagenes:
-            imagen = (
-                imagenes[0].get("thumbnail")
-                or imagenes[0].get("medium")
-                or imagenes[0].get("low")
-            )
+        imagen = item.get("image")
 
         return ProductoProveedor(
             proveedor=cls.PROVEEDOR,
+            sku=sku,
+            codigo_interno=sku2,
             nombre=item.get("title", ""),
             precio=precio,
-            moneda=item.get("currency", "MXN"),
+            moneda=prices.get("currency", "MXN"),
             existencia=total,
             descuento=descuento,
             existencias_sucursal=existencias,
             url=(
-                f"https://siclik.mx/productos/pd/{item.get('title', '').replace(' ', '-').lower()}/{item.get('sku', '')}"
+                f"https://siclik.mx/productos/pd/"
+                f"{item.get('title', '').replace(' ', '-').lower()}/"
+                f"{sku or ''}"
             ),
             url_imagen=imagen,
         )
 
-    @staticmethod
-    def buscar_producto(nombre=None, sku=None):
+    @classmethod
+    def buscar_producto(cls, nombre=None, sku=None):
         if not sku:
             return None
 
         try:
-            item = SiclikService._obtener_detalle(sku)
+            item = cls._buscar_catalogo(sku)
 
             if item is None:
                 return None
 
-            return SiclikService._parse_item(item)
+            return cls._parse_item(item)
 
         except Exception as e:
             logger.error(f"Error Siclik al buscar SKU {sku}: {e}")

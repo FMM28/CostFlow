@@ -13,6 +13,8 @@ class ExistenciaSucursal:
 class ProductoProveedor:
     proveedor: str
     nombre: str
+    sku: Optional[str]
+    codigo_interno: Optional[str]
     precio: Decimal
     moneda: str
     existencia: Optional[int]

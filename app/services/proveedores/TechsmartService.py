@@ -6,12 +6,12 @@ import requests
 from bs4 import BeautifulSoup
 from flask import current_app
 
-from app.services.proveedor_credenciales_service import ProveedorCredencialesService
-from app.services.proveedores.proveedor_productos import ProveedorProductos
 from app.models.producto_proveedor import (
     ExistenciaSucursal,
     ProductoProveedor,
 )
+from app.services.proveedor_credenciales_service import ProveedorCredencialesService
+from app.services.proveedores.proveedor_productos import ProveedorProductos
 from app.services.sesion_proveedor_service import SesionProveedorService
 
 logger = logging.getLogger(__name__)
@@ -35,7 +35,7 @@ class TechSmartService(ProveedorProductos):
             return current_app.config["TECHSMART_URL"]
         except (RuntimeError, KeyError) as e:
             logger.error(f"Error obteniendo TECHSMART_URL: {e}")
-            raise ValueError("La URL de SYSCOM no está configurada (SYSCOM_URL)")
+            raise ValueError("La URL de TECHSMART no está configurada (TECHSMART_URL)")
 
     @classmethod
     def _get_instance(cls):
@@ -193,7 +193,6 @@ class TechSmartService(ProveedorProductos):
         cls,
         cookies: dict,
     ):
-
         SesionProveedorService.guardar(
             proveedor=cls.PROVEEDOR,
             cookies=cookies,
@@ -215,37 +214,56 @@ class TechSmartService(ProveedorProductos):
 
         cards = soup.select(".card.rounded")
 
+        sku_norm = sku_buscado.strip().upper() if sku_buscado else None
+
         for card in cards:
             try:
                 modelo = cls._obtener_modelo(card)
 
-                if sku_buscado and modelo.upper() != sku_buscado.upper():
+                if not modelo:
                     continue
 
-                codigo = cls._obtener_codigo(card)
+                if sku_norm and modelo.strip().upper() != sku_norm:
+                    continue
 
-                if not codigo:
+                codigo_interno = cls._obtener_codigo(card)
+
+                if not codigo_interno:
                     continue
 
                 existencias = cls._obtener_existencias(
-                    codigo,
+                    codigo_interno,
                     cookies,
                 )
 
+                precio, descuento = cls._obtener_precios(card)
+
                 return ProductoProveedor(
-                    proveedor="TECHSMART",
+                    proveedor=cls.PROVEEDOR,
                     nombre=cls._obtener_nombre(card),
-                    precio=cls._obtener_precios(card)[0],
+                    sku=modelo,
+                    codigo_interno=codigo_interno,
+                    precio=precio,
                     moneda="USD",
                     existencia=sum(x.existencia for x in existencias),
-                    descuento=cls._obtener_precios(card)[1],
+                    descuento=descuento,
                     existencias_sucursal=existencias,
                     url=None,
-                    url_imagen=cls._obtener_imagen(card, base_url),
+                    url_imagen=cls._obtener_imagen(
+                        card,
+                        base_url,
+                    ),
                 )
 
             except Exception:
                 logger.exception("Error parseando producto.")
+
+        if sku_norm:
+            logger.info(
+                "TechSmart no encontró un producto cuyo modelo "
+                "coincida exactamente con SKU '%s'",
+                sku_buscado,
+            )
 
         return None
 
@@ -309,15 +327,18 @@ class TechSmartService(ProveedorProductos):
         if not nodo:
             return ""
 
-        match = re.search(
-            r"MODELO:\s*([^\s]+)",
-            nodo.get_text(
-                " ",
-                strip=True,
-            ),
+        texto = nodo.get_text(
+            " ",
+            strip=True,
         )
 
-        return match.group(1) if match else ""
+        match = re.search(
+            r"MODELO:\s*([^\s]+)",
+            texto,
+            re.IGNORECASE,
+        )
+
+        return match.group(1).strip() if match else ""
 
     @staticmethod
     def _obtener_codigo(card) -> str | None:
@@ -338,7 +359,9 @@ class TechSmartService(ProveedorProductos):
         return match.group(1) if match else None
 
     @staticmethod
-    def _obtener_precios(card) -> tuple[Decimal, Decimal | None]:
+    def _obtener_precios(
+        card,
+    ) -> tuple[Decimal, Decimal | None]:
 
         precios = []
 

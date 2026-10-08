@@ -1,14 +1,14 @@
 import logging
-from decimal import Decimal
-import requests
 import xml.etree.ElementTree as ET
+from decimal import Decimal
 from urllib.parse import urlencode
 
+import requests
 from flask import current_app
 
+from app.models.producto_proveedor import ExistenciaSucursal, ProductoProveedor
 from app.services.proveedor_credenciales_service import ProveedorCredencialesService
 from app.services.proveedores.proveedor_productos import ProveedorProductos
-from app.models.producto_proveedor import ProductoProveedor, ExistenciaSucursal
 
 logger = logging.getLogger(__name__)
 
@@ -43,14 +43,19 @@ class CVAService(ProveedorProductos):
             return []
 
     @staticmethod
-    def _parse_existencias(item: ET.Element) -> tuple[int, list[ExistenciaSucursal]]:
-        """Parsea las existencias por sucursal de un item del XML de CVA"""
+    def _parse_existencias(
+        item: ET.Element,
+    ) -> tuple[int, list[ExistenciaSucursal]]:
+        """Parsea las existencias por sucursal de un item del XML de CVA."""
         existencias_sucursal = []
 
         # CVA no envía VENTAS_CDMX explícitamente.
         existencia_cdmx = int(item.findtext("disponible") or 0)
         existencias_sucursal.append(
-            ExistenciaSucursal(sucursal="VENTAS CDMX", existencia=existencia_cdmx)
+            ExistenciaSucursal(
+                sucursal="VENTAS CDMX",
+                existencia=existencia_cdmx,
+            )
         )
         existencia_total = existencia_cdmx
 
@@ -99,11 +104,13 @@ class CVAService(ProveedorProductos):
         descuento = Decimal(descuento)
 
         if precio == descuento:
-            descuento = Decimal(0.0)
+            descuento = Decimal("0.0")
 
         return ProductoProveedor(
             proveedor="CVA",
             nombre=item.findtext("descripcion") or "",
+            sku=item.findtext("codigo_fabricante") or "",
+            codigo_interno=item.findtext("clave") or "",
             precio=precio,
             moneda=CVAService._parse_moneda(item),
             existencia=existencia_total,
@@ -159,7 +166,8 @@ class CVAService(ProveedorProductos):
 
     @staticmethod
     def buscar_producto(
-        nombre: str | None = None, sku: str | None = None
+        nombre: str | None = None,
+        sku: str | None = None,
     ) -> ProductoProveedor | None:
         """
         Busca un producto por su código (SKU) en CVA.

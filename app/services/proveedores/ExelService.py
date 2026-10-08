@@ -45,7 +45,7 @@ class ExelService(ProveedorProductos):
 
     USER_AGENT = (
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
-        "KHTML, like Gecko Chrome/124.0.0.0 Safari/537.36"
+        "(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
     )
 
     # ------------------------------------------------------------------
@@ -125,7 +125,9 @@ class ExelService(ProveedorProductos):
         try:
             page.wait_for_url(lambda url: "/Acceso" not in url, timeout=20000)
         except Exception as e:
-            raise ExelLoginError("Login fallido - no se pudo salir de /Acceso") from e
+            raise ExelLoginError(
+                "Login fallido - no se pudo salir de /Acceso"
+            ) from e
 
         cls._verificar_redirect_password(page.url)
 
@@ -170,7 +172,9 @@ class ExelService(ProveedorProductos):
             try:
                 context.add_cookies(cookies)
             except Exception as e:
-                logger.warning(f"No se pudieron aplicar cookies al navegador: {e}")
+                logger.warning(
+                    f"No se pudieron aplicar cookies al navegador: {e}"
+                )
 
         page = context.new_page()
 
@@ -245,7 +249,7 @@ class ExelService(ProveedorProductos):
 
     @staticmethod
     def _normalizar_codigo(texto):
-        """Deja solo letras y números en mayúsculas: '100-100001015BOX' -> '100100001015BOX'."""
+        """Deja solo letras y números en mayúsculas."""
         return re.sub(r"[^A-Z0-9]", "", (texto or "").upper())
 
     @classmethod
@@ -319,7 +323,8 @@ class ExelService(ProveedorProductos):
         )
 
         return {
-            "codigo": codigo,
+            "sku": codigo,
+            "codigo_interno": None,
             "nombre": nombre,
             "precio": precio,
             "imagen": imagen,
@@ -382,6 +387,7 @@ class ExelService(ProveedorProductos):
             id_tag = producto.select_one("input[id^='hdnProducto_']")
             id_interno = id_tag.get("value", "").strip() if id_tag else ""
 
+            sku_norm = cls._normalizar_codigo(sku)
             codigo_norm = cls._normalizar_codigo(codigo)
             id_norm = cls._normalizar_codigo(id_interno)
 
@@ -578,6 +584,8 @@ class ExelService(ProveedorProductos):
         return ProductoProveedor(
             proveedor=cls.PROVEEDOR,
             nombre=datos["nombre"],
+            sku=datos["sku"],
+            codigo_interno=datos["codigo_interno"],
             precio=datos["precio"],
             moneda="MXN",
             existencia=total,

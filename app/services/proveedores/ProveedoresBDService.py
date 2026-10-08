@@ -2,8 +2,8 @@ from decimal import Decimal
 
 from app.models.producto import Producto
 from app.models.producto_proveedor import (
-    ProductoProveedor,
     ExistenciaSucursal,
+    ProductoProveedor,
 )
 
 
@@ -42,6 +42,8 @@ class ProveedoresBDService:
                 ProductoProveedor(
                     proveedor=producto.proveedor.nombre,
                     nombre=producto.descripcion,
+                    sku=producto.clave_producto,
+                    codigo_interno=producto.clave_interna,
                     precio=Decimal(str(producto.precio)),
                     moneda=producto.moneda,
                     existencia=producto.existencia,

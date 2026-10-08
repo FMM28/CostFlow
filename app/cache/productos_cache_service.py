@@ -1,14 +1,14 @@
 from __future__ import annotations
 
-from decimal import Decimal
 from datetime import datetime, timezone
+from decimal import Decimal
 from typing import Optional
 
 from flask import current_app
 
 from app.cache.redis_cache import RedisCache
 from app.cache.redis_keys import RedisKeys
-from app.models.producto_proveedor import ProductoProveedor, ExistenciaSucursal
+from app.models.producto_proveedor import ExistenciaSucursal, ProductoProveedor
 
 
 class ProductosCacheService:
@@ -67,7 +67,10 @@ class ProductosCacheService:
         current = self.get_raw(sku)
 
         if current is None:
-            current = {}
+            current = {
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "data": {},
+            }
 
         current["data"][producto.proveedor] = self._serialize_product(producto)
 
@@ -117,6 +120,8 @@ class ProductosCacheService:
         return {
             "proveedor": p.proveedor,
             "nombre": p.nombre,
+            "sku": p.sku,
+            "codigo_interno": p.codigo_interno,
             "precio": str(p.precio),
             "moneda": p.moneda,
             "existencia": p.existencia,
@@ -143,6 +148,8 @@ class ProductosCacheService:
             result[proveedor] = ProductoProveedor(
                 proveedor=p["proveedor"],
                 nombre=p["nombre"],
+                sku=p.get("sku"),
+                codigo_interno=p.get("codigo_interno"),
                 precio=Decimal(p["precio"]),
                 moneda=p["moneda"],
                 existencia=p["existencia"],

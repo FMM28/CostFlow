@@ -163,7 +163,10 @@ class SyscomService(ProveedorProductos):
         token = cls._get_access_token()
         if not token:
             return None
-        return {"Authorization": f"Bearer {token}", "Accept": "application/json"}
+        return {
+            "Authorization": f"Bearer {token}",
+            "Accept": "application/json",
+        }
 
     @classmethod
     def _buscar_por_modelo(cls, headers: dict, sku: str) -> Optional[dict]:
@@ -174,9 +177,14 @@ class SyscomService(ProveedorProductos):
             "inventarios": "true",
         }
 
+        sku_norm = sku.strip().upper()
+
         try:
             response = cls._get_session().get(
-                url, headers=headers, params=params, timeout=(5, 20)
+                url,
+                headers=headers,
+                params=params,
+                timeout=(5, 20),
             )
 
             if response.status_code == 404:
@@ -186,20 +194,58 @@ class SyscomService(ProveedorProductos):
             data = response.json()
 
             if isinstance(data, dict):
-                return data
+                modelo = data.get("modelo")
 
-            if isinstance(data, list) and data:
-                sku_norm = sku.strip().upper()
+                if isinstance(modelo, str) and modelo.strip().upper() == sku_norm:
+                    return data
+
+                logger.info(
+                    "SYSCOM devolvió un producto con modelo '%s' pero se esperaba '%s'",
+                    modelo,
+                    sku,
+                )
+                return None
+
+            if isinstance(data, list):
                 for producto in data:
-                    if producto.get("modelo", "").strip().upper() == sku_norm:
+                    if not isinstance(producto, dict):
+                        continue
+
+                    modelo = producto.get("modelo")
+
+                    if isinstance(modelo, str) and modelo.strip().upper() == sku_norm:
                         return producto
-                return data[0]
+
+                logger.info(
+                    "SYSCOM no devolvió ningún producto cuyo modelo coincida "
+                    "exactamente con SKU '%s'",
+                    sku,
+                )
+                return None
+
+            if isinstance(data, dict):
+                productos = data.get("productos")
+
+                if isinstance(productos, list):
+                    for producto in productos:
+                        if not isinstance(producto, dict):
+                            continue
+
+                        modelo = producto.get("modelo")
+
+                        if (
+                            isinstance(modelo, str)
+                            and modelo.strip().upper() == sku_norm
+                        ):
+                            return producto
 
             return None
 
         except requests.RequestException as e:
             logger.error(
-                "Error buscando producto por modelo '%s' en SYSCOM: %s", sku, e
+                "Error buscando producto por modelo '%s' en SYSCOM: %s",
+                sku,
+                e,
             )
             return None
 
@@ -216,7 +262,10 @@ class SyscomService(ProveedorProductos):
 
         try:
             response = cls._get_session().get(
-                url, headers=headers, params=params, timeout=(5, 20)
+                url,
+                headers=headers,
+                params=params,
+                timeout=(5, 20),
             )
 
             if response.status_code == 404:
@@ -227,26 +276,37 @@ class SyscomService(ProveedorProductos):
 
             productos = data.get("productos", [])
             if not productos:
-                logger.info("SYSCOM no devolvió resultados para '%s'", nombre)
+                logger.info(
+                    "SYSCOM no devolvió resultados para '%s'",
+                    nombre,
+                )
                 return None
 
             return productos[0]
 
         except requests.RequestException as e:
             logger.error(
-                "Error buscando producto por texto '%s' en SYSCOM: %s", nombre, e
+                "Error buscando producto por texto '%s' en SYSCOM: %s",
+                nombre,
+                e,
             )
             return None
 
     @classmethod
-    def _buscar_producto(cls, nombre: str | None, sku: str | None) -> Optional[dict]:
+    def _buscar_producto(
+        cls,
+        nombre: str | None,
+        sku: str | None,
+    ) -> Optional[dict]:
         headers = cls._get_headers()
+
         if not headers:
             logger.warning("No se pudo obtener headers de autenticación para SYSCOM")
             return None
 
         if sku:
             producto = cls._buscar_por_modelo(headers, sku)
+
             if producto:
                 return producto
 
@@ -256,33 +316,44 @@ class SyscomService(ProveedorProductos):
         return None
 
     @classmethod
-    def _parse_existencias(cls, data: dict) -> tuple[int, List[ExistenciaSucursal]]:
+    def _parse_existencias(
+        cls,
+        data: dict,
+    ) -> tuple[int, List[ExistenciaSucursal]]:
         """
         Parsea las existencias del producto.
         """
         existencia_data = data.get("existencia")
+
         if not isinstance(existencia_data, dict):
             return int(data.get("total_existencia", 0) or 0), []
 
         existencias_sucursal: dict[str, int] = {}
 
         detalle = existencia_data.get("detalle")
+
         if isinstance(detalle, dict):
             for sucursales in detalle.values():
                 if not isinstance(sucursales, dict):
                     continue
+
                 for sucursal, cantidad in sucursales.items():
                     try:
                         cantidad_int = int(float(cantidad))
                     except (TypeError, ValueError):
                         continue
+
                     sucursal_norm = sucursal.upper().replace("_", " ")
+
                     existencias_sucursal[sucursal_norm] = (
                         existencias_sucursal.get(sucursal_norm, 0) + cantidad_int
                     )
 
         existencias_lista = [
-            ExistenciaSucursal(sucursal=sucursal, existencia=cantidad)
+            ExistenciaSucursal(
+                sucursal=sucursal,
+                existencia=cantidad,
+            )
             for sucursal, cantidad in existencias_sucursal.items()
         ]
 
@@ -290,7 +361,9 @@ class SyscomService(ProveedorProductos):
             existencia_total = int(data.get("total_existencia") or 0)
         else:
             existencia_total = int(existencia_data.get("nuevo", 0) or 0)
+
             asterisco = existencia_data.get("asterisco", {})
+
             if isinstance(asterisco, dict):
                 for cantidad in asterisco.values():
                     try:
@@ -301,8 +374,12 @@ class SyscomService(ProveedorProductos):
         return existencia_total, existencias_lista
 
     @classmethod
-    def _parse_precios(cls, data: dict) -> tuple[Decimal, Optional[Decimal], str]:
+    def _parse_precios(
+        cls,
+        data: dict,
+    ) -> tuple[Decimal, Optional[Decimal], str]:
         precios = data.get("precios")
+
         if not isinstance(precios, dict):
             return Decimal("0"), None, "MXN"
 
@@ -312,24 +389,34 @@ class SyscomService(ProveedorProductos):
         precio_descuento = precios.get("precio_descuento")
 
         descuento = None
+
         if precio_especial is not None:
             descuento = Decimal(str(precio_especial))
+
         if precio_descuento is not None:
             descuento_d = Decimal(str(precio_descuento))
+
             if descuento is None or descuento_d < descuento:
                 descuento = descuento_d
 
         moneda = "MXN"
+
         return precio_lista, descuento, moneda
 
     @classmethod
-    def _get_imagen_principal(cls, data: dict) -> Optional[str]:
+    def _get_imagen_principal(
+        cls,
+        data: dict,
+    ) -> Optional[str]:
         """Obtiene la URL de la imagen principal del producto"""
+
         img_portada = data.get("img_portada")
+
         if img_portada:
             return img_portada
 
         imagenes = data.get("imagenes", [])
+
         if imagenes:
             return imagenes[0].get("imagen") or imagenes[0].get("url")
 
@@ -337,7 +424,9 @@ class SyscomService(ProveedorProductos):
 
     @classmethod
     def buscar_producto(
-        cls, nombre: str | None = None, sku: str | None = None
+        cls,
+        nombre: str | None = None,
+        sku: str | None = None,
     ) -> Optional[ProductoProveedor]:
         """
         Busca un producto por su SKU y/o nombre en SYSCOM.
@@ -349,12 +438,15 @@ class SyscomService(ProveedorProductos):
 
         if not data:
             logger.info(
-                "No se encontró producto (sku='%s', nombre='%s') en SYSCOM", sku, nombre
+                "No se encontró producto (sku='%s', nombre='%s') en SYSCOM",
+                sku,
+                nombre,
             )
             return None
 
         try:
             existencia_total, existencias_sucursal = cls._parse_existencias(data)
+
             precio, descuento, moneda = cls._parse_precios(data)
 
             url_producto = f"https://www.syscom.mx/products/{data.get('producto_id')}"
@@ -362,6 +454,8 @@ class SyscomService(ProveedorProductos):
             producto = ProductoProveedor(
                 proveedor=cls.PROVEEDOR,
                 nombre=data.get("titulo"),
+                sku=data.get("modelo"),
+                codigo_interno=data.get("producto_id"),
                 precio=precio,
                 moneda=moneda,
                 existencia=existencia_total,
@@ -375,6 +469,8 @@ class SyscomService(ProveedorProductos):
 
         except Exception as e:
             logger.error(
-                "Error procesando datos del producto SYSCOM (sku='%s'): %s", sku, e
+                "Error procesando datos del producto SYSCOM (sku='%s'): %s",
+                sku,
+                e,
             )
             return None

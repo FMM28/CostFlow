@@ -32,13 +32,13 @@ logger = logging.getLogger(__name__)
 class BuscadorProducto:
     PROVEEDORES_EXTERNOS = [
         CVAService,
+        ExelService,
         SyscomService,
         SiclikService,
         TechSmartService,
         GlomaService,
-        # PCELService,      #Desactivado
+        # # PCELService,      #Desactivado
         AindiService,
-        ExelService,
         PCHService,
         SuperMexService,
         PedidosComService,

@@ -137,7 +137,7 @@ class PCHService(ProveedorProductos):
         payload = PCHService._obtener_credenciales()
 
         if payload is None:
-            return Decimal("0"), "DESCONOCIDA"
+            return Decimal("0.0"), "DESCONOCIDA"
 
         payload["sku"] = sku
 
@@ -147,7 +147,7 @@ class PCHService(ProveedorProductos):
         )
 
         if respuesta is None:
-            return Decimal("0"), "DESCONOCIDA"
+            return Decimal("0.0"), "DESCONOCIDA"
 
         productos = respuesta.get("data", {}).get("productos", [])
 
@@ -158,13 +158,13 @@ class PCHService(ProveedorProductos):
             precios = producto.get("precios", [])
 
             if not precios:
-                return Decimal("0"), producto.get("moneda", "DESCONOCIDA")
+                return Decimal("0.0"), producto.get("moneda", "DESCONOCIDA")
 
             precio = min(Decimal(str(p["precio"])) for p in precios)
 
             return precio, producto.get("moneda", "DESCONOCIDA")
 
-        return Decimal("0"), "DESCONOCIDA"
+        return Decimal("0.0"), "DESCONOCIDA"
 
     @staticmethod
     def buscar_producto(
@@ -191,10 +191,12 @@ class PCHService(ProveedorProductos):
         return ProductoProveedor(
             proveedor="PCH",
             nombre=producto.get("descripcion", ""),
+            sku=producto.get("skuFabricante", ""),
+            codigo_interno=producto.get("sku", ""),
             precio=precio,
             moneda=moneda,
             existencia=existencia,
-            descuento=Decimal("0"),
+            descuento=Decimal("0.0"),
             existencias_sucursal=existencias_sucursal,
             url=None,
             url_imagen=None,

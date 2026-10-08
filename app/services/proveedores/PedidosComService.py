@@ -76,18 +76,11 @@ class PedidosComService(ProveedorProductos):
             for hit in hits:
                 filtros = hit.get("FILTROS") or {}
 
-                articulo = str(
-                    filtros.get("ARTÍCULO", "")
-                ).strip().upper()
+                articulo = str(filtros.get("ARTÍCULO", "")).strip().upper()
 
-                sort_name = str(
-                    hit.get("SORT_NAME", "")
-                ).strip().upper()
+                sort_name = str(hit.get("SORT_NAME", "")).strip().upper()
 
-                if (
-                    articulo == sku_normalizado
-                    or sort_name == sku_normalizado
-                ):
+                if articulo == sku_normalizado or sort_name == sku_normalizado:
                     return hit
 
         return hits[0] if hits else None
@@ -98,13 +91,15 @@ class PedidosComService(ProveedorProductos):
 
         if url:
             url = f"https://www.pedidos.com/articulos/{url.lstrip('/')}"
-            
+
         precio = Decimal(hit.get("PRECIO") or "0")
         precio = (precio / Decimal("1.16")).quantize(Decimal("0.01"))
 
         return ProductoProveedor(
             proveedor=cls.PROVEEDOR,
             nombre=hit.get("TITULO"),
+            sku=hit.get("SORT_NAME"),
+            codigo_interno=hit.get("ITEM_NUM"),
             precio=precio,
             moneda="MXN",
             existencia=hit.get("STOCK"),

@@ -1,15 +1,17 @@
 import logging
+import re
+import unicodedata
 from decimal import Decimal
 
 import requests
-import re
-import unicodedata
 
 from app.models.producto_proveedor import ProductoProveedor
 from app.services.proveedores.proveedor_productos import ProveedorProductos
 
 logger = logging.getLogger(__name__)
 
+_RE_ASIN = re.compile(r'\\"asin\\":\\"([^"\\]+)\\"')
+_RE_PRODUCT_KEY = re.compile(r'\\"productKey\\":\\"([^"\\]+)\\"')
 
 class AindiService(ProveedorProductos):
     PROVEEDOR = "AINDI"
@@ -67,7 +69,10 @@ class AindiService(ProveedorProductos):
             logger.exception("Error consultando AINDI para '%s'.", termino)
             return None
         except Exception:
-            logger.exception("Error procesando respuesta de AINDI para '%s'.", termino)
+            logger.exception(
+                "Error procesando respuesta de AINDI para '%s'.",
+                termino,
+            )
             return None
 
     @classmethod
@@ -91,6 +96,32 @@ class AindiService(ProveedorProductos):
                 return hit
 
         return None
+
+    @classmethod
+    def _obtener_datos_producto(cls, url):
+        try:
+            response = cls._get_session().get(url, timeout=15)
+            response.raise_for_status()
+            html = response.text
+
+            m_sku = _RE_PRODUCT_KEY.search(html)
+            m_asin = _RE_ASIN.search(html)
+
+            sku = m_sku.group(1).strip() if m_sku else None
+            codigo_interno = m_asin.group(1).strip() if m_asin else None
+
+            return sku, codigo_interno
+
+        except requests.RequestException:
+            logger.exception(
+                "AINDI: Error consultando la página del producto '%s'.", url
+            )
+            return None, None
+        except Exception:
+            logger.exception(
+                "AINDI: Error extrayendo SKU y código interno de '%s'.", url
+            )
+            return None, None
 
     @classmethod
     def _crear_producto(cls, hit):
@@ -123,25 +154,31 @@ class AindiService(ProveedorProductos):
         if pictures:
             imagen = pictures[0]
 
+        url = (
+            "https://aindi.mx/productos/"
+            f"{cls._slugify(hit['nameCategoria'])}/"
+            f"{cls._slugify(hit['nameSubcategoria'])}/"
+            f"{hit['slug']}?id={hit['id']}"
+        )
+
+        sku, codigo_interno = cls._obtener_datos_producto(url)
+
         return ProductoProveedor(
             proveedor=cls.PROVEEDOR,
             nombre=hit.get("title"),
+            sku=sku,
+            codigo_interno=codigo_interno,
             precio=precio,
             moneda="MXN",
             existencia=existencia,
             descuento=0,
             existencias_sucursal=None,
-            url=(
-                "https://aindi.mx/productos/"
-                f"{cls._slugify(hit['nameCategoria'])}/"
-                f"{cls._slugify(hit['nameSubcategoria'])}/"
-                f"{hit['slug']}?id={hit['id']}"
-            ),
+            url=url,
             url_imagen=imagen,
         )
 
     @classmethod
-    def _slugify(cls,texto):
+    def _slugify(cls, texto):
         texto = unicodedata.normalize("NFKD", texto)
         texto = texto.encode("ascii", "ignore").decode("ascii")
         texto = texto.lower()

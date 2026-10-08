@@ -1,12 +1,13 @@
 import logging
+from urllib.parse import urljoin
+
 import requests
 from bs4 import BeautifulSoup
-from urllib.parse import urljoin
 from flask import current_app
 
+from app.models.producto_proveedor import ExistenciaSucursal, ProductoProveedor
 from app.services.proveedor_credenciales_service import ProveedorCredencialesService
 from app.services.proveedores.proveedor_productos import ProveedorProductos
-from app.models.producto_proveedor import ProductoProveedor, ExistenciaSucursal
 from app.services.sesion_proveedor_service import SesionProveedorService
 
 logger = logging.getLogger(__name__)
@@ -67,13 +68,18 @@ class GlomaService(ProveedorProductos):
         url_detalle = urljoin(ins.BASE_URL + "/", redirect_url)
 
         return ProductoProveedor(
-            proveedor="GLOMA",
+            proveedor=cls.PROVEEDOR,
             nombre=p["nombre"],
+            sku=p["sku"],
+            codigo_interno=None,
             precio=p["precio"],
             moneda="MXN",
             existencia=p["stock"],
             descuento=None,
-            existencias_sucursal=cls._obtener_existencias(session, p["sku"]),
+            existencias_sucursal=cls._obtener_existencias(
+                session,
+                p["sku"],
+            ),
             url=url_detalle,
             url_imagen=f"https://xentra.glomastore.mx/{p['imagen']}",
         )
@@ -94,15 +100,20 @@ class GlomaService(ProveedorProductos):
     def _sesion_activa(cls, cookies):
         if not cookies:
             return False
+
         try:
             ins = cls._get_instance()
             s = cls._get_session()
             s.cookies.clear()
             s.cookies.update(cookies)
+
             r = s.get(ins.CUENTA_URL, timeout=10)
             r.raise_for_status()
+
             soup = BeautifulSoup(r.text, "html.parser")
+
             return soup.select_one(".xn_cuenta_contenedor__menu-usuario") is not None
+
         except Exception:
             logger.exception("Error validando sesión.")
             return False
@@ -157,7 +168,11 @@ class GlomaService(ProveedorProductos):
 
         r = session.post(
             f"{ins.BASE_URL}/componentes/base/datos/ventana_agregar.php",
-            data={"sku": sku, "almacen": "", "operacion": "carrito_cantidad"},
+            data={
+                "sku": sku,
+                "almacen": "",
+                "operacion": "carrito_cantidad",
+            },
             timeout=15,
         )
 
@@ -171,7 +186,8 @@ class GlomaService(ProveedorProductos):
             try:
                 resultado.append(
                     ExistenciaSucursal(
-                        sucursal=a.get("almacen"), existencia=int(a.get("stock", 0))
+                        sucursal=a.get("almacen"),
+                        existencia=int(a.get("stock", 0)),
                     )
                 )
             except Exception:
